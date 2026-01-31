@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Research Project Guidelines - NLP with Deep Learning - UNAM</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <img src="assets/unam-logo-png-transparent.png" alt="UNAM Logo" class="university-logo">
+                    <div class="logo-text">
+                        <h1>Natural Language Processing with Deep Learning</h1>
+                        <p class="subtitle">School of Engineering - UNAM · Semester 2026-2</p>
+                    </div>
+                </div>
+                <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+                    <span class="sun-icon">☀️</span>
+                    <span class="moon-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <nav class="nav">
+        <div class="container">
+            <ul class="nav-links">
+                <li><a href="index.html#overview">Overview</a></li>
+                <li><a href="index.html#syllabus">Syllabus</a></li>
+                <li><a href="prerequisites.html">Prerequisites</a></li>
+                <li><a href="guidelines.html" class="active">Guidelines</a></li>
+                <li><a href="index.html#instructor">Instructor</a></li>
+                <li><a href="testimonials.html">Student Experiences</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main">
+        <section class="section">
+            <div class="container">
+                <h2>Research Project Guidelines</h2>
+                <p class="section-intro">The research project counts for 40% of the final grade.</p>
+
+                <div class="prereq-info" style="margin-top: 1.5rem;">
+                    <h3>Scope</h3>
+                    <p>The project should explore the limits of natural language processing. Examples include:</p>
+                    <ul>
+                        <li>Proposal and evaluation of new algorithms or neural network architectures for NLP</li>
+                        <li>Research on applications of NLP</li>
+                        <li>Evaluation of deep learning models in NLP</li>
+                        <li>Study of NLP applied to different modalities: audio, images, etc.</li>
+                    </ul>
+
+                    <h3>Topics</h3>
+                    <p>Novel ideas are encouraged. Students are invited to develop original proposals within the scope above.</p>
+
+                    <h3>Proposal (due Week 5)</h3>
+                    <p>Submit your research proposal as a <strong>PDF</strong> by the end of Week 5. Your submission must include:</p>
+                    <ul>
+                        <li>Title and brief description of the problem</li>
+                        <li>Motivation and relevance to the course</li>
+                        <li>Link(s) to the paper(s) on which you plan to base your project</li>
+                        <li>Link(s) to the dataset(s) you intend to use</li>
+                        <li>Proposed approach (model/architecture, evaluation plan)</li>
+                        <li>Expected deliverables and timeline</li>
+                    </ul>
+                    <p><strong>Tip:</strong> Prefer papers for which public datasets are available. The topic is open within NLP and may range from an application, implementation, modification, or evaluation of a model or algorithm, to adapting existing models to a new task. Later classes and programming sessions will cover more material that may be useful for your project.</p>
+                    <p>Send the proposal to the instructor by the deadline indicated in the syllabus.</p>
+
+                    <h4>Finding papers and datasets</h4>
+                    <p>You can search for papers and datasets on sites such as <a href="https://www.kaggle.com/" target="_blank" rel="noopener">Kaggle</a> (do not limit yourself to this). For inspiration, consider reviewing work published at venues such as ICLR, NeurIPS, ICML, AAAI, ACL, EMNLP, NAACL, EACL, CoNLL, and related conferences and workshops.</p>
+
+                    <h4>Suggested articles for project ideas</h4>
+                    <p>The following list may help you choose a topic or base your project on one of these papers.</p>
+                    <ol class="article-list" style="padding-left: 2.5rem; margin-left: 0.5rem;">
+                        <li><a href="https://arxiv.org/abs/2501.12948" target="_blank" rel="noopener">DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning</a></li>
+                        <li><a href="https://arxiv.org/abs/2103.12407" target="_blank" rel="noopener">Detecting Hate Speech with GPT-3</a></li>
+                        <li><a href="https://arxiv.org/abs/1905.05583" target="_blank" rel="noopener">How to Fine-Tune BERT for Text Classification?</a></li>
+                        <li><a href="https://arxiv.org/abs/1502.03044" target="_blank" rel="noopener">Show, Attend and Tell: Neural Image Caption Generation with Visual Attention</a></li>
+                        <li><a href="https://arxiv.org/abs/2405.04517" target="_blank" rel="noopener">xLSTM: Extended Long Short-Term Memory</a></li>
+                        <li><a href="https://arxiv.org/abs/1409.3215" target="_blank" rel="noopener">Sequence to Sequence Learning with Neural Networks</a></li>
+                        <li><a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener">Attention Is All You Need</a></li>
+                        <li><a href="https://arxiv.org/abs/1810.04805" target="_blank" rel="noopener">BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding</a></li>
+                        <li><a href="https://arxiv.org/abs/1910.10683" target="_blank" rel="noopener">T5: Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer</a></li>
+                        <li><a href="https://arxiv.org/abs/2001.08361" target="_blank" rel="noopener">Scaling Laws for Neural Language Models</a></li>
+                        <li><a href="https://arxiv.org/abs/2005.14165" target="_blank" rel="noopener">Language Models are Few-Shot Learners</a> (GPT-3)</li>
+                        <li><a href="https://cdn.openai.com/research-covers/language-unsupervised/language_understanding_paper.pdf" target="_blank" rel="noopener">Improving Language Understanding by Generative Pre-Training</a> (GPT-1)</li>
+                        <li><a href="https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf" target="_blank" rel="noopener">Language Models are Unsupervised Multitask Learners</a> (GPT-2)</li>
+                        <li><a href="https://arxiv.org/abs/2103.00020" target="_blank" rel="noopener">Learning Transferable Visual Models From Natural Language Supervision</a> (CLIP)</li>
+                        <li><a href="https://arxiv.org/abs/2302.13971" target="_blank" rel="noopener">LLaMA: Open and Efficient Foundation Language Models</a></li>
+                        <li><a href="https://arxiv.org/abs/2112.10752" target="_blank" rel="noopener">High-Resolution Image Synthesis with Latent Diffusion Models</a></li>
+                        <li><a href="https://arxiv.org/abs/2203.02155" target="_blank" rel="noopener">Training Language Models to Follow Instructions with Human Feedback</a></li>
+                        <li><a href="https://arxiv.org/abs/2307.09288" target="_blank" rel="noopener">Llama 2: Open Foundation and Fine-Tuned Chat Models</a></li>
+                        <li><a href="https://arxiv.org/abs/2006.11239" target="_blank" rel="noopener">Denoising Diffusion Probabilistic Models</a></li>
+                        <li><a href="https://arxiv.org/abs/1910.01108" target="_blank" rel="noopener">DistilBERT, a distilled version of BERT: smaller, faster, cheaper and lighter</a></li>
+                        <li><a href="https://arxiv.org/abs/2106.09685" target="_blank" rel="noopener">LoRA: Low-Rank Adaptation of Large Language Models</a></li>
+                        <li><a href="https://arxiv.org/abs/2310.06825" target="_blank" rel="noopener">Mistral 7B</a></li>
+                        <li><a href="https://arxiv.org/abs/2312.00752" target="_blank" rel="noopener">Mamba: Linear-Time Sequence Modeling with Selective State Spaces</a></li>
+                        <li><a href="https://arxiv.org/abs/2312.13771" target="_blank" rel="noopener">AppAgent: Multimodal Agents as Smartphone Users</a></li>
+                        <li><a href="https://arxiv.org/abs/1801.06146" target="_blank" rel="noopener">Universal Language Model Fine-tuning for Text Classification</a> (ULMFiT)</li>
+                        <li><a href="https://arxiv.org/abs/2302.04761" target="_blank" rel="noopener">Toolformer: Language Models Can Teach Themselves to Use Tools</a></li>
+                        <li><a href="https://arxiv.org/abs/2201.11903" target="_blank" rel="noopener">Chain-of-Thought Prompting Elicits Reasoning in Large Language Models</a></li>
+                        <li><a href="https://arxiv.org/abs/2005.11401" target="_blank" rel="noopener">Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks</a></li>
+                    </ol>
+
+                    <h3>Deliverables</h3>
+                    <ul>
+                        <li><strong>Report:</strong> Written report describing problem, method, experiments, and results (length and format as specified by the instructor).</li>
+                        <li><strong>Code:</strong> Clean, documented code and (if applicable) instructions to reproduce experiments.</li>
+                        <li><strong>Presentation:</strong> Oral presentation in the final weeks of the course (Week 15).</li>
+                    </ul>
+
+                    <h3>Presentation (Week 15)</h3>
+                    <p>Each team or student presents the project in class: problem, approach, main results, and conclusions. Time and format will be announced during the semester.</p>
+
+                    <h3>Questions</h3>
+                    <p>For doubts about the project or proposal, contact the instructor: <a href="mailto:emilio.morales@ciencias.unam.mx">emilio.morales@ciencias.unam.mx</a>.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 NLP with Deep Learning - UNAM. All rights reserved.</p>
+            <p>Hosted on <a href="https://pages.github.com/" target="_blank">GitHub Pages</a></p>
+        </div>
+    </footer>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
