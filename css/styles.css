@@ -222,6 +222,80 @@ a:hover {
     max-width: 700px;
 }
 
+.section-intro.syllabus-note {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #b71c1c !important;
+    margin-bottom: 20px;
+}
+
+[data-theme="dark"] .section-intro.syllabus-note {
+    color: #e57373 !important;
+}
+
+/* Programming assignments block */
+.programming-assignments {
+    margin-top: 32px;
+    padding: 24px 28px;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-left: 4px solid var(--accent-primary);
+    border-radius: 0 8px 8px 0;
+    box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+.programming-assignments h3 {
+    font-size: 1.4rem;
+    color: var(--accent-secondary);
+    margin-bottom: 8px;
+}
+
+.programming-assignments .syllabus-note {
+    margin-bottom: 16px;
+}
+
+.program-list {
+    padding-left: 2rem;
+    margin: 0 0 20px 0;
+    color: var(--text-secondary);
+}
+
+.program-list li {
+    padding: 4px 0;
+}
+
+.program-rules {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    color: var(--text-secondary);
+}
+
+.program-rules li {
+    padding: 8px 0;
+    padding-left: 1rem;
+    border-left: 3px solid var(--border-color);
+    margin-bottom: 8px;
+}
+
+.program-rules li:last-child {
+    margin-bottom: 0;
+}
+
+.deadline-note {
+    color: #b71c1c;
+    font-weight: 600;
+}
+
+.deadline-note a {
+    color: #b71c1c;
+}
+
+[data-theme="dark"] .deadline-note,
+[data-theme="dark"] .deadline-note a {
+    color: #e57373;
+}
+
 /* Overview Grid */
 .overview-grid {
     display: grid;
