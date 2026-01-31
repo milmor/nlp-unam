@@ -1,0 +1,14 @@
+--- Review 1 ---
+Muy buena materia, la que más me costó y me gustó de mi intercambio.
+Perceiver no me dejó salir a conocer CDMX un fin de semana, eso es un buen indicador del nivel de la materia.
+Me hubiese gustado conocer más las bases de pytorch y tensorflow antes de comenzar.
+
+--- Review 2 ---
+Me gustó mucho el curso, y me parece una lástima que tan poca gente se inscriba o que muchos deserten.
+En mi opinión, si tuviera que sugerirle algo sería lo siguiente:
+- Tiempo de entrega de ejercicios. Diría que desde el inicio dejar el tiempo de entrega hasta el final del día sería bueno. Sé que nunca se negó a cambiar la fecha, e incluso usted fue quien lo sugería, pero durante las primeras semanas del curso, cuando los ejercicios son más relacionados a temas del anexo, para aquellos con malas bases o que no recuerden mucho, resulta "intimidante" tener la presión de entregar las cosas bien, y a tiempo. A estas alturas no saben que un 0 en un ejercicio no es tan malo, si a final de cuentas se realizan aproximadamente 25 y sólo valen 15% de la calificación. Aún más cuando la mayoría de los ejercicios son las modificaciones a los modelos y actividades de programación. Pero tener 3 ejercicios seguidos, dos con 0 y uno con 5, por ejemplo, sí baja la moral.
+- Una clase de modificación de tensores (Puede que sí la haya dado y fue uno de los días que falté). En mi opinión, además de entender el funcionamiento interno de muchos bloques, al momento de incorporarlos a los diferentes modelos, la cuestión era "hacerlos encajar", que tenga un tamaño de entrada adecuado, y que su salida tenga la forma necesaria. Personalmente yo sí me llegaba a perder al momento de que realizaba muchos reshape(), squeeze(), unsqueeze(), permute(), etc. seguidos, y no entendía exactamente por qué aplicar tal o cual y en donde.
+- Viendo la lista, parece que muchos sí intentaron el programa 2, y que el programa 3 fue el que mató sus esperanzas en la materia. Me parece que el programa 3 es un buen desafío, y en mi opinión vale la pena dejarlo. No sé si el programa extra lo tenía planeado de antemano sabiendo la dificultad del programa 3, pero tal vez avisar acerca de este un poco antes podría darle a varios la motivación suficiente para seguir intentando. Algo así como que el programa 3 en realidad es el programa extra, sólo que quiere que todos hagamos el intento de completarlo, y el programa 3 "verdadero" sea el programa extra + el esfuerzo realizado en el Perceiver.
+
+Finalmente, agradecerle por un curso que sí se siente que pertenece a la Facultad de Ingeniería. Definitivamente implicó un esfuerzo mayor al que pensé para una asignatura de 6 créditos, pero valió mucho la pena.
+

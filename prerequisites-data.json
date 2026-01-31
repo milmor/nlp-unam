@@ -1,0 +1,183 @@
+{
+  "2026-1": {
+    "responses": [
+      {
+        "calculus": 2,
+        "linear_algebra": 2,
+        "probability": 2,
+        "statistics": 3,
+        "programming": 4
+      },
+      {
+        "calculus": 2,
+        "linear_algebra": 2,
+        "probability": 3,
+        "statistics": 3,
+        "programming": 4
+      },
+      {
+        "calculus": 3,
+        "linear_algebra": 2,
+        "probability": 2,
+        "statistics": 2,
+        "programming": 4
+      }
+    ],
+    "averages": {
+      "calculus": 2.33,
+      "linear_algebra": 2.0,
+      "probability": 2.33,
+      "statistics": 2.67,
+      "programming": 4.0
+    }
+  },
+  "2025-2": {
+    "responses": [
+      {
+        "calculus": 3,
+        "linear_algebra": 2,
+        "probability": 3,
+        "statistics": 3,
+        "programming": 4
+      },
+      {
+        "calculus": 4,
+        "linear_algebra": 3,
+        "probability": 4,
+        "statistics": 3,
+        "programming": 4
+      }
+    ],
+    "averages": {
+      "calculus": 3.5,
+      "linear_algebra": 2.5,
+      "probability": 3.5,
+      "statistics": 3.0,
+      "programming": 4.0
+    }
+  },
+  "2025-1": {
+    "responses": [
+      {
+        "calculus": 4,
+        "linear_algebra": 3,
+        "probability": 3,
+        "statistics": 4,
+        "programming": 4
+      },
+      {
+        "calculus": 4,
+        "linear_algebra": 5,
+        "probability": 3,
+        "statistics": 3,
+        "programming": 4
+      },
+      {
+        "calculus": 1,
+        "linear_algebra": 1,
+        "probability": 2,
+        "statistics": 4,
+        "programming": 4
+      }
+    ],
+    "averages": {
+      "calculus": 3.0,
+      "linear_algebra": 3.0,
+      "probability": 2.67,
+      "statistics": 3.67,
+      "programming": 4.0
+    }
+  },
+  "2024-2": {
+    "responses": [
+      {
+        "calculus": 3,
+        "linear_algebra": 3,
+        "probability": 3,
+        "statistics": 3,
+        "programming": 3
+      },
+      {
+        "calculus": 5,
+        "linear_algebra": 5,
+        "probability": 4,
+        "statistics": 4,
+        "programming": 5
+      },
+      {
+        "calculus": 2,
+        "linear_algebra": 2,
+        "probability": 3,
+        "statistics": 3,
+        "programming": 5
+      },
+      {
+        "calculus": 3,
+        "linear_algebra": 3,
+        "probability": 5,
+        "statistics": 5,
+        "programming": 5
+      }
+    ],
+    "averages": {
+      "calculus": 3.25,
+      "linear_algebra": 3.25,
+      "probability": 3.75,
+      "statistics": 3.75,
+      "programming": 4.5
+    }
+  },
+  "2024-1": {
+    "responses": [
+      {
+        "calculus": 3,
+        "linear_algebra": 5,
+        "probability": 3,
+        "statistics": 3,
+        "programming": 5
+      },
+      {
+        "calculus": 5,
+        "linear_algebra": 4,
+        "probability": 3,
+        "statistics": 3,
+        "programming": 4
+      },
+      {
+        "calculus": 5,
+        "linear_algebra": 3,
+        "probability": 4,
+        "statistics": 5,
+        "programming": 3
+      },
+      {
+        "calculus": 2,
+        "linear_algebra": 2,
+        "probability": 2,
+        "statistics": 2,
+        "programming": 4
+      },
+      {
+        "calculus": 2,
+        "linear_algebra": 2,
+        "probability": 2,
+        "statistics": 2,
+        "programming": 3
+      },
+      {
+        "calculus": 5,
+        "linear_algebra": 5,
+        "probability": 5,
+        "statistics": 5,
+        "programming": 5
+      }
+    ],
+    "averages": {
+      "calculus": 3.67,
+      "linear_algebra": 3.5,
+      "probability": 3.17,
+      "statistics": 3.33,
+      "programming": 4.0
+    }
+  }
+}

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Background - NLP with Deep Learning - UNAM</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <img src="unam-logo-png-transparent.png" alt="UNAM Logo" class="university-logo">
+                    <div class="logo-text">
+                        <h1>Natural Language Processing with Deep Learning</h1>
+                        <p class="subtitle">School of Engineering - UNAM · Semester 2026-2</p>
+                    </div>
+                </div>
+                <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+                    <span class="sun-icon">☀️</span>
+                    <span class="moon-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <nav class="nav">
+        <div class="container">
+            <ul class="nav-links">
+                <li><a href="index.html#overview">Overview</a></li>
+                <li><a href="index.html#syllabus">Syllabus</a></li>
+                <li><a href="testimonials.html">Student Experiences</a></li>
+                <li><a href="prerequisites.html" class="active">Prerequisites</a></li>
+                <li><a href="index.html#instructor">Instructor</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main">
+        <section class="section">
+            <div class="container">
+                <h2>Student Background Knowledge</h2>
+                <p class="section-intro">At the end of each semester, students were asked: <em>"Did you have sufficient background knowledge to take and benefit from the course?"</em> (Scale: 1 = Insufficient, 5 = Sufficient)</p>
+                
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h3>Semester 2026-1</h3>
+                        <p class="chart-responses">3 responses</p>
+                        <div class="chart-container">
+                            <canvas id="chart-2026-1"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-card">
+                        <h3>Semester 2025-2</h3>
+                        <p class="chart-responses">2 responses</p>
+                        <div class="chart-container">
+                            <canvas id="chart-2025-2"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-card">
+                        <h3>Semester 2025-1</h3>
+                        <p class="chart-responses">3 responses</p>
+                        <div class="chart-container">
+                            <canvas id="chart-2025-1"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-card">
+                        <h3>Semester 2024-2</h3>
+                        <p class="chart-responses">4 responses</p>
+                        <div class="chart-container">
+                            <canvas id="chart-2024-2"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-card">
+                        <h3>Semester 2024-1</h3>
+                        <p class="chart-responses">6 responses</p>
+                        <div class="chart-container">
+                            <canvas id="chart-2024-1"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="prereq-info">
+                    <h3>Recommended Prerequisites</h3>
+                    <p>Based on student feedback across semesters, we recommend the following background before taking this course:</p>
+                    <ul>
+                        <li><strong>Programming:</strong> Students consistently report strong programming skills (avg ~4.0/5). Python experience is essential.</li>
+                        <li><strong>Linear Algebra:</strong> Often cited as challenging (avg ~2.8/5). Review matrices, vectors, and transformations.</li>
+                        <li><strong>Calculus:</strong> Derivatives and gradients are used throughout (avg ~3.2/5).</li>
+                        <li><strong>Probability & Statistics:</strong> Understanding distributions and basic stats helps (avg ~3.2/5).</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 NLP with Deep Learning - UNAM. All rights reserved.</p>
+            <p>Hosted on <a href="https://pages.github.com/" target="_blank">GitHub Pages</a></p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        // Prerequisites data
+        const prerequisitesData = {
+            "2026-1": {
+                calculus: 2.33,
+                linear_algebra: 2.0,
+                probability: 2.33,
+                statistics: 2.67,
+                programming: 4.0
+            },
+            "2025-2": {
+                calculus: 3.5,
+                linear_algebra: 2.5,
+                probability: 3.5,
+                statistics: 3.0,
+                programming: 4.0
+            },
+            "2025-1": {
+                calculus: 3.0,
+                linear_algebra: 3.0,
+                probability: 2.67,
+                statistics: 3.67,
+                programming: 4.0
+            },
+            "2024-2": {
+                calculus: 3.25,
+                linear_algebra: 3.25,
+                probability: 3.75,
+                statistics: 3.75,
+                programming: 4.5
+            },
+            "2024-1": {
+                calculus: 3.67,
+                linear_algebra: 3.5,
+                probability: 3.17,
+                statistics: 3.33,
+                programming: 4.0
+            }
+        };
+
+        const labels = ['Calculus', ['Linear', 'Algebra'], 'Probability', 'Statistics', 'Program.'];
+
+        // Get theme colors
+        function getChartColors() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            return {
+                backgroundColor: isDark ? 'rgba(107, 163, 214, 0.3)' : 'rgba(0, 51, 102, 0.2)',
+                borderColor: isDark ? 'rgba(107, 163, 214, 1)' : 'rgba(0, 51, 102, 1)',
+                pointBackgroundColor: isDark ? 'rgba(232, 208, 120, 1)' : 'rgba(207, 181, 59, 1)',
+                gridColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                textColor: isDark ? '#e8e8e8' : '#1a1a1a'
+            };
+        }
+
+        // Create charts
+        const charts = {};
+
+        function createChart(semester) {
+            const ctx = document.getElementById(`chart-${semester}`);
+            if (!ctx) return;
+
+            const colors = getChartColors();
+            const data = prerequisitesData[semester];
+
+            charts[semester] = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: `Semester ${semester}`,
+                        data: [data.calculus, data.linear_algebra, data.probability, data.statistics, data.programming],
+                        backgroundColor: colors.backgroundColor,
+                        borderColor: colors.borderColor,
+                        borderWidth: 2,
+                        pointBackgroundColor: colors.pointBackgroundColor,
+                        pointBorderColor: colors.borderColor,
+                        pointRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: 20
+                    },
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            min: 0,
+                            max: 5,
+                            ticks: {
+                                stepSize: 1,
+                                color: colors.textColor,
+                                backdropColor: 'transparent',
+                                font: {
+                                    size: 10
+                                }
+                            },
+                            grid: {
+                                color: colors.gridColor
+                            },
+                            angleLines: {
+                                color: colors.gridColor
+                            },
+                            pointLabels: {
+                                color: colors.textColor,
+                                font: {
+                                    size: 13,
+                                    weight: '600'
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.raw.toFixed(2)}/5`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize all charts
+        Object.keys(prerequisitesData).forEach(semester => {
+            createChart(semester);
+        });
+
+        // Update charts on theme change
+        const originalThemeToggle = document.getElementById('themeToggle');
+        if (originalThemeToggle) {
+            originalThemeToggle.addEventListener('click', function() {
+                setTimeout(() => {
+                    const colors = getChartColors();
+                    Object.keys(charts).forEach(semester => {
+                        const chart = charts[semester];
+                        chart.data.datasets[0].backgroundColor = colors.backgroundColor;
+                        chart.data.datasets[0].borderColor = colors.borderColor;
+                        chart.data.datasets[0].pointBackgroundColor = colors.pointBackgroundColor;
+                        chart.data.datasets[0].pointBorderColor = colors.borderColor;
+                        chart.options.scales.r.ticks.color = colors.textColor;
+                        chart.options.scales.r.grid.color = colors.gridColor;
+                        chart.options.scales.r.angleLines.color = colors.gridColor;
+                        chart.options.scales.r.pointLabels.color = colors.textColor;
+                        chart.update();
+                    });
+                }, 100);
+            });
+        }
+    </script>
+</body>
+</html>

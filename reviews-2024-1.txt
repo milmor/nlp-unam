@@ -1,0 +1,15 @@
+--- Review 1 ---
+Excelente curso, complicado pero extremadamente útil e interesante
+
+--- Review 2 ---
+Tal vez explicar un poco más los temas antes de ir a la práctica  en el laboratorio,  en general fue un buen curso
+
+--- Review 3 ---
+El curso me pareció muy bueno; sin embargo, no siento haberlo aprovechado completamente debido a los problemas de antecedentes. Considero que los temas tratados son muy interesantes y el incluir prácticas y laboratorio para el desarrollo del curso me pareció muy adecuado. Lo único que me hubiese gustado más para mejorar es una clase de laboratorio donde creáramos alguna de las arquitecturas desde 0 para comprender mejor la lógica de programación.
+
+--- Review 4 ---
+Muchas gracias por su gran dedicación por la materia, transmite ese gran interés por la materia. Me hubiera gustado que no obviara varias cosas, aunque sentí que me faltó nivel para el curso.
+
+--- Review 5 ---
+Dejar los notebooks unos días antes para leerlos, ya que en laboratorio cuesta seguir el ritmo
+
