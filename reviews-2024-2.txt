@@ -1,0 +1,19 @@
+--- Review 1 ---
+pues creo que solo me faltaron bases para la parte de la programación y sobre algebra lineal, aunque me hubiese encantado ver lo de síntesis de voz, considero que el curso fue bueno
+
+--- Review 2 ---
+Estoy muy conforme con el curso, considero que contaba con los antecedentes necesarios para el curso y la organización y temas son adecuados. Pienso que tuve complicaciones cuándo a mediados del curso me enfermé y no pude asistir a las clases del perceptrón, descenso de gradiente, optimizadores y funciones de perdida. Estos temas se ven mediante código y considero me afectó considerablemente el no poder comprenderlos hasta clases posteriores en clase, ya que no hay una presentación que los acompañe. Esta situación fue especial pero pienso que me retrasó mucho al ser las bases de todos los temas posteriores.
+Finalmente me gustaría agradecerle por su interés y dedicación a la clase, aprendí mucho y a pesar de que el área no me termina de convencer al ser algo desordenada y específica para cado caso de uso en la implementación, estoy seguro que la retomaré para terminar y pulir los modelos del curso, así como elaborar alguna que otra idea interesante.
+
+--- Review 3 ---
+Me gustó bastante la clase y el método de impartirla del profesor, se ocupa retomar bases de álgebra lineal principalmente porque como esta materia es de últimos semestres a algunos estudiantes se les puede complicar la falta de esos conocimientos
+
+--- Review 4 ---
+Me gustó mucho su clase, aprendí mucho más de lo que esperaba y fue una de mis clases favoritas del semestre, aunque también una de las que más me hizo sufrir jajaja. 
+
+El hecho de que hubiera laboratorio de cómputo creo que fue invaluable, porque aunque si bien los créditos eran solo teóricos, temas como los vistos iban a quedar vacíos sin ver la parte práctica. Muchas gracias por tomarse el esfuerzo de buscar salones de cómputo para dar su clase. Quizás el único inconveniente era que a veces se iba muy rápido y no daba tiempo de terminar de copiar código o entender todos los cambios. 
+
+También considerando lo ambicioso del programa, creo que el tiempo era muy corto. No creo que la respuesta sea disminuir el programa, pero a lo mejor sí aprovechar al cien todo el horario disponible y llegar temprano jeje.
+
+Fuera de eso, me gustó mucho su clase y me dio la confianza para emprender proyectos propios de NLP. Quería saber si habría algún inconveniente de que en un futuro lo pudiera buscar para conocer su opinión sobre dichos proyectos. De cualquier forma, ¡muchas gracias por su clase!
+

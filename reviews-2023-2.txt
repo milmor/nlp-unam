@@ -1,0 +1,33 @@
+--- Review 1 ---
+Los temas vistos en el curso son muy emocionantes! Lástima que el tiempo si puede ser un poco corto para verlos todos.
+
+--- Review 2 ---
+Me gusto bastante que se haya visto el tema de transformadores y las prácticas, debería  tener más créditos la materia
+
+--- Review 3 ---
+En lo personal, el material fue bastante claro y completo. Las prácticas de laboratorio que me encantaron salvo las últimas de semestre dónde la demanda fue mucho mayor en otras materias y se vuelve complicado poder cumplir con lo último, sin embargo, me gusto mucho la asignatura y su material es muy claro y bueno.
+
+--- Review 4 ---
+Hace falta ver un poco de más material e infografia en algunso casos, por lo que seria bueno que avise con un mayor tiempo de anticipación los temas que se veran en  cada clase
+
+--- Review 5 ---
+Para llevar bien la materia es importante que el alumno tenga conocimientos sólidos sobre cálculo, álgebra y al menos haya tomando un curso introductorio de Machine Learning porque de no ser así, llevar la asignatura cuesta mucho.
+
+--- Review 6 ---
+Los temas de la clase son sumamente interesantes, pero también son bastante complejos. Le pido perdón porque claramente nos fallaron las bases de muchas cosas profe, comenzando por el álgebra lineal :(
+Igualmente le agradezco mucho por su paciencia y apoyo, así como por su entusiasmo al dar la clase que siempre estuvo presente. Prometo ponerme a estudiar para entrar a una empresa donde paguen bien, tal como siempre bromeamos en clase :)
+Fue una de las clases más chidas que tuve en la carrera, muchas gracias profe Emilio.
+
+--- Review 7 ---
+Considero que fue un excelente curso, aunque pienso que al inicio las prácticas o programas (ejercicios) que se dejaban de tarea para el mismo día nos estresaban más que ayudarnos, porque a veces los días ya los teníamos organizados y al tener nuevos ejercicios o tareas que hacer para la tarde nos partía el día o inclusive había veces que no llegábamos a nuestras casas hasta las 10-11 de la noche y resultaba estresante realizarlo con tan poco tiempo (siendo que no era difícil, pero si se nos da como fecha de entrega la siguiente clase o al menos un día más es mejor para la organización de los horarios, eso cambió conforme se fue hablando durante la clase y mejoró muchísimo).
+
+Con respecto a las lecturas sugeridas, lo veo excelente, creo que ayuda muchísimo aunque en las últimas semanas resultaba imposible leerlas ya que a penas dormíamos por entregas y exámenes, pero considero que esa fue una excelente implementación ya que depende del alumno si quiere profundizar en el tema o llegar más preparado.
+
+Del material y diapositivas dadas en clase (del profesor), me hubiera gustado que se dieran antes de la clase y no después, ya que al mandarlas antes las podemos leer e inclusive guardar e ir tomando nota sobre ellas, y si se mandan después realmente ya no las veíamos (si llega a haber ejercicios en las diapositivas a lo mejor es buena idea tener dos tipos de diapositivas, una de profesor y otra de alumno o algo así, pero es bueno contar con el material para ir tomando notas, sobre todo porque durante la clase se pasaban muy rápido y no daba tiempo de anotar)
+
+Con respecto a los ejercicios de programación, me gustaron bastante! Resulta complicado trabajar sobre conocimiento del cual hay poca información en internet, pero creo que estuvieron bien. En específico para el Perceptrón a lo mejor hubiera sugerido dividir ese proyecto en partes e ir revisando dudas a lo largo de las clases, así se puede aumentar el porcentaje de alumnos que entiendan y vayan logrando avances (o ir notando el avance del grupo en general y qué tanto van entendiendo)
+
+Le agradezco mucho todo lo que nos enseñó profesor, fue un curso sumamente interesante, pesado, pero lleno de conocimiento que nos ayudó a complementar muchas otras materias.
+
+¡Saludos!
+

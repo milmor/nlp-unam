@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NLP with Deep Learning - UNAM</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <img src="unam-logo-png-transparent.png" alt="UNAM Logo" class="university-logo">
+                    <div class="logo-text">
+                        <h1>Natural Language Processing with Deep Learning</h1>
+                        <p class="subtitle">School of Engineering - UNAM · Semester 2026-2</p>
+                    </div>
+                </div>
+                <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+                    <span class="sun-icon">☀️</span>
+                    <span class="moon-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <nav class="nav">
+        <div class="container">
+            <ul class="nav-links">
+                <li><a href="#overview">Overview</a></li>
+                <li><a href="#syllabus">Syllabus</a></li>
+                <li><a href="testimonials.html">Student Experiences</a></li>
+                <li><a href="prerequisites.html">Prerequisites</a></li>
+                <li><a href="#instructor">Instructor</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main">
+        <section id="overview" class="section">
+            <div class="container">
+                <h2>Course Overview</h2>
+                <div class="overview-grid">
+                    <div class="info-card">
+                        <h3>Course ID</h3>
+                        <p>2950</p>
+                    </div>
+                    <div class="info-card">
+                        <h3>Credits</h3>
+                        <p>6 Credits</p>
+                    </div>
+                    <div class="info-card">
+                        <h3>Program</h3>
+                        <p>Computer Engineering</p>
+                    </div>
+                    <div class="info-card repo-card">
+                        <h3>Repository</h3>
+                        <p><a href="https://github.com/milmor/NLP" target="_blank">github.com/milmor/NLP</a></p>
+                    </div>
+                </div>
+                <div class="description">
+                    <p>This course provides a comprehensive introduction to Natural Language Processing using Deep Learning techniques. Starting with machine learning fundamentals for text classification, students progress through neural network architectures (perceptrons, RNNs, LSTMs, Transformers) to state-of-the-art models like BERT and GPT. The course also covers language and vision models, including CNNs, VAEs, and diffusion models for text-to-image generation.</p>
+                </div>
+
+                <div class="prerequisites-warning">
+                    <h3>⚠️ Prerequisites Required</h3>
+                    <p>This course requires strong foundations in:</p>
+                    <ul class="prereq-list">
+                        <li><strong>Linear Algebra</strong> – matrices, vectors, transformations</li>
+                        <li><strong>Calculus</strong> – derivatives, gradients, chain rule</li>
+                        <li><strong>Probability & Statistics</strong> – distributions, Bayes' theorem</li>
+                        <li><strong>Programming</strong> – Python proficiency required</li>
+                    </ul>
+                    <p class="prereq-note">See <a href="prerequisites.html">student background data</a> from previous semesters.</p>
+                </div>
+
+                <div class="course-objectives">
+                    <h3>Course Objectives</h3>
+                    <ul>
+                        <li>Understand the fundamental concepts of deep learning and their application in NLP, such as text representation and neural networks.</li>
+                        <li>Acquire practical skills for developing and training NLP models using deep learning techniques.</li>
+                        <li>Apply the knowledge gained to real-world NLP use cases, such as sentiment analysis, machine translation, text generation, and data generation from natural language.</li>
+                    </ul>
+                </div>
+
+            </div>
+        </section>
+
+        <section id="syllabus" class="section section-alt">
+            <div class="container">
+                <h2>Course Syllabus</h2>
+                <div class="syllabus-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Week</th>
+                                <th>Topic</th>
+                                <th>Materials</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>
+                                    <strong>Machine Learning & NLP Fundamentals</strong>
+                                    <p>Text classification, bag of words, n-grams, Naive Bayes, logistic regression</p>
+                                </td>
+                                <td><a href="#">Slides</a> | <a href="#">Reading</a></td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>
+                                    <strong>Text Representation & Evaluation</strong>
+                                    <p>TF-IDF, PCA, stemming, lemmatization, Zipf's law, precision/recall/F1</p>
+                                </td>
+                                <td><a href="#">Slides</a> | <a href="#">Notebook</a></td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>
+                                    <strong>Introduction to Neural Networks</strong>
+                                    <p>Perceptron, multilayer perceptron, backpropagation</p>
+                                </td>
+                                <td><a href="#">Slides</a> | <a href="#">Notebook</a></td>
+                            </tr>
+                            <tr>
+                                <td>4</td>
+                                <td>
+                                    <strong>Neural Network Training</strong>
+                                    <p>Activation functions, entropy, optimizers (SGD, Adam), regularization</p>
+                                </td>
+                                <td><a href="#">Slides</a> | <a href="#">Lab</a></td>
+                            </tr>
+                            <tr>
+                                <td>5</td>
+                                <td>
+                                    <strong>Word Embeddings</strong>
+                                    <p>Word vectors, Word2Vec, distributed representations</p>
+                                </td>
+                                <td><a href="#">Slides</a> | <a href="#">Notebook</a></td>
+                            </tr>
+                            <tr>
+                                <td>6</td>
+                                <td>
+                                    <strong>Recurrent Neural Networks</strong>
+                                    <p>RNNs, backpropagation through time, LSTM, GRU</p>
+                                </td>
+                                <td><a href="#">Slides</a> | <a href="#">Lab</a></td>
+                            </tr>
+                            <tr>
+                                <td>7</td>
+                                <td>
+                                    <strong>Language Models & Text Generation</strong>
+                                    <p>Language modeling, sequence generation, sampling strategies</p>
+                                </td>
+                                <td><a href="#">Slides</a> | <a href="#">Notebook</a></td>
+                            </tr>
+                            <tr>
+                                <td>8</td>
+                                <td>
+                                    <strong>Sequence-to-Sequence & Attention</strong>
+                                    <p>Seq2seq for translation, attention mechanism</p>
+                                </td>
+                                <td><a href="#">Slides</a> | <a href="#">Lab</a></td>
+                            </tr>
+                            <tr>
+                                <td>9</td>
+                                <td>
+                                    <strong>Transformers</strong>
+                                    <p>Self-attention, multi-head attention, positional encoding</p>
+                                </td>
+                                <td><a href="#">Slides</a> | <a href="#">Notebook</a></td>
+                            </tr>
+                            <tr>
+                                <td>10</td>
+                                <td>
+                                    <strong>Pre-trained Models: BERT & GPT</strong>
+                                    <p>Transfer learning, fine-tuning, masked language modeling</p>
+                                </td>
+                                <td><a href="#">Slides</a> | <a href="#">Lab</a></td>
+                            </tr>
+                            <tr>
+                                <td>11</td>
+                                <td>
+                                    <strong>Advanced NLP Techniques</strong>
+                                    <p>LoRA, FAISS, Retrieval-Augmented Generation (RAG)</p>
+                                </td>
+                                <td><a href="#">Slides</a> | <a href="#">Notebook</a></td>
+                            </tr>
+                            <tr>
+                                <td>12</td>
+                                <td>
+                                    <strong>Language & Vision: CNNs and Captioning</strong>
+                                    <p>Convolutional neural networks, image description generation</p>
+                                </td>
+                                <td><a href="#">Slides</a> | <a href="#">Lab</a></td>
+                            </tr>
+                            <tr>
+                                <td>13</td>
+                                <td>
+                                    <strong>Generative Models: VAEs & Diffusion</strong>
+                                    <p>Variational autoencoders, diffusion models, DALL-E, Stable Diffusion</p>
+                                </td>
+                                <td><a href="#">Slides</a> | <a href="#">Lab</a></td>
+                            </tr>
+                            <tr>
+                                <td>14</td>
+                                <td>
+                                    <strong>Project Presentations</strong>
+                                    <p>Student project demos and discussions</p>
+                                </td>
+                                <td><a href="#">Guidelines</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="course-details-grid">
+                    <div class="detail-card">
+                        <h4>Grading</h4>
+                        <ul class="grading-list">
+                            <li><span>Research Project</span><span>40%</span></li>
+                            <li><span>Programming Assignments</span><span>45%</span></li>
+                            <li><span>Class Exercises</span><span>15%</span></li>
+                        </ul>
+                    </div>
+                    <div class="detail-card">
+                        <h4>Grading Scale</h4>
+                        <ul class="scale-list">
+                            <li><span>≥ 95</span><span>10</span></li>
+                            <li><span>85 - 94</span><span>9</span></li>
+                            <li><span>75 - 84</span><span>8</span></li>
+                            <li><span>65 - 74</span><span>7</span></li>
+                            <li><span>60 - 64</span><span>6</span></li>
+                            <li><span>25 - 59</span><span>5</span></li>
+                            <li><span>≤ 25</span><span>NP</span></li>
+                        </ul>
+                    </div>
+                    <div class="detail-card bibliography">
+                        <h4>Bibliography</h4>
+                        <p><strong>Machine Learning:</strong></p>
+                        <ul>
+                            <li>Hastie et al. <em>The Elements of Statistical Learning</em>, Springer, 2009</li>
+                        </ul>
+                        <p><strong>Neural Networks:</strong></p>
+                        <ul>
+                            <li>Goodfellow et al. <em><a href="https://www.deeplearningbook.org/" target="_blank">Deep Learning</a></em>, MIT Press, 2016</li>
+                            <li>Zhang et al. <em><a href="https://d2l.ai/" target="_blank">Dive into Deep Learning</a></em>, 2021</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="testimonials" class="section">
+            <div class="container">
+                <h2>Student Experiences</h2>
+                <p class="section-intro">Hear what previous students have to say about their experience in this course.</p>
+                <div class="testimonials-grid">
+                    <div class="testimonial-card">
+                        <div class="quote">"La materia fue mucho más interesante y entretenida de lo que llegué a pensar."</div>
+                        <div class="author">
+                            <div class="author-info">
+                                <strong>Anonymous Student</strong>
+                                <span>Semester 2026-1</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="testimonial-card">
+                        <div class="quote">"Es muy buen profesor y es muy bueno en la materia, sabe mucho y muchas gracias por todo."</div>
+                        <div class="author">
+                            <div class="author-info">
+                                <strong>Anonymous Student</strong>
+                                <span>Semester 2025-2</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="testimonial-card">
+                        <div class="quote">"Excelente curso, complicado pero extremadamente útil e interesante."</div>
+                        <div class="author">
+                            <div class="author-info">
+                                <strong>Anonymous Student</strong>
+                                <span>Semester 2024-1</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="see-all-link">
+                    <a href="testimonials.html" class="btn-primary">See all experiences →</a>
+                </div>
+            </div>
+        </section>
+
+        <section id="instructor" class="section section-alt">
+            <div class="container">
+                <h2>Instructor</h2>
+                <div class="instructor-card">
+                    <div class="instructor-photo">
+                        <div class="photo-placeholder">👨‍🏫</div>
+                    </div>
+                    <div class="instructor-info">
+                        <h3>Prof. Emilio Morales</h3>
+                        <p class="title">The School of Engineering of the National Autonomous University of Mexico</p>
+                        <p class="bio">Research interests include natural language processing, deep learning, diffusion models, GANs, music generation, audio and video processing, and language-vision applications.</p>
+                        <div class="contact-info">
+                            <p><strong>Email:</strong> <a href="mailto:emilio.morales@ciencias.unam.mx">emilio.morales@ciencias.unam.mx</a></p>
+                            <p><strong>Institution:</strong> School of Engineering, UNAM</p>
+                            <p><strong>Location:</strong> Ciudad Universitaria, CDMX</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 NLP with Deep Learning - UNAM. All rights reserved.</p>
+            <p>Hosted on <a href="https://pages.github.com/" target="_blank">GitHub Pages</a></p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
