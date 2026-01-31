@@ -921,6 +921,19 @@ td a {
     color: var(--text-primary);
 }
 
+/* Article list in guidelines: more left space (override universal reset) */
+ol.article-list,
+.prereq-info ol.article-list {
+    padding-left: 2.5rem !important;
+    margin-left: 0.5rem !important;
+    margin-bottom: 1.5rem;
+}
+
+.prereq-info .article-list li {
+    padding: 6px 0;
+    border-bottom: none;
+}
+
 @media (max-width: 768px) {
     .charts-grid {
         grid-template-columns: 1fr;
