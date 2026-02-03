@@ -979,6 +979,8 @@ td a {
 .prereq-info ul {
     list-style: none;
     padding: 0;
+    padding-left: 1.5rem;
+    margin-left: 0.5rem;
 }
 
 .prereq-info li {
