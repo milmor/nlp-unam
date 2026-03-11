@@ -155,3 +155,89 @@ window.addEventListener('scroll', function() {
     checkApiStatus();
     refreshBtn.addEventListener('click', checkApiStatus);
 })();
+
+// Supabase authentication for submissions page
+(function() {
+    // Only run on pages that include auth forms
+    const loginForm = document.getElementById('loginForm');
+    const signupForm = document.getElementById('signupForm');
+    const statusEl = document.getElementById('authMessage');
+
+    if (!loginForm && !signupForm) {
+        return;
+    }
+
+    if (!window.supabase) {
+        if (statusEl) {
+            statusEl.textContent = 'Auth library not loaded. Please contact the instructor.';
+        }
+        return;
+    }
+
+    const SUPABASE_URL = 'https://dhvnozwogprzpgwusjqv.supabase.com';
+    const SUPABASE_KEY = 'sb_publishable_O-9_hPI2G889zB57o2pJRw_SAv-UT8k';
+
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    function setAuthMessage(message, isError = false) {
+        if (!statusEl) return;
+        statusEl.textContent = message;
+        statusEl.style.color = isError ? '#b00020' : '';
+    }
+
+    if (loginForm) {
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('authEmailLogin').value.trim();
+            const password = document.getElementById('authPasswordLogin').value;
+
+            setAuthMessage('Logging in…');
+
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email,
+                    password
+                });
+
+                if (error) {
+                    console.error('Login error', error);
+                    setAuthMessage('Login failed: ' + error.message, true);
+                } else {
+                    console.log('Logged in', data);
+                    setAuthMessage('Logged in successfully.');
+                }
+            } catch (err) {
+                console.error('Unexpected login error', err);
+                setAuthMessage('Unexpected error during login.', true);
+            }
+        });
+    }
+
+    if (signupForm) {
+        signupForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('authEmailSignup').value.trim();
+            const password = document.getElementById('authPasswordSignup').value;
+
+            setAuthMessage('Creating account…');
+
+            try {
+                const { data, error } = await supabaseClient.auth.signUp({
+                    email,
+                    password
+                });
+
+                if (error) {
+                    console.error('Signup error', error);
+                    setAuthMessage('Signup failed: ' + error.message, true);
+                } else {
+                    console.log('Signup result', data);
+                    setAuthMessage('Signup successful. Check your email to confirm your account.');
+                }
+            } catch (err) {
+                console.error('Unexpected signup error', err);
+                setAuthMessage('Unexpected error during signup.', true);
+            }
+        });
+    }
+})();
