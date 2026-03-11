@@ -114,3 +114,44 @@ window.addEventListener('scroll', function() {
         }
     });
 });
+
+// Simple integration with homework submission API
+(function() {
+    const statusEl = document.getElementById('submissionApiStatus');
+    const messageEl = document.getElementById('submissionApiMessage');
+    const refreshBtn = document.getElementById('checkSubmissionApi');
+    const API_URL = 'https://nlp-course-api.fly.dev/';
+
+    if (!statusEl || !refreshBtn) {
+        return;
+    }
+
+    async function checkApiStatus() {
+        statusEl.textContent = 'Checking API status…';
+        messageEl.textContent = '';
+
+        try {
+            const response = await fetch(API_URL, { method: 'GET' });
+            if (!response.ok) {
+                throw new Error('HTTP ' + response.status);
+            }
+            const data = await response.json();
+            const status = data.status || 'unknown';
+
+            if (status.toLowerCase() === 'running') {
+                statusEl.textContent = 'API is running ✅';
+                messageEl.textContent = 'You will soon be able to upload homework through this page.';
+            } else {
+                statusEl.textContent = 'API responded, but status is: ' + status;
+                messageEl.textContent = 'If this persists, please contact the instructor.';
+            }
+        } catch (err) {
+            statusEl.textContent = 'Cannot reach submission API ❌';
+            messageEl.textContent = 'Error: ' + (err && err.message ? err.message : 'Unknown error');
+        }
+    }
+
+    // Initial check and manual refresh
+    checkApiStatus();
+    refreshBtn.addEventListener('click', checkApiStatus);
+})();
