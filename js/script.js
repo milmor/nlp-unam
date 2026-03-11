@@ -174,7 +174,7 @@ window.addEventListener('scroll', function() {
         return;
     }
 
-    const SUPABASE_URL = 'https://dhvnozwogprzpgwusjqv.supabase.com';
+    const SUPABASE_URL = 'https://dhvnozwogprzpgwusjqv.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_O-9_hPI2G889zB57o2pJRw_SAv-UT8k';
 
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
