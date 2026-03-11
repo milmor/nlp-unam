@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homework Submissions - NLP with Deep Learning - UNAM</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <img src="assets/unam-logo-png-transparent.png" alt="UNAM Logo" class="university-logo">
+                    <div class="logo-text">
+                        <h1>Natural Language Processing with Deep Learning</h1>
+                        <p class="subtitle">School of Engineering - UNAM · Semester 2026-2</p>
+                    </div>
+                </div>
+                <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+                    <span class="sun-icon">☀️</span>
+                    <span class="moon-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <nav class="nav">
+        <div class="container">
+            <ul class="nav-links">
+                <li><a href="index.html#overview">Overview</a></li>
+                <li><a href="index.html#syllabus">Syllabus</a></li>
+                <li><a href="prerequisites.html">Prerequisites</a></li>
+                <li><a href="guidelines.html">Guidelines</a></li>
+                <li><a href="index.html#instructor">Instructor</a></li>
+                <li><a href="testimonials.html">Student Experiences</a></li>
+                <li><a href="submissions.html" class="active">Submissions</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main">
+        <section class="section">
+            <div class="container">
+                <h2>Homework Submissions</h2>
+                <p class="section-intro">
+                    Programming assignments are submitted through the course submission service:
+                    <a href="https://nlp-course-api.fly.dev/" target="_blank" rel="noopener">nlp-course-api.fly.dev</a>.
+                </p>
+
+                <div class="course-details-grid">
+                    <div class="detail-card">
+                        <h3>API Connection Status</h3>
+                        <p id="submissionApiStatus" class="syllabus-note">Checking API status…</p>
+                        <button id="checkSubmissionApi" class="btn-primary" type="button">
+                            Refresh status
+                        </button>
+                        <p id="submissionApiMessage" class="prereq-note"></p>
+                    </div>
+                    <div class="detail-card">
+                        <h3>How submissions will work</h3>
+                        <ul class="program-rules">
+                            <li>The submission API will handle authentication and homework uploads.</li>
+                            <li>This page will evolve to include a form to upload notebooks / code and metadata.</li>
+                            <li>For now, use the link above to open the service in a new tab.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 NLP with Deep Learning - UNAM. All rights reserved.</p>
+            <p>Hosted on <a href="https://pages.github.com/" target="_blank">GitHub Pages</a></p>
+        </div>
+    </footer>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
+
