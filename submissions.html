@@ -51,42 +51,84 @@
 
                 <div class="course-details-grid submissions-grid">
                     <div class="detail-card">
-                        <h3>Student Login</h3>
-                        <p class="prereq-note" style="margin-bottom: 1rem;">
-                            Use your course account to log in. New students can sign up below.
-                        </p>
+                        <div id="loginSection">
+                            <h3>Student Login</h3>
+                            <p class="prereq-note" style="margin-bottom: 1rem;">
+                                Use your course account to log in. New students can sign up below.
+                            </p>
 
-                        <form id="loginForm" class="auth-form">
-                            <div class="auth-field">
-                                <input type="email" id="authEmailLogin" placeholder="Email" required>
+                            <form id="loginForm" class="auth-form">
+                                <div class="auth-field">
+                                    <input type="email" id="authEmailLogin" placeholder="Email" required>
+                                </div>
+
+                                <div class="auth-field">
+                                    <input type="password" id="authPasswordLogin" placeholder="Password" required>
+                                </div>
+
+                                <button type="submit" class="btn-primary btn-small">Log in</button>
+                            </form>
+
+                            <h4 class="auth-section-title">Create an account</h4>
+                            <form id="signupForm" class="auth-form">
+                                <div class="auth-field">
+                                    <input type="email" id="authEmailSignup" placeholder="Email" required>
+                                </div>
+
+                                <div class="auth-field">
+                                    <input type="password" id="authPasswordSignup" placeholder="Password" required>
+                                </div>
+
+                                <button type="submit" class="btn-primary btn-small">Sign up</button>
+                            </form>
+
+                            <p id="authMessage" class="prereq-note"></p>
+
+                        </div>
+
+                        <div id="studentDashboard" class="dashboard hidden">
+                            <div class="dashboard-header">
+                                <h4 class="dashboard-title">Your submissions &amp; grades</h4>
+                                <button id="logoutButton" class="btn-secondary btn-small" type="button">
+                                    Log out
+                                </button>
                             </div>
-
-                            <div class="auth-field">
-                                <input type="password" id="authPasswordLogin" placeholder="Password" required>
+                            <p class="prereq-note">
+                                Logged in as <span id="dashboardUserEmail"></span>.
+                            </p>
+                            <div class="dashboard-table-wrapper">
+                                <table class="dashboard-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Assignment</th>
+                                            <th>Status</th>
+                                            <th>Grade</th>
+                                            <th>Last updated</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dashboardSubmissionsBody">
+                                        <tr>
+                                            <td>Program 1: ML &amp; NLP Fundamentals</td>
+                                            <td>Not submitted</td>
+                                            <td>–</td>
+                                            <td>–</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Program 2: Embeddings &amp; RNNs</td>
+                                            <td>Not submitted</td>
+                                            <td>–</td>
+                                            <td>–</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Program 3: Advanced Topics</td>
+                                            <td>Not submitted</td>
+                                            <td>–</td>
+                                            <td>–</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
-
-                            <button type="submit" class="btn-primary btn-small">Log in</button>
-                        </form>
-
-                        <h4 class="auth-section-title">Create an account</h4>
-                        <form id="signupForm" class="auth-form">
-                            <div class="auth-field">
-                                <input type="email" id="authEmailSignup" placeholder="Email" required>
-                            </div>
-
-                            <div class="auth-field">
-                                <input type="password" id="authPasswordSignup" placeholder="Password" required>
-                            </div>
-
-                            <button type="submit" class="btn-primary btn-small">Sign up</button>
-                        </form>
-
-                        <p id="authMessage" class="prereq-note"></p>
-
-                        <p class="prereq-note" style="margin-top: 0.75rem;">
-                            You can also open the submission portal directly:
-                            <a href="https://nlp-course-api.fly.dev/" target="_blank" rel="noopener">Open submission portal</a>.
-                        </p>
+                        </div>
                     </div>
                     <div class="detail-card">
                         <h3>System status</h3>
