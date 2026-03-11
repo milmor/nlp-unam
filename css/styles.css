@@ -738,6 +738,59 @@ td a {
     color: var(--accent-primary);
 }
 
+.hidden {
+    display: none !important;
+}
+
+/* Simple dashboard styles on submissions page */
+.dashboard {
+    margin-top: 1.75rem;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.dashboard-title {
+    font-size: 1rem;
+    color: var(--accent-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-table-wrapper {
+    margin-top: 0.5rem;
+    overflow-x: auto;
+}
+
+.dashboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.dashboard-table th,
+.dashboard-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: left;
+}
+
+.dashboard-table th {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+@media (max-width: 600px) {
+    .dashboard-table th,
+    .dashboard-table td {
+        padding: 6px 8px;
+        font-size: 0.85rem;
+    }
+}
+
 /* Submissions page layout */
 .submissions-grid {
     grid-template-columns: minmax(340px, 2fr) minmax(260px, 1.2fr);

@@ -185,6 +185,14 @@ window.addEventListener('scroll', function() {
         statusEl.style.color = isError ? '#b00020' : '';
     }
 
+    // Try to restore existing session on load
+    supabaseClient.auth.getSession().then(({ data }) => {
+        const user = data?.session?.user;
+        if (user) {
+            showDashboard(user);
+        }
+    });
+
     if (loginForm) {
         loginForm.addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -205,6 +213,7 @@ window.addEventListener('scroll', function() {
                 } else {
                     console.log('Logged in', data);
                     setAuthMessage('Logged in successfully.');
+                    showDashboard(data.user);
                 }
             } catch (err) {
                 console.error('Unexpected login error', err);
@@ -239,5 +248,50 @@ window.addEventListener('scroll', function() {
                 setAuthMessage('Unexpected error during signup.', true);
             }
         });
+    }
+
+    async function handleLogout() {
+        const dashboardEl = document.getElementById('studentDashboard');
+        const loginSectionEl = document.getElementById('loginSection');
+
+        try {
+            await supabaseClient.auth.signOut();
+        } catch (err) {
+            console.error('Logout error', err);
+        }
+
+        if (dashboardEl) {
+            dashboardEl.classList.add('hidden');
+        }
+        if (loginSectionEl) {
+            loginSectionEl.classList.remove('hidden');
+        }
+
+        setAuthMessage('Logged out.');
+    }
+
+    const logoutBtn = document.getElementById('logoutButton');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', handleLogout);
+    }
+
+    function showDashboard(user) {
+        const dashboardEl = document.getElementById('studentDashboard');
+        if (!dashboardEl) return;
+
+        const loginSectionEl = document.getElementById('loginSection');
+        if (loginSectionEl) {
+            loginSectionEl.classList.add('hidden');
+        }
+
+        // Clear transient login messages
+        setAuthMessage('');
+
+        const emailSpan = document.getElementById('dashboardUserEmail');
+        if (emailSpan && user && user.email) {
+            emailSpan.textContent = user.email;
+        }
+
+        dashboardEl.classList.remove('hidden');
     }
 })();
