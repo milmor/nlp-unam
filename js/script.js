@@ -120,7 +120,7 @@ window.addEventListener('scroll', function() {
     const statusEl = document.getElementById('submissionApiStatus');
     const messageEl = document.getElementById('submissionApiMessage');
     const refreshBtn = document.getElementById('checkSubmissionApi');
-    const API_URL = 'https://nlp-course-api.fly.dev/';
+    const API_URL = 'https://nlp-course-api.onrender.com/';
 
     if (!statusEl || !refreshBtn) {
         return;
