@@ -816,6 +816,47 @@ td a {
     color: var(--text-muted);
 }
 
+.admin-assignment-form {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    margin-bottom: 0.75rem;
+}
+
+.admin-assignment-fields {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    flex: 1;
+}
+
+.admin-assignment-form input {
+    padding: 8px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-body);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+}
+
+.admin-assignment-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding-left: 0;
+    list-style: none;
+    margin-bottom: 0.5rem;
+}
+
+.admin-assignment-text {
+    flex: 1;
+}
+
+.admin-list {
+    padding-left: 0;
+}
+
 .admin-submissions-table .admin-score-input {
     width: 4rem;
     padding: 4px 6px;
