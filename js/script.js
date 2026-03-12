@@ -193,6 +193,15 @@ window.addEventListener('scroll', function() {
         }
     });
 
+    async function fetchUserRole(userId) {
+        const { data } = await supabaseClient
+            .from('profiles')
+            .select('role')
+            .eq('id', userId)
+            .single();
+        return data?.role || null;
+    }
+
     if (loginForm) {
         loginForm.addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -213,7 +222,7 @@ window.addEventListener('scroll', function() {
                 } else {
                     console.log('Logged in', data);
                     setAuthMessage('Logged in successfully.');
-                    showDashboard(data.user);
+                    await showDashboard(data.user);
                 }
             } catch (err) {
                 console.error('Unexpected login error', err);
@@ -275,7 +284,7 @@ window.addEventListener('scroll', function() {
         logoutBtn.addEventListener('click', handleLogout);
     }
 
-    function showDashboard(user) {
+    async function showDashboard(user) {
         const dashboardEl = document.getElementById('studentDashboard');
         if (!dashboardEl) return;
 
@@ -290,6 +299,18 @@ window.addEventListener('scroll', function() {
         const emailSpan = document.getElementById('dashboardUserEmail');
         if (emailSpan && user && user.email) {
             emailSpan.textContent = user.email;
+        }
+
+        const adminBadge = document.getElementById('dashboardAdminBadge');
+        if (adminBadge) {
+            adminBadge.classList.add('hidden');
+            if (user && user.id) {
+                const role = await fetchUserRole(user.id);
+                if (role === 'admin') {
+                    adminBadge.classList.remove('hidden');
+                    console.log('admin access granted');
+                }
+            }
         }
 
         dashboardEl.classList.remove('hidden');
