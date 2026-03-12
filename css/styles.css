@@ -783,6 +783,67 @@ td a {
     display: none !important;
 }
 
+.admin-assignments-section {
+    margin-top: 1rem;
+}
+
+.admin-submissions-section {
+    margin-top: 1rem;
+}
+
+.admin-section-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.admin-list {
+    margin: 0;
+    padding-left: 1.25rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.admin-list li {
+    margin-bottom: 0.25rem;
+}
+
+.admin-list-empty {
+    list-style: none;
+    padding-left: 0;
+    font-style: italic;
+    color: var(--text-muted);
+}
+
+.admin-submissions-table .admin-score-input {
+    width: 4rem;
+    padding: 4px 6px;
+    font-size: 0.9rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--bg-body);
+    color: var(--text-primary);
+}
+
+.admin-submissions-table .admin-feedback-input {
+    width: 100%;
+    min-width: 120px;
+    padding: 4px 6px;
+    font-size: 0.85rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--bg-body);
+    color: var(--text-primary);
+}
+
+.admin-table-empty {
+    text-align: center;
+    font-style: italic;
+    color: var(--text-muted);
+    padding: 1rem !important;
+}
+
 .dashboard-table-wrapper {
     margin-top: 0.5rem;
     overflow-x: auto;
