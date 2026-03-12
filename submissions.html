@@ -145,6 +145,13 @@
                             <p id="adminDashboardMessage" class="prereq-note"></p>
                             <div class="admin-assignments-section">
                                 <h5 class="admin-section-title">Assignments</h5>
+                                <form id="adminAddAssignmentForm" class="admin-assignment-form">
+                                    <div class="admin-assignment-fields">
+                                        <input type="text" id="adminAssignmentTitle" placeholder="Title" required>
+                                        <input type="text" id="adminAssignmentDescription" placeholder="Description (optional)">
+                                    </div>
+                                    <button type="submit" class="btn-primary btn-small">Add</button>
+                                </form>
                                 <ul id="adminAssignmentsList" class="admin-list"></ul>
                             </div>
                             <div class="admin-submissions-section">

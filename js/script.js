@@ -302,7 +302,8 @@ window.addEventListener('scroll', function() {
                 supabaseClient.from('assignments').select('id, title, description').order('id'),
                 supabaseClient
                     .from('submissions')
-                    .select('id, notebook_url, score, feedback, created_at, students(name), assignments(title)')
+                    // Use FK constraint names to disambiguate embedding paths.
+                    .select('id, notebook_url, score, feedback, created_at, student:profiles!fk_student(email, role, created_at), assignment:assignments!fk_assignment(title)')
                     .order('created_at', { ascending: false })
             ]);
 
@@ -315,7 +316,16 @@ window.addEventListener('scroll', function() {
             if (assignmentsList) {
                 assignmentsList.innerHTML = assignments.length === 0
                     ? '<li class="admin-list-empty">No assignments defined.</li>'
-                    : assignments.map(a => `<li><strong>${escapeHtml(a.title)}</strong>${a.description ? ': ' + escapeHtml(a.description) : ''}</li>`).join('');
+                    : assignments.map(a => `
+                        <li class="admin-assignment-item">
+                            <div class="admin-assignment-text">
+                                <strong>${escapeHtml(a.title)}</strong>${a.description ? ': ' + escapeHtml(a.description) : ''}
+                            </div>
+                            <button type="button" class="btn-secondary btn-small admin-delete-assignment" data-id="${a.id}">
+                                Delete
+                            </button>
+                        </li>
+                    `).join('');
             }
 
             function escapeHtml(str) {
@@ -328,8 +338,10 @@ window.addEventListener('scroll', function() {
             tbody.innerHTML = submissions.length === 0
                 ? '<tr><td colspan="6" class="admin-table-empty">No submissions yet.</td></tr>'
                 : submissions.map(sub => {
-                    const studentName = sub.students?.name ?? '—';
-                    const assignmentTitle = sub.assignments?.title ?? '—';
+                    const studentEmail = sub.student?.email ?? '—';
+                    const studentRole = sub.student?.role ? ` (${sub.student.role})` : '';
+                    const studentLabel = `${studentEmail}${studentRole}`;
+                    const assignmentTitle = sub.assignment?.title ?? '—';
                     const notebook = sub.notebook_url
                         ? `<a href="${escapeHtml(sub.notebook_url)}" target="_blank" rel="noopener">Open</a>`
                         : '—';
@@ -337,7 +349,7 @@ window.addEventListener('scroll', function() {
                     const feedback = escapeHtml((sub.feedback || '').slice(0, 200)) + (sub.feedback && sub.feedback.length > 200 ? '…' : '');
                     const date = sub.created_at ? new Date(sub.created_at).toLocaleString() : '—';
                     return `<tr data-submission-id="${sub.id}">
-                        <td>${escapeHtml(studentName)}</td>
+                        <td>${escapeHtml(studentLabel)}</td>
                         <td>${escapeHtml(assignmentTitle)}</td>
                         <td>${notebook}</td>
                         <td><input type="number" min="0" max="100" step="0.5" class="admin-score-input" value="${score}" data-id="${sub.id}"></td>
@@ -350,6 +362,25 @@ window.addEventListener('scroll', function() {
             tbody.querySelectorAll('.admin-score-input, .admin-feedback-input').forEach(input => {
                 input.addEventListener('blur', debounce(saveSubmissionGrade, 400));
             });
+
+            // Delete assignment buttons (admin only by RLS)
+            if (assignmentsList) {
+                assignmentsList.querySelectorAll('.admin-delete-assignment').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const id = btn.dataset.id;
+                        if (!id) return;
+                        setAdminDashboardMessage('Deleting assignment…');
+                        const { error } = await supabaseClient.from('assignments').delete().eq('id', id);
+                        if (error) {
+                            console.error('Delete assignment error', error);
+                            setAdminDashboardMessage('Failed to delete: ' + error.message, true);
+                            return;
+                        }
+                        setAdminDashboardMessage('');
+                        loadAdminData();
+                    });
+                });
+            }
 
             setAdminDashboardMessage('');
         } catch (err) {
@@ -390,6 +421,93 @@ window.addEventListener('scroll', function() {
         }
     }
 
+    function escapeHtml(str) {
+        if (str == null) return '';
+        const div = document.createElement('div');
+        div.textContent = String(str);
+        return div.innerHTML;
+    }
+
+    async function loadStudentData(userId) {
+        const tbody = document.getElementById('dashboardSubmissionsBody');
+        if (!tbody) return;
+
+        tbody.innerHTML = '<tr><td colspan="4">Loading…</td></tr>';
+
+        try {
+            const [assignmentsRes, submissionsRes] = await Promise.all([
+                supabaseClient.from('assignments').select('id, title').order('id'),
+                supabaseClient
+                    .from('submissions')
+                    .select('id, assignment_id, score, created_at')
+                    .eq('student_id', userId)
+                    .order('created_at', { ascending: false })
+            ]);
+
+            if (assignmentsRes.error) throw new Error(assignmentsRes.error.message || 'Failed to load assignments');
+            if (submissionsRes.error) throw new Error(submissionsRes.error.message || 'Failed to load submissions');
+
+            const assignments = assignmentsRes.data || [];
+            const submissions = submissionsRes.data || [];
+
+            const latestByAssignment = new Map();
+            for (const s of submissions) {
+                if (!latestByAssignment.has(s.assignment_id)) {
+                    latestByAssignment.set(s.assignment_id, s);
+                }
+            }
+
+            if (assignments.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4">No assignments yet.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = assignments.map(a => {
+                const sub = latestByAssignment.get(a.id);
+                const status = sub ? 'Submitted' : 'Not submitted';
+                const grade = sub && sub.score != null ? sub.score : '–';
+                const updated = sub && sub.created_at ? new Date(sub.created_at).toLocaleString() : '–';
+                return `<tr>
+                    <td>${escapeHtml(a.title)}</td>
+                    <td>${escapeHtml(status)}</td>
+                    <td>${escapeHtml(grade)}</td>
+                    <td>${escapeHtml(updated)}</td>
+                </tr>`;
+            }).join('');
+        } catch (err) {
+            console.error('Student data load error', err);
+            tbody.innerHTML = '<tr><td colspan="4">Error loading assignments/submissions.</td></tr>';
+        }
+    }
+
+    // Admin: add assignment (INSERT protected by RLS)
+    const adminAddAssignmentForm = document.getElementById('adminAddAssignmentForm');
+    if (adminAddAssignmentForm) {
+        adminAddAssignmentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const titleEl = document.getElementById('adminAssignmentTitle');
+            const descEl = document.getElementById('adminAssignmentDescription');
+            const title = (titleEl?.value || '').trim();
+            const description = (descEl?.value || '').trim();
+
+            if (!title) return;
+
+            setAdminDashboardMessage('Adding assignment…');
+            const payload = description ? { title, description } : { title };
+            const { error } = await supabaseClient.from('assignments').insert([payload]);
+            if (error) {
+                console.error('Insert assignment error', error);
+                setAdminDashboardMessage('Failed to add: ' + error.message, true);
+                return;
+            }
+
+            if (titleEl) titleEl.value = '';
+            if (descEl) descEl.value = '';
+            setAdminDashboardMessage('');
+            loadAdminData();
+        });
+    }
+
     async function showDashboard(user) {
         const studentDashboard = document.getElementById('studentDashboard');
         const adminDashboard = document.getElementById('adminDashboard');
@@ -424,6 +542,9 @@ window.addEventListener('scroll', function() {
         } else {
             adminDashboard && adminDashboard.classList.add('hidden');
             if (studentDashboard) studentDashboard.classList.remove('hidden');
+            if (user && user.id) {
+                loadStudentData(user.id);
+            }
         }
     }
 })();
