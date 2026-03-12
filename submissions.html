@@ -130,6 +130,43 @@
                                 </table>
                             </div>
                         </div>
+
+                        <div id="adminDashboard" class="dashboard hidden">
+                            <div class="dashboard-header">
+                                <h4 class="dashboard-title">Admin — Student submissions &amp; grades</h4>
+                                <button id="adminLogoutButton" class="btn-secondary btn-small" type="button">
+                                    Log out
+                                </button>
+                            </div>
+                            <p class="prereq-note dashboard-user-line">
+                                Logged in as <span id="adminDashboardUserEmail"></span>
+                                <span class="admin-badge">Admin</span>
+                            </p>
+                            <p id="adminDashboardMessage" class="prereq-note"></p>
+                            <div class="admin-assignments-section">
+                                <h5 class="admin-section-title">Assignments</h5>
+                                <ul id="adminAssignmentsList" class="admin-list"></ul>
+                            </div>
+                            <div class="admin-submissions-section">
+                                <h5 class="admin-section-title">All submissions</h5>
+                                <div class="dashboard-table-wrapper">
+                                    <table class="dashboard-table admin-submissions-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Student</th>
+                                                <th>Assignment</th>
+                                                <th>Notebook</th>
+                                                <th>Score</th>
+                                                <th>Feedback</th>
+                                                <th>Submitted</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="adminSubmissionsBody">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="detail-card">
                         <h3>System status</h3>

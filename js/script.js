@@ -260,7 +260,8 @@ window.addEventListener('scroll', function() {
     }
 
     async function handleLogout() {
-        const dashboardEl = document.getElementById('studentDashboard');
+        const studentDashboard = document.getElementById('studentDashboard');
+        const adminDashboard = document.getElementById('adminDashboard');
         const loginSectionEl = document.getElementById('loginSection');
 
         try {
@@ -269,50 +270,160 @@ window.addEventListener('scroll', function() {
             console.error('Logout error', err);
         }
 
-        if (dashboardEl) {
-            dashboardEl.classList.add('hidden');
-        }
-        if (loginSectionEl) {
-            loginSectionEl.classList.remove('hidden');
-        }
+        if (studentDashboard) studentDashboard.classList.add('hidden');
+        if (adminDashboard) adminDashboard.classList.add('hidden');
+        if (loginSectionEl) loginSectionEl.classList.remove('hidden');
 
         setAuthMessage('Logged out.');
     }
 
     const logoutBtn = document.getElementById('logoutButton');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', handleLogout);
+    if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
+
+    const adminLogoutBtn = document.getElementById('adminLogoutButton');
+    if (adminLogoutBtn) adminLogoutBtn.addEventListener('click', handleLogout);
+
+    function setAdminDashboardMessage(msg, isError) {
+        const el = document.getElementById('adminDashboardMessage');
+        if (!el) return;
+        el.textContent = msg;
+        el.style.color = isError ? '#b00020' : '';
+    }
+
+    async function loadAdminData() {
+        const assignmentsList = document.getElementById('adminAssignmentsList');
+        const tbody = document.getElementById('adminSubmissionsBody');
+        if (!tbody) return;
+
+        setAdminDashboardMessage('Loading…');
+
+        try {
+            const [assignmentsRes, submissionsRes] = await Promise.all([
+                supabaseClient.from('assignments').select('id, title, description').order('id'),
+                supabaseClient
+                    .from('submissions')
+                    .select('id, notebook_url, score, feedback, created_at, students(name), assignments(title)')
+                    .order('created_at', { ascending: false })
+            ]);
+
+            if (assignmentsRes.error) throw new Error(assignmentsRes.error.message || 'Failed to load assignments');
+            if (submissionsRes.error) throw new Error(submissionsRes.error.message || 'Failed to load submissions');
+
+            const assignments = assignmentsRes.data || [];
+            const submissions = submissionsRes.data || [];
+
+            if (assignmentsList) {
+                assignmentsList.innerHTML = assignments.length === 0
+                    ? '<li class="admin-list-empty">No assignments defined.</li>'
+                    : assignments.map(a => `<li><strong>${escapeHtml(a.title)}</strong>${a.description ? ': ' + escapeHtml(a.description) : ''}</li>`).join('');
+            }
+
+            function escapeHtml(str) {
+                if (str == null) return '';
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            }
+
+            tbody.innerHTML = submissions.length === 0
+                ? '<tr><td colspan="6" class="admin-table-empty">No submissions yet.</td></tr>'
+                : submissions.map(sub => {
+                    const studentName = sub.students?.name ?? '—';
+                    const assignmentTitle = sub.assignments?.title ?? '—';
+                    const notebook = sub.notebook_url
+                        ? `<a href="${escapeHtml(sub.notebook_url)}" target="_blank" rel="noopener">Open</a>`
+                        : '—';
+                    const score = sub.score != null ? sub.score : '';
+                    const feedback = escapeHtml((sub.feedback || '').slice(0, 200)) + (sub.feedback && sub.feedback.length > 200 ? '…' : '');
+                    const date = sub.created_at ? new Date(sub.created_at).toLocaleString() : '—';
+                    return `<tr data-submission-id="${sub.id}">
+                        <td>${escapeHtml(studentName)}</td>
+                        <td>${escapeHtml(assignmentTitle)}</td>
+                        <td>${notebook}</td>
+                        <td><input type="number" min="0" max="100" step="0.5" class="admin-score-input" value="${score}" data-id="${sub.id}"></td>
+                        <td><input type="text" class="admin-feedback-input" placeholder="Feedback" value="${escapeHtml(sub.feedback || '')}" data-id="${sub.id}"></td>
+                        <td>${escapeHtml(date)}</td>
+                    </tr>`;
+                }).join('');
+
+            // Save on blur for score/feedback
+            tbody.querySelectorAll('.admin-score-input, .admin-feedback-input').forEach(input => {
+                input.addEventListener('blur', debounce(saveSubmissionGrade, 400));
+            });
+
+            setAdminDashboardMessage('');
+        } catch (err) {
+            console.error('Admin data load error', err);
+            setAdminDashboardMessage('Could not load data. Ensure RLS allows admins to read assignments, students, and submissions.', true);
+            if (assignmentsList) assignmentsList.innerHTML = '';
+            tbody.innerHTML = '<tr><td colspan="6" class="admin-table-empty">Error loading submissions.</td></tr>';
+        }
+    }
+
+    function debounce(fn, ms) {
+        let t;
+        return function (...args) {
+            clearTimeout(t);
+            t = setTimeout(() => fn.apply(this, args), ms);
+        };
+    }
+
+    async function saveSubmissionGrade(e) {
+        const input = e.target;
+        const id = input.dataset.id;
+        if (!id) return;
+        const row = input.closest('tr');
+        const scoreInput = row.querySelector('.admin-score-input');
+        const feedbackInput = row.querySelector('.admin-feedback-input');
+        const score = scoreInput.value === '' ? null : parseFloat(scoreInput.value);
+        const feedback = (feedbackInput && feedbackInput.value) || null;
+
+        try {
+            const { error } = await supabaseClient
+                .from('submissions')
+                .update({ score, feedback })
+                .eq('id', id);
+            if (error) throw error;
+        } catch (err) {
+            console.error('Save grade error', err);
+            setAdminDashboardMessage('Failed to save: ' + (err.message || 'unknown'), true);
+        }
     }
 
     async function showDashboard(user) {
-        const dashboardEl = document.getElementById('studentDashboard');
-        if (!dashboardEl) return;
-
+        const studentDashboard = document.getElementById('studentDashboard');
+        const adminDashboard = document.getElementById('adminDashboard');
         const loginSectionEl = document.getElementById('loginSection');
-        if (loginSectionEl) {
-            loginSectionEl.classList.add('hidden');
-        }
 
-        // Clear transient login messages
+        if (!studentDashboard && !adminDashboard) return;
+
+        loginSectionEl && loginSectionEl.classList.add('hidden');
         setAuthMessage('');
 
         const emailSpan = document.getElementById('dashboardUserEmail');
-        if (emailSpan && user && user.email) {
-            emailSpan.textContent = user.email;
-        }
+        if (emailSpan && user && user.email) emailSpan.textContent = user.email;
+
+        const adminEmailSpan = document.getElementById('adminDashboardUserEmail');
+        if (adminEmailSpan && user && user.email) adminEmailSpan.textContent = user.email;
+
+        let role = null;
+        if (user && user.id) role = await fetchUserRole(user.id);
 
         const adminBadge = document.getElementById('dashboardAdminBadge');
         if (adminBadge) {
             adminBadge.classList.add('hidden');
-            if (user && user.id) {
-                const role = await fetchUserRole(user.id);
-                if (role === 'admin') {
-                    adminBadge.classList.remove('hidden');
-                    console.log('admin access granted');
-                }
-            }
+            if (role === 'admin') adminBadge.classList.remove('hidden');
         }
 
-        dashboardEl.classList.remove('hidden');
+        if (role === 'admin') {
+            studentDashboard && studentDashboard.classList.add('hidden');
+            if (adminDashboard) {
+                adminDashboard.classList.remove('hidden');
+                loadAdminData();
+            }
+        } else {
+            adminDashboard && adminDashboard.classList.add('hidden');
+            if (studentDashboard) studentDashboard.classList.remove('hidden');
+        }
     }
 })();
