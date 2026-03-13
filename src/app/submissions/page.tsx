@@ -68,9 +68,11 @@ export default function SubmissionsPage() {
       <div className="container">
         <div className={isAuthView ? 'submissions-auth-wrapper' : ''}>
           <h2>Homework Submissions</h2>
-          <p className="section-intro">
-            Authenticate below to view your submissions and grades for the course programming assignments.
-          </p>
+          {isAuthView && (
+            <p className="section-intro">
+              Authenticate below to view your submissions and grades for the course programming assignments.
+            </p>
+          )}
 
           <div className="detail-card submissions-main-card">
             {authState === 'loading' && <p className="prereq-note">Loading…</p>}

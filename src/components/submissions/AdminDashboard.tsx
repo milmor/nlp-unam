@@ -36,6 +36,26 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
   const [signupsToggling, setSignupsToggling] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<{ id: number; title: string } | null>(null);
 
+  // Course name/term inline editing
+  const [editingCourse, setEditingCourse] = useState(false);
+  const [courseName, setCourseName] = useState(course.name);
+  const [courseTerm, setCourseTerm] = useState(course.term ?? '');
+  const [savingCourse, setSavingCourse] = useState(false);
+
+  async function saveCourse() {
+    if (!courseName.trim()) return;
+    const sb = getSupabase();
+    if (!sb) return;
+    setSavingCourse(true);
+    const { error } = await sb
+      .from('courses')
+      .update({ name: courseName.trim(), term: courseTerm.trim() || null })
+      .eq('id', course.id);
+    setSavingCourse(false);
+    if (error) showMsg('Failed to save course: ' + error.message, true);
+    else setEditingCourse(false);
+  }
+
   // Inline assignment editing: id → { title, description, deadline }
   type EditDraft = { title: string; description: string; deadline: string };
   const [editingAssignment, setEditingAssignment] = useState<Map<number, EditDraft>>(new Map());
@@ -281,7 +301,39 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
       <div className="dashboard-header">
         <div className="dashboard-header-left">
           <button className="btn-secondary btn-small" onClick={onBack} type="button">← Courses</button>
-          <h4 className="dashboard-title">{course.name}{course.term ? ` · ${course.term}` : ''}</h4>
+          {editingCourse ? (
+            <div className="course-edit-inline">
+              <input
+                type="text"
+                value={courseName}
+                onChange={e => setCourseName(e.target.value)}
+                placeholder="Course name"
+                disabled={savingCourse}
+                className="course-edit-input"
+              />
+              <input
+                type="text"
+                value={courseTerm}
+                onChange={e => setCourseTerm(e.target.value)}
+                placeholder="Term (e.g. 2025-1)"
+                disabled={savingCourse}
+                className="course-edit-input course-edit-input--term"
+              />
+              <button type="button" className="btn-primary btn-small" onClick={saveCourse} disabled={savingCourse}>
+                {savingCourse ? '…' : 'Save'}
+              </button>
+              <button type="button" className="btn-secondary btn-small" onClick={() => { setEditingCourse(false); setCourseName(course.name); setCourseTerm(course.term ?? ''); }}>
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <>
+              <h4 className="dashboard-title">{courseName}{courseTerm ? ` · ${courseTerm}` : ''}</h4>
+              <button type="button" className="btn-secondary btn-small" onClick={() => setEditingCourse(true)}>
+                Edit
+              </button>
+            </>
+          )}
         </div>
         <button className="btn-secondary btn-small" onClick={onLogout} type="button">
           Log out

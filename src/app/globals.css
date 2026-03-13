@@ -1095,6 +1095,26 @@ ol.article-list,
     box-shadow: 0 0 0 2px rgba(0, 51, 102, 0.15);
 }
 
+/* Override browser autofill background (light theme) */
+.auth-form input:-webkit-autofill,
+.auth-form input:-webkit-autofill:hover,
+.auth-form input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--text-primary);
+    -webkit-box-shadow: 0 0 0 1000px var(--bg-primary) inset;
+    box-shadow: 0 0 0 1000px var(--bg-primary) inset;
+    border-color: var(--border-color);
+    transition: background-color 9999s ease-in-out 0s;
+}
+
+/* Override autofill background in dark theme */
+[data-theme="dark"] .auth-form input:-webkit-autofill,
+[data-theme="dark"] .auth-form input:-webkit-autofill:hover,
+[data-theme="dark"] .auth-form input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--text-primary);
+    -webkit-box-shadow: 0 0 0 1000px var(--bg-primary) inset;
+    box-shadow: 0 0 0 1000px var(--bg-primary) inset;
+}
+
 .auth-form button {
     align-self: flex-start;
     margin-top: 6px;
@@ -1646,6 +1666,34 @@ ol.article-list,
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+/* Inline course name editing in dashboard header */
+.course-edit-inline {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.course-edit-input {
+    padding: 5px 9px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    width: 160px;
+}
+
+.course-edit-input--term {
+    width: 110px;
+}
+
+.course-edit-input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px rgba(0, 51, 102, 0.12);
 }
 
 /* Course selector list */
