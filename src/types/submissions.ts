@@ -1,3 +1,12 @@
+export interface Course {
+  id: number;
+  name: string;
+  term: string | null;
+  description: string | null;
+  signups_open: boolean;
+  created_at: string;
+}
+
 export interface Assignment {
   id: number;
   title: string;

@@ -3,16 +3,18 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { getSupabase } from '@/lib/supabase';
-import type { Assignment, Submission } from '@/types/submissions';
+import type { Assignment, Submission, Course } from '@/types/submissions';
 
 interface Props {
   user: User;
+  course: Course;
   onLogout: () => void;
+  onBack: () => void;
 }
 
 const BUCKET = 'student-notebooks';
 
-export default function StudentDashboard({ user, onLogout }: Props) {
+export default function StudentDashboard({ user, course, onLogout, onBack }: Props) {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,7 +47,7 @@ export default function StudentDashboard({ user, onLogout }: Props) {
     setLoading(true);
     try {
       const [assignRes, subRes] = await Promise.all([
-        sb.from('assignments').select('id, title, deadline').order('id'),
+        sb.from('assignments').select('id, title, deadline').eq('course_id', course.id).order('id'),
         sb
           .from('submissions')
           .select('id, assignment_id, notebook_url, score, feedback, created_at')
@@ -150,7 +152,10 @@ export default function StudentDashboard({ user, onLogout }: Props) {
   return (
     <div className="dashboard">
       <div className="dashboard-header">
-        <h4 className="dashboard-title">Your submissions &amp; grades</h4>
+        <div className="dashboard-header-left">
+          <button className="btn-secondary btn-small" onClick={onBack} type="button">← Courses</button>
+          <h4 className="dashboard-title">{course.name}{course.term ? ` · ${course.term}` : ''}</h4>
+        </div>
         <button className="btn-secondary btn-small" onClick={onLogout} type="button">
           Log out
         </button>

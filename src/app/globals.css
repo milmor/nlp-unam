@@ -1526,6 +1526,60 @@ ol.article-list,
 [data-theme="dark"] .signup-status-badge.open  { color: #81c784; background: color-mix(in srgb, #81c784 15%, transparent); }
 [data-theme="dark"] .signup-status-badge.closed { color: #e57373; background: color-mix(in srgb, #e57373 15%, transparent); }
 
+/* Dashboard header with back button */
+.dashboard-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+}
+
+.dashboard-header-left .dashboard-title {
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Course selector list */
+.course-list {
+    list-style: none;
+    padding: 0;
+    margin: 0.75rem 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.course-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    flex-wrap: wrap;
+}
+
+.course-list-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.course-term {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.course-desc {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}
+
 /* Deadline badges */
 .deadline-badge {
     display: inline-block;
