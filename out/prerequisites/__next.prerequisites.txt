@@ -1,4 +1,4 @@
 1:"$Sreact.fragment"
 2:I[39756,["/nlp-unam/_next/static/chunks/ff1a16fafef87110.js","/nlp-unam/_next/static/chunks/aad4131a22433c64.js"],"default"]
 3:I[37457,["/nlp-unam/_next/static/chunks/ff1a16fafef87110.js","/nlp-unam/_next/static/chunks/aad4131a22433c64.js"],"default"]
-0:{"buildId":"mC2PRaFMWGUm8E3ZYyR_v","rsc":["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","template":["$","$L3",null,{}]}]]}],"loading":null,"isPartial":false}
+0:{"buildId":"_Guz4MyeCve_F9xNgkXz2","rsc":["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","template":["$","$L3",null,{}]}]]}],"loading":null,"isPartial":false}

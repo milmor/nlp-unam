@@ -1,7 +1,8 @@
 'use client';
 
-import Image from 'next/image';
 import { useTheme } from './ThemeProvider';
+
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
 
 export default function Header() {
   const { toggleTheme } = useTheme();
@@ -11,14 +12,11 @@ export default function Header() {
       <div className="container">
         <div className="header-content">
           <div className="logo">
-            <Image
-              src="/assets/unam-logo-png-transparent.png"
+            {/* Plain <img> so basePath is applied correctly in static export */}
+            <img
+              src={`${BASE_PATH}/assets/unam-logo-png-transparent.png`}
               alt="UNAM Logo"
               className="university-logo"
-              width={120}
-              height={70}
-              style={{ height: '70px', width: 'auto' }}
-              priority
             />
             <div className="logo-text">
               <h1>Natural Language Processing with Deep Learning</h1>
