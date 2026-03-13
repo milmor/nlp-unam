@@ -18,6 +18,53 @@ export default function AdminDashboard({ user, onLogout }: Props) {
   const [isError, setIsError] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newDesc, setNewDesc] = useState('');
+  const [newDeadline, setNewDeadline] = useState('');
+
+  // Inline deadline editing: assignmentId → draft datetime-local string
+  const [editingDeadline, setEditingDeadline] = useState<Map<number, string>>(new Map());
+
+  function startEditDeadline(a: Assignment) {
+    const value = a.deadline
+      ? new Date(new Date(a.deadline).getTime() - new Date().getTimezoneOffset() * 60000)
+          .toISOString()
+          .slice(0, 16)
+      : '';
+    setEditingDeadline(prev => new Map(prev).set(a.id, value));
+  }
+
+  function cancelEditDeadline(id: number) {
+    setEditingDeadline(prev => { const m = new Map(prev); m.delete(id); return m; });
+  }
+
+  async function saveDeadline(id: number) {
+    const sb = getSupabase();
+    if (!sb) return;
+    const raw = editingDeadline.get(id) ?? '';
+    const deadline = raw ? new Date(raw).toISOString() : null;
+    const { error } = await sb.from('assignments').update({ deadline }).eq('id', id);
+    if (error) return showMsg('Failed to save deadline: ' + error.message, true);
+    cancelEditDeadline(id);
+    loadData();
+  }
+
+  const BUCKET = 'student-notebooks';
+
+  async function openNotebook(pathOrUrl: string) {
+    const sb = getSupabase();
+    if (!sb) return;
+    let storagePath = pathOrUrl;
+    const marker = `/${BUCKET}/`;
+    if (pathOrUrl.startsWith('https://')) {
+      const idx = pathOrUrl.indexOf(marker);
+      storagePath = idx !== -1 ? pathOrUrl.slice(idx + marker.length) : pathOrUrl;
+    }
+    const { data, error } = await sb.storage.from(BUCKET).createSignedUrl(storagePath, 60);
+    if (error || !data?.signedUrl) {
+      alert('Could not open notebook: ' + (error?.message ?? 'unknown error'));
+      return;
+    }
+    window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
+  }
 
   function showMsg(text: string, error = false) {
     setMessage(text);
@@ -31,7 +78,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     showMsg('');
     try {
       const [assignRes, subRes] = await Promise.all([
-        sb.from('assignments').select('id, title, description').order('id'),
+        sb.from('assignments').select('id, title, description, deadline').order('id'),
         sb
           .from('submissions')
           .select(
@@ -59,11 +106,14 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     const sb = getSupabase();
     if (!sb) return;
     showMsg('Adding assignment…');
-    const payload = newDesc.trim() ? { title, description: newDesc.trim() } : { title };
+    const payload: Record<string, unknown> = { title };
+    if (newDesc.trim()) payload.description = newDesc.trim();
+    if (newDeadline) payload.deadline = new Date(newDeadline).toISOString();
     const { error } = await sb.from('assignments').insert([payload]);
     if (error) return showMsg('Failed to add: ' + error.message, true);
     setNewTitle('');
     setNewDesc('');
+    setNewDeadline('');
     loadData();
   }
 
@@ -169,6 +219,12 @@ export default function AdminDashboard({ user, onLogout }: Props) {
               value={newDesc}
               onChange={e => setNewDesc(e.target.value)}
             />
+            <input
+              type="datetime-local"
+              title="Deadline (optional)"
+              value={newDeadline}
+              onChange={e => setNewDeadline(e.target.value)}
+            />
           </div>
           <button type="submit" className="btn-primary btn-small">Add</button>
         </form>
@@ -180,21 +236,66 @@ export default function AdminDashboard({ user, onLogout }: Props) {
             {assignments.length === 0 ? (
               <li className="admin-list-empty">No assignments defined.</li>
             ) : (
-              assignments.map(a => (
-                <li key={a.id} className="admin-assignment-item">
-                  <span>
-                    <strong>{a.title}</strong>
-                    {a.description ? `: ${a.description}` : ''}
-                  </span>
-                  <button
-                    type="button"
-                    className="btn-secondary btn-small"
-                    onClick={() => handleDeleteAssignment(a.id)}
-                  >
-                    Delete
-                  </button>
-                </li>
-              ))
+              assignments.map(a => {
+                const isEditingDl = editingDeadline.has(a.id);
+                const isPast = a.deadline ? new Date(a.deadline) < new Date() : false;
+                return (
+                  <li key={a.id} className="admin-assignment-item">
+                    <span>
+                      <strong>{a.title}</strong>
+                      {a.description ? `: ${a.description}` : ''}
+                      {!isEditingDl && a.deadline && (
+                        <span className={`deadline-badge${isPast ? ' deadline-past' : ''}`}>
+                          {isPast ? '⏰ Closed' : '⏰ Due'}{' '}
+                          {new Date(a.deadline).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+                        </span>
+                      )}
+                    </span>
+                    <span className="admin-assignment-actions">
+                      {isEditingDl ? (
+                        <>
+                          <input
+                            type="datetime-local"
+                            value={editingDeadline.get(a.id) ?? ''}
+                            onChange={e =>
+                              setEditingDeadline(prev => new Map(prev).set(a.id, e.target.value))
+                            }
+                          />
+                          <button
+                            type="button"
+                            className="btn-primary btn-small"
+                            onClick={() => saveDeadline(a.id)}
+                          >
+                            Save
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-secondary btn-small"
+                            onClick={() => cancelEditDeadline(a.id)}
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn-secondary btn-small"
+                          onClick={() => startEditDeadline(a)}
+                        >
+                          {a.deadline ? 'Edit deadline' : 'Set deadline'}
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="btn-secondary btn-small"
+                        onClick={() => handleDeleteAssignment(a.id)}
+                      >
+                        Delete
+                      </button>
+                    </span>
+                  </li>
+                );
+              })
             )}
           </ul>
         )}
@@ -231,9 +332,13 @@ export default function AdminDashboard({ user, onLogout }: Props) {
                       <td>{sub.assignment?.title ?? '—'}</td>
                       <td>
                         {sub.notebook_url ? (
-                          <a href={sub.notebook_url} target="_blank" rel="noopener noreferrer">
-                            Open
-                          </a>
+                          <button
+                            type="button"
+                            className="btn-secondary btn-small"
+                            onClick={() => openNotebook(sub.notebook_url!)}
+                          >
+                            Open ↗
+                          </button>
                         ) : '—'}
                       </td>
                       <td>

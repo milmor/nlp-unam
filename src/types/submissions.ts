@@ -2,15 +2,16 @@ export interface Assignment {
   id: number;
   title: string;
   description?: string | null;
+  deadline?: string | null; // ISO 8601 timestamptz from Supabase
 }
 
 export interface Submission {
   id: number;
   assignment_id: number;
   student_id: string;
-  notebook_url?: string | null;
-  score?: number | null;
-  feedback?: string | null;
+  notebook_url: string | null;
+  score: number | null;
+  feedback: string | null;
   created_at: string;
 }
 
