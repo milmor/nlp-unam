@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { getSupabase } from '@/lib/supabase';
 
@@ -30,6 +30,14 @@ export default function AuthPanel({ onAuth }: AuthPanelProps) {
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [signupsOpen, setSignupsOpen] = useState(true);
+
+  useEffect(() => {
+    const sb = getSupabase();
+    if (!sb) return;
+    sb.from('settings').select('value').eq('key', 'signups_open').single()
+      .then(({ data }) => setSignupsOpen(data?.value !== 'false'));
+  }, []);
 
   function showMsg(text: string, error = false) {
     setMessage(text);
@@ -186,7 +194,12 @@ export default function AuthPanel({ onAuth }: AuthPanelProps) {
       {view === 'login' && (
         <>
           <h4 className="auth-section-title">Create an account</h4>
-          <form className="auth-form" onSubmit={handleSignup}>
+          {!signupsOpen && (
+            <p className="prereq-note" style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>
+              Registrations are currently closed.
+            </p>
+          )}
+          {signupsOpen && <form className="auth-form" onSubmit={handleSignup}>
             <div className="auth-field">
               <input
                 type="text"
@@ -220,7 +233,7 @@ export default function AuthPanel({ onAuth }: AuthPanelProps) {
             <button type="submit" className="btn-primary btn-small" disabled={busy}>
               Sign up
             </button>
-          </form>
+          </form>}
         </>
       )}
 

@@ -19,6 +19,8 @@ export default function AdminDashboard({ user, onLogout }: Props) {
   const [newTitle, setNewTitle] = useState('');
   const [newDesc, setNewDesc] = useState('');
   const [newDeadline, setNewDeadline] = useState('');
+  const [signupsOpen, setSignupsOpen] = useState<boolean | null>(null);
+  const [signupsToggling, setSignupsToggling] = useState(false);
 
   // Inline deadline editing: assignmentId → draft datetime-local string
   const [editingDeadline, setEditingDeadline] = useState<Map<number, string>>(new Map());
@@ -71,6 +73,27 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     setIsError(error);
   }
 
+  async function loadSignupSetting() {
+    const sb = getSupabase();
+    if (!sb) return;
+    const { data } = await sb.from('settings').select('value').eq('key', 'signups_open').single();
+    setSignupsOpen(data?.value !== 'false');
+  }
+
+  async function toggleSignups() {
+    const sb = getSupabase();
+    if (!sb || signupsOpen === null) return;
+    setSignupsToggling(true);
+    const next = !signupsOpen;
+    const { error } = await sb
+      .from('settings')
+      .update({ value: next ? 'true' : 'false' })
+      .eq('key', 'signups_open');
+    if (!error) setSignupsOpen(next);
+    else showMsg('Failed to update signup setting.', true);
+    setSignupsToggling(false);
+  }
+
   async function loadData() {
     const sb = getSupabase();
     if (!sb) return;
@@ -97,7 +120,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     }
   }
 
-  useEffect(() => { loadData(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { loadData(); loadSignupSetting(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleAddAssignment(e: FormEvent) {
     e.preventDefault();
@@ -196,6 +219,26 @@ export default function AdminDashboard({ user, onLogout }: Props) {
         Logged in as <strong>{user.email}</strong>{' '}
         <span className="admin-badge">Admin</span>
       </p>
+
+      {/* Signup toggle */}
+      {signupsOpen !== null && (
+        <div className="signup-toggle-row">
+          <span className="signup-toggle-label">
+            New registrations:
+            <span className={`signup-status-badge${signupsOpen ? ' open' : ' closed'}`}>
+              {signupsOpen ? 'Open' : 'Closed'}
+            </span>
+          </span>
+          <button
+            type="button"
+            className={signupsOpen ? 'btn-secondary btn-small' : 'btn-primary btn-small'}
+            onClick={toggleSignups}
+            disabled={signupsToggling}
+          >
+            {signupsToggling ? '…' : signupsOpen ? 'Close registrations' : 'Open registrations'}
+          </button>
+        </div>
+      )}
 
       {message && (
         <p className={`admin-dashboard-message${isError ? ' error' : ''}`}>{message}</p>
