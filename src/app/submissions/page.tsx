@@ -8,10 +8,12 @@ import AuthPanel from '@/components/submissions/AuthPanel';
 import StudentDashboard from '@/components/submissions/StudentDashboard';
 import AdminDashboard from '@/components/submissions/AdminDashboard';
 import ApiStatus from '@/components/submissions/ApiStatus';
+import ResetPasswordForm from '@/components/submissions/ResetPasswordForm';
 
 export default function SubmissionsPage() {
   const [authState, setAuthState] = useState<AuthState>('loading');
   const [user, setUser] = useState<User | null>(null);
+  const [recovering, setRecovering] = useState(false);
 
   const resolveRole = useCallback(async (u: User): Promise<UserRole> => {
     const sb = getSupabase();
@@ -38,7 +40,6 @@ export default function SubmissionsPage() {
     [resolveRole]
   );
 
-  // Restore existing session on mount
   useEffect(() => {
     const sb = getSupabase();
     if (!sb) {
@@ -46,12 +47,20 @@ export default function SubmissionsPage() {
       return;
     }
 
+    // Restore existing session on mount
     sb.auth.getSession().then(({ data }) => {
       handleUser(data.session?.user ?? null);
     });
 
-    // Keep auth state in sync across tabs
-    const { data: listener } = sb.auth.onAuthStateChange((_event, session) => {
+    // Listen for auth events — including PASSWORD_RECOVERY
+    const { data: listener } = sb.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        // User arrived via a reset-password email link
+        setUser(session?.user ?? null);
+        setRecovering(true);
+        setAuthState('unauthenticated');
+        return;
+      }
       handleUser(session?.user ?? null);
     });
 
@@ -62,6 +71,12 @@ export default function SubmissionsPage() {
     const sb = getSupabase();
     if (sb) await sb.auth.signOut();
     setUser(null);
+    setRecovering(false);
+    setAuthState('unauthenticated');
+  };
+
+  const handleResetDone = () => {
+    setRecovering(false);
     setAuthState('unauthenticated');
   };
 
@@ -79,13 +94,21 @@ export default function SubmissionsPage() {
             {authState === 'loading' && (
               <p className="prereq-note">Loading…</p>
             )}
-            {authState === 'unauthenticated' && (
+
+            {/* Password recovery flow — shown when user arrives via reset link */}
+            {recovering && (
+              <ResetPasswordForm onDone={handleResetDone} />
+            )}
+
+            {!recovering && authState === 'unauthenticated' && (
               <AuthPanel onAuth={handleUser} />
             )}
-            {authState === 'student' && user && (
+
+            {!recovering && authState === 'student' && user && (
               <StudentDashboard user={user} onLogout={handleLogout} />
             )}
-            {authState === 'admin' && user && (
+
+            {!recovering && authState === 'admin' && user && (
               <AdminDashboard user={user} onLogout={handleLogout} />
             )}
           </div>
