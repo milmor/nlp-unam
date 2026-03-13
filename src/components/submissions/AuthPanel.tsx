@@ -35,8 +35,8 @@ export default function AuthPanel({ onAuth }: AuthPanelProps) {
   useEffect(() => {
     const sb = getSupabase();
     if (!sb) return;
-    sb.from('settings').select('value').eq('key', 'signups_open').single()
-      .then(({ data }) => setSignupsOpen(data?.value !== 'false'));
+    sb.from('courses').select('id').eq('signups_open', true).limit(1)
+      .then(({ data }) => setSignupsOpen((data?.length ?? 0) > 0));
   }, []);
 
   function showMsg(text: string, error = false) {
