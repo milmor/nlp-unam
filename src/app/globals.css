@@ -1309,6 +1309,38 @@ ol.article-list,
     margin-top: 0.5rem;
 }
 
+/* Assignment action buttons group */
+.admin-assignment-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+/* Deadline badges */
+.deadline-badge {
+    display: inline-block;
+    margin-left: 0.5rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+    color: var(--primary);
+    white-space: nowrap;
+}
+
+.deadline-badge.deadline-past {
+    background: color-mix(in srgb, #b00020 12%, transparent);
+    color: #b00020;
+}
+
+[data-theme="dark"] .deadline-badge.deadline-past {
+    background: color-mix(in srgb, #e57373 15%, transparent);
+    color: #e57373;
+}
+
 /* ── End Submissions ─────────────────────────────────────────────── */
 
 /* Print Styles */

@@ -31,7 +31,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${crimsonPro.variable} ${sourceSans.variable}`}>
+    <html lang="en" className={`${crimsonPro.variable} ${sourceSans.variable}`} suppressHydrationWarning>
       <body>
         <ThemeProvider>
           <Header />
