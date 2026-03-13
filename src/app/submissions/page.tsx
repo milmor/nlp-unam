@@ -113,10 +113,12 @@ export default function SubmissionsPage() {
             )}
           </div>
 
-          {/* Right column — API status */}
-          <div className="detail-card">
-            <ApiStatus />
-          </div>
+          {/* Right column — API status (admin only) */}
+          {authState === 'admin' && (
+            <div className="detail-card">
+              <ApiStatus />
+            </div>
+          )}
         </div>
       </div>
     </section>

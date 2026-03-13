@@ -20,6 +20,7 @@ export default function AuthPanel({ onAuth }: AuthPanelProps) {
   const [loginPassword, setLoginPassword] = useState('');
 
   // Signup fields
+  const [signupName, setSignupName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
 
@@ -63,12 +64,20 @@ export default function AuthPanel({ onAuth }: AuthPanelProps) {
     setBusy(true);
     showMsg('Creating account…');
     try {
-      const { error } = await sb.auth.signUp({
+      const { data, error } = await sb.auth.signUp({
         email: signupEmail.trim(),
         password: signupPassword,
       });
       if (error) throw error;
+      // Save name to profiles (row is created by DB trigger, we just update it)
+      if (data.user && signupName.trim()) {
+        await sb
+          .from('profiles')
+          .update({ name: signupName.trim() })
+          .eq('id', data.user.id);
+      }
       showMsg('Account created. Check your email to confirm before logging in.');
+      setSignupName('');
       setSignupEmail('');
       setSignupPassword('');
     } catch (err: unknown) {
@@ -176,6 +185,16 @@ export default function AuthPanel({ onAuth }: AuthPanelProps) {
         <>
           <h4 className="auth-section-title">Create an account</h4>
           <form className="auth-form" onSubmit={handleSignup}>
+            <div className="auth-field">
+              <input
+                type="text"
+                placeholder="Full name"
+                value={signupName}
+                onChange={e => setSignupName(e.target.value)}
+                required
+                disabled={busy}
+              />
+            </div>
             <div className="auth-field">
               <input
                 type="email"
