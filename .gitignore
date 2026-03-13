@@ -1,6 +1,6 @@
 # Next.js
 .next/
-out/
+out/      # static export output — built by GitHub Actions, not committed
 
 # Dependencies
 node_modules/
