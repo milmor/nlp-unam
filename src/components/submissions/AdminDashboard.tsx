@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, FormEvent } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { getSupabase } from '@/lib/supabase';
 import type { Assignment, AdminSubmission, Course } from '@/types/submissions';
+import ConfirmDialog from './ConfirmDialog';
 
 interface EnrolledStudent {
   student_id: string;
@@ -33,6 +34,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
   const [newDeadline, setNewDeadline] = useState('');
   const [signupsOpen, setSignupsOpen] = useState<boolean | null>(null);
   const [signupsToggling, setSignupsToggling] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: number; title: string } | null>(null);
 
   // Inline assignment editing: id → { title, description, deadline }
   type EditDraft = { title: string; description: string; deadline: string };
@@ -195,11 +197,13 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
     loadData();
   }
 
-  async function handleDeleteAssignment(id: number) {
+  async function confirmDeleteAssignment() {
+    if (!confirmDelete) return;
     const sb = getSupabase();
     if (!sb) return;
+    setConfirmDelete(null);
     showMsg('Deleting…');
-    const { error } = await sb.from('assignments').delete().eq('id', id);
+    const { error } = await sb.from('assignments').delete().eq('id', confirmDelete.id);
     if (error) return showMsg('Failed to delete: ' + error.message, true);
     showMsg('');
     loadData();
@@ -417,8 +421,8 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                           </button>
                           <button
                             type="button"
-                            className="btn-secondary btn-small"
-                            onClick={() => handleDeleteAssignment(a.id)}
+                            className="btn-danger btn-small"
+                            onClick={() => setConfirmDelete({ id: a.id, title: a.title })}
                           >
                             Delete
                           </button>
@@ -572,6 +576,16 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
             </div>
           )}
         </div>
+      )}
+
+      {confirmDelete && (
+        <ConfirmDialog
+          title="Delete assignment?"
+          message={`"${confirmDelete.title}" and all its submissions will be permanently deleted. This cannot be undone.`}
+          confirmLabel="Delete"
+          onConfirm={confirmDeleteAssignment}
+          onCancel={() => setConfirmDelete(null)}
+        />
       )}
     </div>
   );
