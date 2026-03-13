@@ -12,7 +12,7 @@ export default function Header() {
         <div className="header-content">
           <div className="logo">
             <Image
-              src="/unam-logo-png-transparent.png"
+              src="/assets/unam-logo-png-transparent.png"
               alt="UNAM Logo"
               className="university-logo"
               width={120}
