@@ -465,6 +465,9 @@ a:hover {
     padding: 20px;
     box-shadow: 0 2px 8px var(--shadow-color);
     border: 1px solid var(--border-color);
+    /* Prevent grid children from overflowing their cell */
+    min-width: 0;
+    overflow: hidden;
 }
 
 .detail-card h4 {
@@ -1153,10 +1156,14 @@ ol.article-list,
 .dashboard-table-wrapper {
     margin-top: 0.5rem;
     overflow-x: auto;
+    /* Prevent the wrapper from exceeding its grid cell */
+    width: 100%;
+    max-width: 100%;
 }
 
 .dashboard-table {
     width: 100%;
+    min-width: 480px; /* keeps columns readable; wrapper scrolls on narrow screens */
     border-collapse: collapse;
     font-size: 0.9rem;
 }
@@ -1185,7 +1192,43 @@ ol.article-list,
     .dashboard-table th,
     .dashboard-table td {
         padding: 6px 8px;
-        font-size: 0.85rem;
+        font-size: 0.82rem;
+    }
+
+    .dashboard-table {
+        min-width: 420px;
+    }
+
+    /* Admin feedback input: don't force a wide minimum on small screens */
+    .admin-feedback-input {
+        min-width: 80px;
+    }
+
+    /* Admin score input */
+    .admin-score-input {
+        width: 3.8rem;
+    }
+
+    /* Deadline badge: allow it to wrap below the title on small screens */
+    .deadline-badge {
+        display: block;
+        margin-left: 0;
+        margin-top: 3px;
+        width: fit-content;
+    }
+
+    /* Add-assignment form: fields take full width */
+    .admin-assignment-fields {
+        width: 100%;
+    }
+
+    .admin-assignment-form > button {
+        width: 100%;
+    }
+
+    /* Stack header buttons on very small screens */
+    .dashboard-header {
+        flex-wrap: wrap;
     }
 }
 
@@ -1207,6 +1250,7 @@ ol.article-list,
     align-items: flex-end;
     gap: 10px;
     margin-bottom: 0.75rem;
+    flex-wrap: wrap;
 }
 
 .admin-assignment-fields {
@@ -1239,13 +1283,14 @@ ol.article-list,
 
 .admin-assignment-item {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 10px;
     padding: 6px 0;
     border-bottom: 1px solid var(--border-color);
     font-size: 0.9rem;
     color: var(--text-secondary);
+    flex-wrap: wrap;
 }
 
 .admin-assignment-item:last-child {

@@ -64,9 +64,14 @@ export default function AuthPanel({ onAuth }: AuthPanelProps) {
     setBusy(true);
     showMsg('Creating account…');
     try {
+      const redirectTo =
+        typeof window !== 'undefined'
+          ? `${window.location.origin}${BASE_PATH}/submissions`
+          : undefined;
       const { data, error } = await sb.auth.signUp({
         email: signupEmail.trim(),
         password: signupPassword,
+        options: { emailRedirectTo: redirectTo },
       });
       if (error) throw error;
       // Save name to profiles (row is created by DB trigger, we just update it)
