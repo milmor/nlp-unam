@@ -1526,6 +1526,80 @@ ol.article-list,
 [data-theme="dark"] .signup-status-badge.open  { color: #81c784; background: color-mix(in srgb, #81c784 15%, transparent); }
 [data-theme="dark"] .signup-status-badge.closed { color: #e57373; background: color-mix(in srgb, #e57373 15%, transparent); }
 
+/* Confirm dialog */
+.confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+    backdrop-filter: blur(2px);
+}
+
+.confirm-dialog {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.75rem 2rem;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+    animation: confirm-in 0.15s ease;
+}
+
+@keyframes confirm-in {
+    from { opacity: 0; transform: scale(0.95) translateY(-8px); }
+    to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+
+.confirm-title {
+    margin: 0 0 0.6rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.confirm-message {
+    margin: 0 0 1.5rem;
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+}
+
+.btn-danger {
+    display: inline-block;
+    padding: 12px 28px;
+    border: 1px solid #c0392b;
+    border-radius: 6px;
+    background: #c0392b;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.btn-danger:hover {
+    background: #a93226;
+    border-color: #a93226;
+    transform: translateY(-2px);
+}
+
+.btn-danger.btn-small {
+    padding: 8px 18px;
+    font-size: 0.85rem;
+}
+
 /* Admin tab bar */
 .admin-tab-bar {
     display: flex;

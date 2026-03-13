@@ -108,11 +108,17 @@ export default function SubmissionsPage() {
           </div>
         </div>
 
-        {/* API status + usage stats — admin only, course selected */}
+        {/* Resource usage — admin only, course selected */}
+        {authState === 'admin' && selectedCourse && (
+          <div className="detail-card submissions-api-card">
+            <UsageStats />
+          </div>
+        )}
+
+        {/* API status — admin only, course selected, bottom */}
         {authState === 'admin' && selectedCourse && (
           <div className="detail-card submissions-api-card">
             <ApiStatus />
-            <UsageStats />
           </div>
         )}
       </div>
