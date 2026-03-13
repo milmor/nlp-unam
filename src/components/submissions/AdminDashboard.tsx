@@ -82,7 +82,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
         sb
           .from('submissions')
           .select(
-            'id, notebook_url, score, feedback, created_at, student:profiles!fk_student(email, role), assignment:assignments!fk_assignment(title)'
+            'id, notebook_url, score, feedback, created_at, student:profiles!fk_student(email, name, role), assignment:assignments!fk_assignment(title)'
           )
           .order('created_at', { ascending: false }),
       ]);
@@ -324,11 +324,18 @@ export default function AdminDashboard({ user, onLogout }: Props) {
               ) : (
                 submissions.map(sub => {
                   const g = grades.get(sub.id) ?? { score: '', feedback: '' };
-                  const studentEmail = sub.student?.email ?? '—';
+                  const displayName = sub.student?.name || sub.student?.email || '—';
                   const role = sub.student?.role ? ` (${sub.student.role})` : '';
                   return (
                     <tr key={sub.id}>
-                      <td>{studentEmail}{role}</td>
+                      <td>
+                        {displayName}{role}
+                        {sub.student?.name && (
+                          <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                            {sub.student.email}
+                          </span>
+                        )}
+                      </td>
                       <td>{sub.assignment?.title ?? '—'}</td>
                       <td>
                         {sub.notebook_url ? (

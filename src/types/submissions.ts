@@ -21,7 +21,7 @@ export interface AdminSubmission {
   score?: number | null;
   feedback?: string | null;
   created_at: string;
-  student?: { email: string; role: string | null } | null;
+  student?: { email: string; name: string | null; role: string | null } | null;
   assignment?: { title: string } | null;
 }
 
