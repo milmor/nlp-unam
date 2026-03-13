@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { getSupabase } from '@/lib/supabase';
 import type { Assignment, Submission } from '@/types/submissions';
@@ -17,6 +17,18 @@ export default function StudentDashboard({ user, onLogout }: Props) {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Expanded feedback per assignment
+  const [expandedFeedback, setExpandedFeedback] = useState<Set<number>>(new Set());
+  const toggleFeedback = useCallback((id: number) => {
+    setExpandedFeedback(prev => {
+      const s = new Set(prev);
+      s.has(id) ? s.delete(id) : s.add(id);
+      return s;
+    });
+  }, []);
+
+  const PREVIEW_LEN = 80;
 
   // Per-assignment upload state: assignmentId → status message
   const [uploadStatus, setUploadStatus] = useState<Map<number, string>>(new Map());
@@ -169,13 +181,14 @@ export default function StudentDashboard({ user, onLogout }: Props) {
                 <th>Status</th>
                 <th>Notebook</th>
                 <th>Grade</th>
+                <th>Feedback</th>
                 <th>Upload</th>
               </tr>
             </thead>
             <tbody>
               {assignments.length === 0 ? (
                 <tr>
-                      <td colSpan={6} style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>
+                      <td colSpan={7} style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>
                     No assignments yet.
                   </td>
                 </tr>
@@ -216,6 +229,31 @@ export default function StudentDashboard({ user, onLogout }: Props) {
                         ) : '—'}
                       </td>
                       <td>{sub?.score != null ? sub.score : '–'}</td>
+                      <td className="feedback-cell">
+                        {sub?.feedback ? (() => {
+                          const text = sub.feedback;
+                          const isLong = text.length > PREVIEW_LEN;
+                          const expanded = expandedFeedback.has(a.id);
+                          return (
+                            <>
+                              <span className="feedback-text">
+                                {isLong && !expanded
+                                  ? text.slice(0, PREVIEW_LEN) + '…'
+                                  : text}
+                              </span>
+                              {isLong && (
+                                <button
+                                  type="button"
+                                  className="read-more-btn"
+                                  onClick={() => toggleFeedback(a.id)}
+                                >
+                                  {expanded ? 'Show less ↑' : 'Show more ↓'}
+                                </button>
+                              )}
+                            </>
+                          );
+                        })() : '–'}
+                      </td>
                       <td>
                         <button
                           type="button"

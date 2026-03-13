@@ -8,6 +8,7 @@ import AuthPanel from '@/components/submissions/AuthPanel';
 import StudentDashboard from '@/components/submissions/StudentDashboard';
 import AdminDashboard from '@/components/submissions/AdminDashboard';
 import ApiStatus from '@/components/submissions/ApiStatus';
+import UsageStats from '@/components/submissions/UsageStats';
 import ResetPasswordForm from '@/components/submissions/ResetPasswordForm';
 
 export default function SubmissionsPage() {
@@ -116,10 +117,11 @@ export default function SubmissionsPage() {
         </div>
         </div>{/* end auth-wrapper or fragment */}
 
-        {/* API status — below dashboard, admin only */}
+        {/* API status + usage stats — below dashboard, admin only */}
         {authState === 'admin' && (
           <div className="detail-card submissions-api-card">
             <ApiStatus />
+            <UsageStats />
           </div>
         )}
       </div>
