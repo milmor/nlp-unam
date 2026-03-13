@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, FormEvent } from 'react';
+import { useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { getSupabase } from '@/lib/supabase';
 
@@ -8,253 +8,52 @@ interface AuthPanelProps {
   onAuth: (user: User | null) => void;
 }
 
-type View = 'login' | 'forgot';
-
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
 
-export default function AuthPanel({ onAuth }: AuthPanelProps) {
-  const [view, setView] = useState<View>('login');
-
-  // Login fields
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-
-  // Signup fields
-  const [signupName, setSignupName] = useState('');
-  const [signupEmail, setSignupEmail] = useState('');
-  const [signupPassword, setSignupPassword] = useState('');
-
-  // Forgot-password field
-  const [resetEmail, setResetEmail] = useState('');
-
+export default function AuthPanel({ onAuth: _onAuth }: AuthPanelProps) {
+  const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [signupsOpen, setSignupsOpen] = useState(true);
 
-  useEffect(() => {
-    const sb = getSupabase();
-    if (!sb) return;
-    sb.from('courses').select('id').eq('signups_open', true).limit(1)
-      .then(({ data }) => setSignupsOpen((data?.length ?? 0) > 0));
-  }, []);
+  function showMsg(text: string, error = false) { setMessage(text); setIsError(error); }
 
-  function showMsg(text: string, error = false) {
-    setMessage(text);
-    setIsError(error);
-  }
-
-  async function handleLogin(e: FormEvent) {
-    e.preventDefault();
+  async function handleGoogleLogin() {
     const sb = getSupabase();
     if (!sb) return showMsg('Auth service unavailable.', true);
     setBusy(true);
-    showMsg('Logging in…');
-    try {
-      const { data, error } = await sb.auth.signInWithPassword({
-        email: loginEmail.trim(),
-        password: loginPassword,
-      });
-      if (error) throw error;
-      showMsg('Logged in successfully.');
-      onAuth(data.user);
-    } catch (err: unknown) {
-      showMsg('Login failed: ' + (err instanceof Error ? err.message : 'Unknown error'), true);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function handleSignup(e: FormEvent) {
-    e.preventDefault();
-    const sb = getSupabase();
-    if (!sb) return showMsg('Auth service unavailable.', true);
-    setBusy(true);
-    showMsg('Creating account…');
-    try {
-      const redirectTo =
-        typeof window !== 'undefined'
-          ? `${window.location.origin}${BASE_PATH}/submissions`
-          : undefined;
-      const { error } = await sb.auth.signUp({
-        email: signupEmail.trim(),
-        password: signupPassword,
-        options: {
-          emailRedirectTo: redirectTo,
-          // Name is passed as metadata → handle_new_user() writes it to profiles
-          data: { name: signupName.trim() },
-        },
-      });
-      if (error) throw error;
-      showMsg('Account created. Check your email to confirm before logging in.');
-      setSignupName('');
-      setSignupEmail('');
-      setSignupPassword('');
-    } catch (err: unknown) {
-      showMsg('Sign-up failed: ' + (err instanceof Error ? err.message : 'Unknown error'), true);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function handleForgotPassword(e: FormEvent) {
-    e.preventDefault();
-    const sb = getSupabase();
-    if (!sb) return showMsg('Auth service unavailable.', true);
-    setBusy(true);
-    showMsg('Sending reset link…');
-    // Redirect back to this page; the recovery token arrives in the URL hash
     const redirectTo =
       typeof window !== 'undefined'
         ? `${window.location.origin}${BASE_PATH}/submissions`
         : undefined;
-    try {
-      const { error } = await sb.auth.resetPasswordForEmail(resetEmail.trim(), {
-        redirectTo,
-      });
-      if (error) throw error;
-      showMsg('Reset link sent — check your email. You can close this form.');
-      setResetEmail('');
-    } catch (err: unknown) {
-      showMsg('Could not send reset link: ' + (err instanceof Error ? err.message : 'Unknown error'), true);
-    } finally {
-      setBusy(false);
-    }
+    const { error } = await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo },
+    });
+    if (error) { showMsg('Google sign-in failed: ' + error.message, true); setBusy(false); }
   }
 
   return (
-    <div>
+    <div className="google-auth-panel">
       <h3>Student Login</h3>
-      <p className="prereq-note" style={{ marginBottom: '1rem' }}>
-        Use your course account to log in. New students can sign up below.
+      <p className="prereq-note" style={{ marginBottom: '1.5rem' }}>
+        Sign in with your Google account to access your course submissions and grades.
       </p>
 
-      {/* ── Login form ── */}
-      <form className="auth-form" onSubmit={handleLogin}>
-        <div className="auth-field">
-          <input
-            type="email"
-            placeholder="Email"
-            value={loginEmail}
-            onChange={e => setLoginEmail(e.target.value)}
-            required
-            disabled={busy}
-            autoComplete="email"
-            autoCorrect="off"
-            autoCapitalize="off"
-            spellCheck={false}
-          />
-        </div>
-        <div className="auth-field">
-          <input
-            type="password"
-            placeholder="Password"
-            value={loginPassword}
-            onChange={e => setLoginPassword(e.target.value)}
-            required
-            disabled={busy}
-            autoComplete="current-password"
-            spellCheck={false}
-          />
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-          <button type="submit" className="btn-primary btn-small" disabled={busy}>
-            Log in
-          </button>
-          <button
-            type="button"
-            className="read-more-btn"
-            onClick={() => { setView(view === 'forgot' ? 'login' : 'forgot'); showMsg(''); }}
-          >
-            {view === 'forgot' ? '← Back to login' : 'Forgot password?'}
-          </button>
-        </div>
-      </form>
-
-      {/* ── Forgot-password panel ── */}
-      {view === 'forgot' && (
-        <>
-          <h4 className="auth-section-title">Reset password</h4>
-          <p className="prereq-note" style={{ marginBottom: '0.75rem' }}>
-            Enter your account email and we&apos;ll send you a link to set a new password.
-          </p>
-          <form className="auth-form" onSubmit={handleForgotPassword}>
-            <div className="auth-field">
-              <input
-                type="email"
-                placeholder="Email"
-                value={resetEmail}
-                onChange={e => setResetEmail(e.target.value)}
-                required
-                disabled={busy}
-                autoComplete="email"
-                autoCorrect="off"
-                autoCapitalize="off"
-                spellCheck={false}
-              />
-            </div>
-            <button type="submit" className="btn-primary btn-small" disabled={busy}>
-              Send reset link
-            </button>
-          </form>
-        </>
-      )}
-
-      {/* ── Sign-up form ── */}
-      {view === 'login' && (
-        <>
-          <h4 className="auth-section-title">Create an account</h4>
-          {!signupsOpen && (
-            <p className="prereq-note" style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>
-              Registrations are currently closed.
-            </p>
-          )}
-          {signupsOpen && <form className="auth-form" onSubmit={handleSignup}>
-            <div className="auth-field">
-              <input
-                type="text"
-                placeholder="Full name"
-                value={signupName}
-                onChange={e => setSignupName(e.target.value)}
-                required
-                disabled={busy}
-              />
-            </div>
-            <div className="auth-field">
-              <input
-                type="email"
-                placeholder="Email"
-                value={signupEmail}
-                onChange={e => setSignupEmail(e.target.value)}
-                required
-                disabled={busy}
-                autoComplete="email"
-                autoCorrect="off"
-                autoCapitalize="off"
-                spellCheck={false}
-              />
-            </div>
-            <div className="auth-field">
-              <input
-                type="password"
-                placeholder="Password"
-                value={signupPassword}
-                onChange={e => setSignupPassword(e.target.value)}
-                required
-                disabled={busy}
-                autoComplete="new-password"
-                spellCheck={false}
-              />
-            </div>
-            <button type="submit" className="btn-primary btn-small" disabled={busy}>
-              Sign up
-            </button>
-          </form>}
-        </>
-      )}
+      <button type="button" className="btn-google" onClick={handleGoogleLogin} disabled={busy}>
+        <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+          <path fill="none" d="M0 0h48v48H0z"/>
+        </svg>
+        {busy ? 'Redirecting…' : 'Continue with Google'}
+      </button>
 
       {message && (
-        <p className={`auth-message${isError ? ' error' : ''}`}>{message}</p>
+        <p className={`auth-message${isError ? ' error' : ''}`} style={{ marginTop: '1rem' }}>
+          {message}
+        </p>
       )}
     </div>
   );
