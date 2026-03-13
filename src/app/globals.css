@@ -1268,13 +1268,15 @@ ol.article-list,
     flex: 1;
 }
 
-.admin-assignment-form input {
+.admin-assignment-form input,
+.admin-assignment-edit-form input {
     padding: 8px 10px;
     border: 1px solid var(--border-color);
     border-radius: 6px;
     background: var(--bg-primary);
     color: var(--text-primary);
     font-size: 0.95rem;
+    color-scheme: light dark;
 }
 
 .admin-list {
@@ -1303,6 +1305,33 @@ ol.article-list,
 
 .admin-assignment-item:last-child {
     border-bottom: none;
+}
+
+.admin-assignment-item--editing {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.admin-assignment-edit-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 8px;
+    align-items: center;
+    width: 100%;
+}
+
+.admin-assignment-edit-form input[type="datetime-local"] {
+    grid-column: 1 / -1;
+}
+
+.admin-assignment-edit-form .admin-assignment-actions {
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 600px) {
+    .admin-assignment-edit-form {
+        grid-template-columns: 1fr;
+    }
 }
 
 .admin-score-input {
