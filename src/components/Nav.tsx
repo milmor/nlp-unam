@@ -10,6 +10,7 @@ const navLinks = [
   { label: 'Guidelines', href: '/guidelines' },
   { label: 'Instructor', href: '/#instructor' },
   { label: 'Student Experiences', href: '/testimonials' },
+  { label: 'Submissions', href: '/submissions' },
 ];
 
 export default function Nav() {
