@@ -1526,6 +1526,39 @@ ol.article-list,
 [data-theme="dark"] .signup-status-badge.open  { color: #81c784; background: color-mix(in srgb, #81c784 15%, transparent); }
 [data-theme="dark"] .signup-status-badge.closed { color: #e57373; background: color-mix(in srgb, #e57373 15%, transparent); }
 
+/* Admin tab bar */
+.admin-tab-bar {
+    display: flex;
+    gap: 4px;
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.admin-tab {
+    padding: 0.45rem 1rem;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    border-radius: 4px 4px 0 0;
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.admin-tab:hover {
+    color: var(--text-primary);
+    background: color-mix(in srgb, var(--border-color) 30%, transparent);
+}
+
+.admin-tab--active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    font-weight: 600;
+}
+
 /* Dashboard header with back button */
 .dashboard-header-left {
     display: flex;

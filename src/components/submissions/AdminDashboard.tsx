@@ -5,6 +5,12 @@ import type { User } from '@supabase/supabase-js';
 import { getSupabase } from '@/lib/supabase';
 import type { Assignment, AdminSubmission, Course } from '@/types/submissions';
 
+interface EnrolledStudent {
+  student_id: string;
+  enrolled_at: string | null;
+  profile: { email: string | null; name: string | null } | null;
+}
+
 interface Props {
   user: User;
   course: Course;
@@ -12,9 +18,13 @@ interface Props {
   onBack: () => void;
 }
 
+type AdminTab = 'assignments' | 'submissions' | 'students';
+
 export default function AdminDashboard({ user, course, onLogout, onBack }: Props) {
+  const [activeTab, setActiveTab] = useState<AdminTab>('assignments');
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<AdminSubmission[]>([]);
+  const [students, setStudents] = useState<EnrolledStudent[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
@@ -131,6 +141,33 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
       const courseAssignIds = new Set((assignRes.data ?? []).map(a => a.id));
       setAssignments(assignRes.data ?? []);
       setSubmissions(((subRes.data ?? []) as unknown as AdminSubmission[]).filter(s => courseAssignIds.has(s.assignment_id)));
+
+      // Students: fetch enrollments then join profiles manually (FK goes to auth.users, not profiles)
+      const enrollRes = await sb
+        .from('enrollments')
+        .select('student_id, enrolled_at')
+        .eq('course_id', course.id)
+        .order('enrolled_at', { ascending: false });
+      if (enrollRes.error) {
+        showMsg('Could not load students: ' + enrollRes.error.message, true);
+      } else if (enrollRes.data && enrollRes.data.length > 0) {
+        const ids = enrollRes.data.map(e => e.student_id);
+        const profRes = await sb
+          .from('profiles')
+          .select('id, email, name')
+          .in('id', ids);
+        const profileMap = new Map((profRes.data ?? []).map(p => [p.id, p]));
+        setStudents(enrollRes.data.map(e => ({
+          student_id: e.student_id,
+          enrolled_at: e.enrolled_at,
+          profile: profileMap.get(e.student_id) ? {
+            email: profileMap.get(e.student_id)!.email,
+            name: profileMap.get(e.student_id)!.name,
+          } : null,
+        })));
+      } else {
+        setStudents([]);
+      }
     } catch (err: unknown) {
       showMsg(err instanceof Error ? err.message : 'Failed to load data.', true);
     } finally {
@@ -275,8 +312,24 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
         <p className={`admin-dashboard-message${isError ? ' error' : ''}`}>{message}</p>
       )}
 
+      {/* Tab bar */}
+      <div className="admin-tab-bar">
+        {(['assignments', 'submissions', 'students'] as AdminTab[]).map(tab => (
+          <button
+            key={tab}
+            type="button"
+            className={`admin-tab${activeTab === tab ? ' admin-tab--active' : ''}`}
+            onClick={() => setActiveTab(tab)}
+          >
+            {tab === 'assignments' && `Assignments (${assignments.length})`}
+            {tab === 'submissions' && `Submissions (${submissions.length})`}
+            {tab === 'students' && `Students (${students.length})`}
+          </button>
+        ))}
+      </div>
+
       {/* Assignments management */}
-      <div className="admin-assignments-section">
+      {activeTab === 'assignments' && <div className="admin-assignments-section">
         <h5 className="admin-section-title">Assignments</h5>
         <form className="admin-assignment-form" onSubmit={handleAddAssignment}>
           <div className="admin-assignment-fields">
@@ -378,10 +431,10 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
             )}
           </ul>
         )}
-      </div>
+      </div>}
 
       {/* All submissions — grouped by assignment */}
-      <div className="admin-submissions-section">
+      {activeTab === 'submissions' && <div className="admin-submissions-section">
         <h5 className="admin-section-title">Submissions by assignment</h5>
         {loading ? (
           <p className="prereq-note">Loading…</p>
@@ -480,7 +533,46 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
             })}
           </ul>
         )}
-      </div>
+      </div>}
+
+      {/* Students enrolled in this course */}
+      {activeTab === 'students' && (
+        <div className="admin-assignments-section">
+          {loading ? (
+            <p className="prereq-note">Loading…</p>
+          ) : students.length === 0 ? (
+            <p className="prereq-note" style={{ fontStyle: 'italic' }}>No students enrolled yet.</p>
+          ) : (
+            <div className="dashboard-table-wrapper">
+              <table className="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Enrolled</th>
+                    <th>Submissions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {students.map(s => {
+                    const subCount = submissions.filter(sub =>
+                      sub.student?.email === s.profile?.email
+                    ).length;
+                    return (
+                      <tr key={s.student_id}>
+                        <td><strong>{s.profile?.name ?? '—'}</strong></td>
+                        <td>{s.profile?.email ?? '—'}</td>
+                        <td>{s.enrolled_at ? new Date(s.enrolled_at).toLocaleDateString() : '—'}</td>
+                        <td>{subCount} / {assignments.length}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
