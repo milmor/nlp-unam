@@ -3,14 +3,16 @@
 import { useState, useEffect, useRef, FormEvent } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { getSupabase } from '@/lib/supabase';
-import type { Assignment, AdminSubmission } from '@/types/submissions';
+import type { Assignment, AdminSubmission, Course } from '@/types/submissions';
 
 interface Props {
   user: User;
+  course: Course;
   onLogout: () => void;
+  onBack: () => void;
 }
 
-export default function AdminDashboard({ user, onLogout }: Props) {
+export default function AdminDashboard({ user, course, onLogout, onBack }: Props) {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<AdminSubmission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,8 +96,8 @@ export default function AdminDashboard({ user, onLogout }: Props) {
   async function loadSignupSetting() {
     const sb = getSupabase();
     if (!sb) return;
-    const { data } = await sb.from('settings').select('value').eq('key', 'signups_open').single();
-    setSignupsOpen(data?.value !== 'false');
+    const { data } = await sb.from('courses').select('signups_open').eq('id', course.id).single();
+    if (data) setSignupsOpen(data.signups_open);
   }
 
   async function toggleSignups() {
@@ -103,10 +105,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     if (!sb || signupsOpen === null) return;
     setSignupsToggling(true);
     const next = !signupsOpen;
-    const { error } = await sb
-      .from('settings')
-      .update({ value: next ? 'true' : 'false' })
-      .eq('key', 'signups_open');
+    const { error } = await sb.from('courses').update({ signups_open: next }).eq('id', course.id);
     if (!error) setSignupsOpen(next);
     else showMsg('Failed to update signup setting.', true);
     setSignupsToggling(false);
@@ -119,18 +118,19 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     showMsg('');
     try {
       const [assignRes, subRes] = await Promise.all([
-        sb.from('assignments').select('id, title, description, deadline').order('id'),
+        sb.from('assignments').select('id, title, description, deadline').eq('course_id', course.id).order('id'),
         sb
           .from('submissions')
           .select(
-            'id, assignment_id, notebook_url, score, feedback, created_at, student:profiles!fk_student(email, name, role), assignment:assignments!fk_assignment(title)'
+            'id, assignment_id, notebook_url, score, feedback, created_at, student:profiles!submissions_student_id_fkey(email, name, role), assignment:assignments!fk_assignment(title, course_id)'
           )
           .order('created_at', { ascending: false }),
       ]);
       if (assignRes.error) throw assignRes.error;
       if (subRes.error) throw subRes.error;
+      const courseAssignIds = new Set((assignRes.data ?? []).map(a => a.id));
       setAssignments(assignRes.data ?? []);
-      setSubmissions((subRes.data ?? []) as unknown as AdminSubmission[]);
+      setSubmissions(((subRes.data ?? []) as unknown as AdminSubmission[]).filter(s => courseAssignIds.has(s.assignment_id)));
     } catch (err: unknown) {
       showMsg(err instanceof Error ? err.message : 'Failed to load data.', true);
     } finally {
@@ -147,7 +147,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     const sb = getSupabase();
     if (!sb) return;
     showMsg('Adding assignment…');
-    const payload: Record<string, unknown> = { title };
+    const payload: Record<string, unknown> = { title, course_id: course.id };
     if (newDesc.trim()) payload.description = newDesc.trim();
     if (newDeadline) payload.deadline = new Date(newDeadline).toISOString();
     const { error } = await sb.from('assignments').insert([payload]);
@@ -238,7 +238,10 @@ export default function AdminDashboard({ user, onLogout }: Props) {
   return (
     <div className="dashboard">
       <div className="dashboard-header">
-        <h4 className="dashboard-title">Admin — Student submissions &amp; grades</h4>
+        <div className="dashboard-header-left">
+          <button className="btn-secondary btn-small" onClick={onBack} type="button">← Courses</button>
+          <h4 className="dashboard-title">{course.name}{course.term ? ` · ${course.term}` : ''}</h4>
+        </div>
         <button className="btn-secondary btn-small" onClick={onLogout} type="button">
           Log out
         </button>
