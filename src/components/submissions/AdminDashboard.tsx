@@ -22,30 +22,48 @@ export default function AdminDashboard({ user, onLogout }: Props) {
   const [signupsOpen, setSignupsOpen] = useState<boolean | null>(null);
   const [signupsToggling, setSignupsToggling] = useState(false);
 
-  // Inline deadline editing: assignmentId → draft datetime-local string
-  const [editingDeadline, setEditingDeadline] = useState<Map<number, string>>(new Map());
+  // Inline assignment editing: id → { title, description, deadline }
+  type EditDraft = { title: string; description: string; deadline: string };
+  const [editingAssignment, setEditingAssignment] = useState<Map<number, EditDraft>>(new Map());
 
-  function startEditDeadline(a: Assignment) {
-    const value = a.deadline
+  function startEdit(a: Assignment) {
+    const deadline = a.deadline
       ? new Date(new Date(a.deadline).getTime() - new Date().getTimezoneOffset() * 60000)
-          .toISOString()
-          .slice(0, 16)
+          .toISOString().slice(0, 16)
       : '';
-    setEditingDeadline(prev => new Map(prev).set(a.id, value));
+    setEditingAssignment(prev => new Map(prev).set(a.id, {
+      title: a.title,
+      description: a.description ?? '',
+      deadline,
+    }));
   }
 
-  function cancelEditDeadline(id: number) {
-    setEditingDeadline(prev => { const m = new Map(prev); m.delete(id); return m; });
+  function cancelEdit(id: number) {
+    setEditingAssignment(prev => { const m = new Map(prev); m.delete(id); return m; });
   }
 
-  async function saveDeadline(id: number) {
+  function updateDraft(id: number, field: keyof EditDraft, value: string) {
+    setEditingAssignment(prev => {
+      const m = new Map(prev);
+      const current = m.get(id);
+      if (current) m.set(id, { ...current, [field]: value });
+      return m;
+    });
+  }
+
+  async function saveEdit(id: number) {
     const sb = getSupabase();
     if (!sb) return;
-    const raw = editingDeadline.get(id) ?? '';
-    const deadline = raw ? new Date(raw).toISOString() : null;
-    const { error } = await sb.from('assignments').update({ deadline }).eq('id', id);
-    if (error) return showMsg('Failed to save deadline: ' + error.message, true);
-    cancelEditDeadline(id);
+    const draft = editingAssignment.get(id);
+    if (!draft || !draft.title.trim()) return;
+    const payload: Record<string, unknown> = {
+      title: draft.title.trim(),
+      description: draft.description.trim() || null,
+      deadline: draft.deadline ? new Date(draft.deadline).toISOString() : null,
+    };
+    const { error } = await sb.from('assignments').update(payload).eq('id', id);
+    if (error) return showMsg('Failed to save: ' + error.message, true);
+    cancelEdit(id);
     loadData();
   }
 
@@ -280,62 +298,67 @@ export default function AdminDashboard({ user, onLogout }: Props) {
               <li className="admin-list-empty">No assignments defined.</li>
             ) : (
               assignments.map(a => {
-                const isEditingDl = editingDeadline.has(a.id);
+                const draft = editingAssignment.get(a.id);
+                const isEditing = !!draft;
                 const isPast = a.deadline ? new Date(a.deadline) < new Date() : false;
                 return (
-                  <li key={a.id} className="admin-assignment-item">
-                    <span>
-                      <strong>{a.title}</strong>
-                      {a.description ? `: ${a.description}` : ''}
-                      {!isEditingDl && a.deadline && (
-                        <span className={`deadline-badge${isPast ? ' deadline-past' : ''}`}>
-                          {isPast ? '⏰ Closed' : '⏰ Due'}{' '}
-                          {new Date(a.deadline).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
-                        </span>
-                      )}
-                    </span>
-                    <span className="admin-assignment-actions">
-                      {isEditingDl ? (
-                        <>
-                          <input
-                            type="datetime-local"
-                            value={editingDeadline.get(a.id) ?? ''}
-                            onChange={e =>
-                              setEditingDeadline(prev => new Map(prev).set(a.id, e.target.value))
-                            }
-                          />
-                          <button
-                            type="button"
-                            className="btn-primary btn-small"
-                            onClick={() => saveDeadline(a.id)}
-                          >
+                  <li key={a.id} className={`admin-assignment-item${isEditing ? ' admin-assignment-item--editing' : ''}`}>
+                    {isEditing ? (
+                      <div className="admin-assignment-edit-form">
+                        <input
+                          type="text"
+                          placeholder="Title"
+                          value={draft.title}
+                          onChange={e => updateDraft(a.id, 'title', e.target.value)}
+                          required
+                        />
+                        <input
+                          type="text"
+                          placeholder="Description (optional)"
+                          value={draft.description}
+                          onChange={e => updateDraft(a.id, 'description', e.target.value)}
+                        />
+                        <input
+                          type="datetime-local"
+                          title="Deadline (optional)"
+                          value={draft.deadline}
+                          onChange={e => updateDraft(a.id, 'deadline', e.target.value)}
+                        />
+                        <div className="admin-assignment-actions">
+                          <button type="button" className="btn-primary btn-small" onClick={() => saveEdit(a.id)}>
                             Save
+                          </button>
+                          <button type="button" className="btn-secondary btn-small" onClick={() => cancelEdit(a.id)}>
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <span>
+                          <strong>{a.title}</strong>
+                          {a.description ? `: ${a.description}` : ''}
+                          {a.deadline && (
+                            <span className={`deadline-badge${isPast ? ' deadline-past' : ''}`}>
+                              {isPast ? '⏰ Closed' : '⏰ Due'}{' '}
+                              {new Date(a.deadline).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+                            </span>
+                          )}
+                        </span>
+                        <span className="admin-assignment-actions">
+                          <button type="button" className="btn-secondary btn-small" onClick={() => startEdit(a)}>
+                            Edit
                           </button>
                           <button
                             type="button"
                             className="btn-secondary btn-small"
-                            onClick={() => cancelEditDeadline(a.id)}
+                            onClick={() => handleDeleteAssignment(a.id)}
                           >
-                            Cancel
+                            Delete
                           </button>
-                        </>
-                      ) : (
-                        <button
-                          type="button"
-                          className="btn-secondary btn-small"
-                          onClick={() => startEditDeadline(a)}
-                        >
-                          {a.deadline ? 'Edit deadline' : 'Set deadline'}
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        className="btn-secondary btn-small"
-                        onClick={() => handleDeleteAssignment(a.id)}
-                      >
-                        Delete
-                      </button>
-                    </span>
+                        </span>
+                      </>
+                    )}
                   </li>
                 );
               })
