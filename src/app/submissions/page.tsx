@@ -80,46 +80,48 @@ export default function SubmissionsPage() {
     setAuthState('unauthenticated');
   };
 
+  const isAuthView = authState === 'unauthenticated' || authState === 'loading' || recovering;
+
   return (
     <section className="section">
       <div className="container">
-        <h2>Homework Submissions</h2>
-        <p className="section-intro">
-          Authenticate below to view your submissions and grades for the course programming assignments.
-        </p>
+        {/* Wrap heading + card in the same narrow column when showing auth */}
+        <div className={isAuthView ? 'submissions-auth-wrapper' : ''}>
+          <h2>Homework Submissions</h2>
+          <p className="section-intro">
+            Authenticate below to view your submissions and grades for the course programming assignments.
+          </p>
 
-        <div className="course-details-grid submissions-grid">
-          {/* Left column — auth / dashboard */}
-          <div className="detail-card">
-            {authState === 'loading' && (
-              <p className="prereq-note">Loading…</p>
-            )}
+        {/* Main dashboard card */}
+        <div className="detail-card submissions-main-card">
+          {authState === 'loading' && (
+            <p className="prereq-note">Loading…</p>
+          )}
 
-            {/* Password recovery flow — shown when user arrives via reset link */}
-            {recovering && (
-              <ResetPasswordForm onDone={handleResetDone} />
-            )}
+          {recovering && (
+            <ResetPasswordForm onDone={handleResetDone} />
+          )}
 
-            {!recovering && authState === 'unauthenticated' && (
-              <AuthPanel onAuth={handleUser} />
-            )}
+          {!recovering && authState === 'unauthenticated' && (
+            <AuthPanel onAuth={handleUser} />
+          )}
 
-            {!recovering && authState === 'student' && user && (
-              <StudentDashboard user={user} onLogout={handleLogout} />
-            )}
+          {!recovering && authState === 'student' && user && (
+            <StudentDashboard user={user} onLogout={handleLogout} />
+          )}
 
-            {!recovering && authState === 'admin' && user && (
-              <AdminDashboard user={user} onLogout={handleLogout} />
-            )}
-          </div>
-
-          {/* Right column — API status (admin only) */}
-          {authState === 'admin' && (
-            <div className="detail-card">
-              <ApiStatus />
-            </div>
+          {!recovering && authState === 'admin' && user && (
+            <AdminDashboard user={user} onLogout={handleLogout} />
           )}
         </div>
+        </div>{/* end auth-wrapper or fragment */}
+
+        {/* API status — below dashboard, admin only */}
+        {authState === 'admin' && (
+          <div className="detail-card submissions-api-card">
+            <ApiStatus />
+          </div>
+        )}
       </div>
     </section>
   );
