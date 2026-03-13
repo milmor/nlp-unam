@@ -1355,6 +1355,59 @@ ol.article-list,
     color: var(--text-primary);
 }
 
+/* Submissions accordion */
+.admin-accordion {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.admin-accordion-item {
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.admin-accordion-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: color-mix(in srgb, var(--border-color) 30%, transparent);
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    text-align: left;
+    gap: 8px;
+    transition: background 0.15s;
+}
+
+.admin-accordion-header:hover {
+    background: color-mix(in srgb, var(--border-color) 55%, transparent);
+}
+
+.admin-accordion-count {
+    margin-left: 0.6rem;
+    font-size: 0.78rem;
+    font-weight: normal;
+    color: var(--text-muted);
+}
+
+.admin-accordion-chevron {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.admin-accordion-item .dashboard-table-wrapper {
+    border-top: 1px solid var(--border-color);
+}
+
 .admin-table-empty {
     text-align: center;
     font-style: italic;
