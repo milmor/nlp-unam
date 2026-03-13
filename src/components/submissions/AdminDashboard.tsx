@@ -123,7 +123,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
         sb
           .from('submissions')
           .select(
-            'id, notebook_url, score, feedback, created_at, student:profiles!fk_student(email, name, role), assignment:assignments!fk_assignment(title)'
+            'id, assignment_id, notebook_url, score, feedback, created_at, student:profiles!fk_student(email, name, role), assignment:assignments!fk_assignment(title)'
           )
           .order('created_at', { ascending: false }),
       ]);
@@ -191,6 +191,16 @@ export default function AdminDashboard({ user, onLogout }: Props) {
   const [grades, setGrades] = useState<
     Map<number, { score: string; feedback: string }>
   >(new Map());
+
+  // Accordion: which assignment rows are expanded
+  const [expandedAssignments, setExpandedAssignments] = useState<Set<number>>(new Set());
+  function toggleAssignment(id: number) {
+    setExpandedAssignments(prev => {
+      const s = new Set(prev);
+      s.has(id) ? s.delete(id) : s.add(id);
+      return s;
+    });
+  }
 
   useEffect(() => {
     const initial = new Map<number, { score: string; feedback: string }>();
@@ -367,85 +377,106 @@ export default function AdminDashboard({ user, onLogout }: Props) {
         )}
       </div>
 
-      {/* All submissions */}
+      {/* All submissions — grouped by assignment */}
       <div className="admin-submissions-section">
-        <h5 className="admin-section-title">All submissions</h5>
-        <div className="dashboard-table-wrapper">
-          <table className="dashboard-table admin-submissions-table">
-            <thead>
-              <tr>
-                <th>Student</th>
-                <th>Assignment</th>
-                <th>Notebook</th>
-                <th>Score</th>
-                <th>Feedback</th>
-                <th>Submitted</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr><td colSpan={6} className="admin-table-empty">Loading…</td></tr>
-              ) : submissions.length === 0 ? (
-                <tr><td colSpan={6} className="admin-table-empty">No submissions yet.</td></tr>
-              ) : (
-                submissions.map(sub => {
-                  const g = grades.get(sub.id) ?? { score: '', feedback: '' };
-                  const role = sub.student?.role ? ` (${sub.student.role})` : '';
-                  return (
-                    <tr key={sub.id}>
-                      <td>
-                        {sub.student?.name
-                          ? <><strong>{sub.student.name}</strong>{role}</>
-                          : (sub.student?.email ?? '—') + role
-                        }
-                        <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                          {sub.student?.email ?? ''}
-                        </span>
-                      </td>
-                      <td>{sub.assignment?.title ?? '—'}</td>
-                      <td>
-                        {sub.notebook_url ? (
-                          <button
-                            type="button"
-                            className="btn-secondary btn-small"
-                            onClick={() => openNotebook(sub.notebook_url!)}
-                          >
-                            Open ↗
-                          </button>
-                        ) : '—'}
-                      </td>
-                      <td>
-                        <input
-                          type="number"
-                          min={0}
-                          max={100}
-                          step={0.5}
-                          className="admin-score-input"
-                          value={g.score}
-                          onChange={e => handleScoreChange(sub.id, e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          className="admin-feedback-input"
-                          placeholder="Feedback"
-                          value={g.feedback}
-                          onChange={e => handleFeedbackChange(sub.id, e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        {sub.created_at
-                          ? new Date(sub.created_at).toLocaleDateString()
-                          : '—'}
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+        <h5 className="admin-section-title">Submissions by assignment</h5>
+        {loading ? (
+          <p className="prereq-note">Loading…</p>
+        ) : assignments.length === 0 ? (
+          <p className="prereq-note" style={{ fontStyle: 'italic' }}>No assignments yet.</p>
+        ) : (
+          <ul className="admin-accordion">
+            {assignments.map(a => {
+              const assignSubs = submissions.filter(s => s.assignment_id === a.id);
+              const count = assignSubs.length;
+              const isOpen = expandedAssignments.has(a.id);
+              return (
+                <li key={a.id} className="admin-accordion-item">
+                  <button
+                    type="button"
+                    className="admin-accordion-header"
+                    onClick={() => toggleAssignment(a.id)}
+                  >
+                    <span>
+                      <strong>{a.title}</strong>
+                      <span className="admin-accordion-count">{count} submission{count !== 1 ? 's' : ''}</span>
+                    </span>
+                    <span className="admin-accordion-chevron">{isOpen ? '▲' : '▼'}</span>
+                  </button>
+
+                  {isOpen && (
+                    <div className="dashboard-table-wrapper">
+                      <table className="dashboard-table admin-submissions-table">
+                        <thead>
+                          <tr>
+                            <th>Student</th>
+                            <th>Notebook</th>
+                            <th>Score</th>
+                            <th>Feedback</th>
+                            <th>Submitted</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {assignSubs.length === 0 ? (
+                            <tr><td colSpan={5} className="admin-table-empty">No submissions yet.</td></tr>
+                          ) : assignSubs.map(sub => {
+                            const g = grades.get(sub.id) ?? { score: '', feedback: '' };
+                            const role = sub.student?.role ? ` (${sub.student.role})` : '';
+                            return (
+                              <tr key={sub.id}>
+                                <td>
+                                  {sub.student?.name
+                                    ? <><strong>{sub.student.name}</strong>{role}</>
+                                    : (sub.student?.email ?? '—') + role
+                                  }
+                                  <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                                    {sub.student?.email ?? ''}
+                                  </span>
+                                </td>
+                                <td>
+                                  {sub.notebook_url ? (
+                                    <button
+                                      type="button"
+                                      className="btn-secondary btn-small"
+                                      onClick={() => openNotebook(sub.notebook_url!)}
+                                    >
+                                      Open ↗
+                                    </button>
+                                  ) : '—'}
+                                </td>
+                                <td>
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    max={100}
+                                    step={0.5}
+                                    className="admin-score-input"
+                                    value={g.score}
+                                    onChange={e => handleScoreChange(sub.id, e.target.value)}
+                                  />
+                                </td>
+                                <td>
+                                  <input
+                                    type="text"
+                                    className="admin-feedback-input"
+                                    placeholder="Feedback"
+                                    value={g.feedback}
+                                    onChange={e => handleFeedbackChange(sub.id, e.target.value)}
+                                  />
+                                </td>
+                                <td>{sub.created_at ? new Date(sub.created_at).toLocaleDateString() : '—'}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
     </div>
   );

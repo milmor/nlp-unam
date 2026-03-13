@@ -17,6 +17,7 @@ export interface Submission {
 
 export interface AdminSubmission {
   id: number;
+  assignment_id: number;
   notebook_url?: string | null;
   score?: number | null;
   feedback?: string | null;
