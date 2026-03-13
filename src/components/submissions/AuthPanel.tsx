@@ -139,6 +139,10 @@ export default function AuthPanel({ onAuth }: AuthPanelProps) {
             onChange={e => setLoginEmail(e.target.value)}
             required
             disabled={busy}
+            autoComplete="email"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
           />
         </div>
         <div className="auth-field">
@@ -149,6 +153,8 @@ export default function AuthPanel({ onAuth }: AuthPanelProps) {
             onChange={e => setLoginPassword(e.target.value)}
             required
             disabled={busy}
+            autoComplete="current-password"
+            spellCheck={false}
           />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
@@ -181,6 +187,10 @@ export default function AuthPanel({ onAuth }: AuthPanelProps) {
                 onChange={e => setResetEmail(e.target.value)}
                 required
                 disabled={busy}
+                autoComplete="email"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
               />
             </div>
             <button type="submit" className="btn-primary btn-small" disabled={busy}>
@@ -218,6 +228,10 @@ export default function AuthPanel({ onAuth }: AuthPanelProps) {
                 onChange={e => setSignupEmail(e.target.value)}
                 required
                 disabled={busy}
+                autoComplete="email"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
               />
             </div>
             <div className="auth-field">
@@ -228,6 +242,8 @@ export default function AuthPanel({ onAuth }: AuthPanelProps) {
                 onChange={e => setSignupPassword(e.target.value)}
                 required
                 disabled={busy}
+                autoComplete="new-password"
+                spellCheck={false}
               />
             </div>
             <button type="submit" className="btn-primary btn-small" disabled={busy}>
