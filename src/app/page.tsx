@@ -182,8 +182,8 @@ export default function Home() {
                 <tr>
                   <td>6</td>
                   <td>
-                    <strong>Recurrent Neural Networks</strong>
-                    <p>RNNs, backpropagation through time, LSTM, GRU</p>
+                    <strong>Recurrent Neural Networks &amp; Language Models</strong>
+                    <p>RNNs, backpropagation through time, LSTM, GRU; language modeling, sequence generation, sampling strategies</p>
                   </td>
                   <td>
                     <strong>Readings:</strong><br />
@@ -199,14 +199,6 @@ export default function Home() {
                 </tr>
                 <tr>
                   <td>7</td>
-                  <td>
-                    <strong>Language Models &amp; Text Generation</strong>
-                    <p>Language modeling, sequence generation, sampling strategies</p>
-                  </td>
-                  <td></td>
-                </tr>
-                <tr>
-                  <td>8</td>
                   <td>
                     <strong>Sequence-to-Sequence &amp; Attention</strong>
                     <p>Seq2seq for translation, attention mechanism</p>
@@ -224,7 +216,7 @@ export default function Home() {
                   </td>
                 </tr>
                 <tr>
-                  <td>9</td>
+                  <td>8</td>
                   <td>
                     <strong>Transformers</strong>
                     <p>Self-attention, multi-head attention, positional encoding</p>
@@ -238,7 +230,7 @@ export default function Home() {
                   </td>
                 </tr>
                 <tr>
-                  <td>10</td>
+                  <td>9</td>
                   <td>
                     <strong>Pre-trained Models: BERT &amp; GPT</strong>
                     <p>Transfer learning, fine-tuning, masked language modeling</p>
@@ -256,7 +248,7 @@ export default function Home() {
                   </td>
                 </tr>
                 <tr>
-                  <td>11</td>
+                  <td>10</td>
                   <td>
                     <strong>Advanced NLP Techniques</strong>
                     <p>LoRA, FAISS, Retrieval-Augmented Generation (RAG)</p>
@@ -272,7 +264,7 @@ export default function Home() {
                   </td>
                 </tr>
                 <tr>
-                  <td>12</td>
+                  <td>11</td>
                   <td>
                     <strong>Language &amp; Vision: CNNs and Captioning</strong>
                     <p>Convolutional neural networks, image description generation</p>
@@ -280,7 +272,7 @@ export default function Home() {
                   <td></td>
                 </tr>
                 <tr>
-                  <td>13</td>
+                  <td>12</td>
                   <td>
                     <strong>Generative Models: VAEs &amp; GANs</strong>
                     <p>Variational autoencoders, generative adversarial networks</p>
@@ -294,7 +286,7 @@ export default function Home() {
                   </td>
                 </tr>
                 <tr>
-                  <td>14</td>
+                  <td>13</td>
                   <td>
                     <strong>Generative Models: Diffusion</strong>
                     <p>Diffusion models, DALL-E, Stable Diffusion, text-to-image generation</p>
@@ -314,7 +306,7 @@ export default function Home() {
                   </td>
                 </tr>
                 <tr>
-                  <td>15</td>
+                  <td>14</td>
                   <td>
                     <strong>Project Presentations</strong>
                     <p>Student project demos and discussions</p>
