@@ -324,17 +324,17 @@ export default function AdminDashboard({ user, onLogout }: Props) {
               ) : (
                 submissions.map(sub => {
                   const g = grades.get(sub.id) ?? { score: '', feedback: '' };
-                  const displayName = sub.student?.name || sub.student?.email || '—';
                   const role = sub.student?.role ? ` (${sub.student.role})` : '';
                   return (
                     <tr key={sub.id}>
                       <td>
-                        {displayName}{role}
-                        {sub.student?.name && (
-                          <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                            {sub.student.email}
-                          </span>
-                        )}
+                        {sub.student?.name
+                          ? <><strong>{sub.student.name}</strong>{role}</>
+                          : (sub.student?.email ?? '—') + role
+                        }
+                        <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                          {sub.student?.email ?? ''}
+                        </span>
                       </td>
                       <td>{sub.assignment?.title ?? '—'}</td>
                       <td>

@@ -68,19 +68,16 @@ export default function AuthPanel({ onAuth }: AuthPanelProps) {
         typeof window !== 'undefined'
           ? `${window.location.origin}${BASE_PATH}/submissions`
           : undefined;
-      const { data, error } = await sb.auth.signUp({
+      const { error } = await sb.auth.signUp({
         email: signupEmail.trim(),
         password: signupPassword,
-        options: { emailRedirectTo: redirectTo },
+        options: {
+          emailRedirectTo: redirectTo,
+          // Name is passed as metadata → handle_new_user() writes it to profiles
+          data: { name: signupName.trim() },
+        },
       });
       if (error) throw error;
-      // Save name to profiles (row is created by DB trigger, we just update it)
-      if (data.user && signupName.trim()) {
-        await sb
-          .from('profiles')
-          .update({ name: signupName.trim() })
-          .eq('id', data.user.id);
-      }
       showMsg('Account created. Check your email to confirm before logging in.');
       setSignupName('');
       setSignupEmail('');
