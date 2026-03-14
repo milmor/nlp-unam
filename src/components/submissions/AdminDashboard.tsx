@@ -150,7 +150,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
     showMsg('');
     try {
       const [assignRes, subRes] = await Promise.all([
-        sb.from('assignments').select('id, title, description, deadline').eq('course_id', course.id).order('id'),
+        sb.from('assignments').select('id, title, description, deadline, reference_notebook').eq('course_id', course.id).order('id'),
         sb
           .from('submissions')
           .select(
@@ -252,6 +252,69 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
   const [grades, setGrades] = useState<
     Map<number, { score: string; feedback: string }>
   >(new Map());
+
+  // Reference notebook upload & grading
+  const refInputRef = useRef<HTMLInputElement>(null);
+  const pendingRefAssignId = useRef<number | null>(null);
+  const [gradingStatus, setGradingStatus] = useState<Map<number, string>>(new Map());
+  const [gradingError, setGradingError]   = useState<Map<number, boolean>>(new Map());
+
+  const API_URL    = (process.env.NEXT_PUBLIC_API_URL ?? '').replace(/\/+$/, '');
+  const API_SECRET = process.env.NEXT_PUBLIC_API_SECRET ?? '';
+
+  function setGradeMsg(id: number, msg: string, isErr = false) {
+    setGradingStatus(p => new Map(p).set(id, msg));
+    setGradingError(p  => new Map(p).set(id, isErr));
+  }
+
+  function triggerRefUpload(assignmentId: number) {
+    pendingRefAssignId.current = assignmentId;
+    if (refInputRef.current) { refInputRef.current.value = ''; refInputRef.current.click(); }
+  }
+
+  async function handleRefFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    const assignId = pendingRefAssignId.current;
+    if (!file || assignId === null) return;
+    if (!file.name.endsWith('.ipynb')) {
+      setGradeMsg(assignId, 'Only .ipynb files accepted.', true); return;
+    }
+    const sb = getSupabase();
+    if (!sb) return;
+    setGradeMsg(assignId, 'Uploading reference…');
+    const path = `reference/${assignId}_reference.ipynb`;
+    const { error: upErr } = await sb.storage.from('student-notebooks').upload(path, file, { upsert: true, contentType: 'application/json' });
+    if (upErr) { setGradeMsg(assignId, 'Upload failed: ' + upErr.message, true); return; }
+    const { error: dbErr } = await sb.from('assignments').update({ reference_notebook: path }).eq('id', assignId);
+    if (dbErr) { setGradeMsg(assignId, 'DB update failed: ' + dbErr.message, true); return; }
+    setGradeMsg(assignId, 'Reference uploaded ✓');
+    loadData();
+  }
+
+  async function handleGradeAll(assignmentId: number, force = false) {
+    if (!API_URL) { setGradeMsg(assignmentId, 'API URL not configured.', true); return; }
+    setGradeMsg(assignmentId, 'Grading in progress…');
+    try {
+      const res = await fetch(`${API_URL}/grade/${assignmentId}${force ? '?force=true' : ''}`, {
+        method: 'POST',
+        headers: API_SECRET ? { 'x-api-key': API_SECRET } : {},
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail ?? 'Unknown error');
+      const t = data.tokens_used;
+      const tokenStr = t && (t.prompt_tokens || t.completion_tokens)
+        ? ` · ${(t.prompt_tokens || 0).toLocaleString()} in / ${(t.completion_tokens || 0).toLocaleString()} out`
+        : '';
+      setGradeMsg(assignmentId, `Done — ${data.graded} graded, ${data.errors} errors${tokenStr}`);
+      loadData();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      const hint = msg === 'Failed to fetch'
+        ? ' — API unreachable. Run FastAPI locally (uvicorn on :8000) or set NEXT_PUBLIC_API_URL to your deployed API.'
+        : '';
+      setGradeMsg(assignmentId, `Grading failed: ${msg}${hint}`, true);
+    }
+  }
 
   // Accordion: which assignment rows are expanded
   const [expandedAssignments, setExpandedAssignments] = useState<Set<number>>(new Set());
@@ -415,6 +478,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
         {loading ? (
           <p className="prereq-note">Loading…</p>
         ) : (
+          <>
           <ul className="admin-list">
             {assignments.length === 0 ? (
               <li className="admin-list-empty">No assignments defined.</li>
@@ -473,12 +537,34 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                           </button>
                           <button
                             type="button"
+                            className="btn-secondary btn-small"
+                            onClick={() => triggerRefUpload(a.id)}
+                            title={a.reference_notebook ? 'Replace reference notebook' : 'Upload reference notebook'}
+                          >
+                            {a.reference_notebook ? '📄 Reference ✓' : '📄 Reference'}
+                          </button>
+                          {a.reference_notebook && (
+                            <button
+                              type="button"
+                              className="btn-primary btn-small"
+                              onClick={() => handleGradeAll(a.id)}
+                            >
+                              ✨ Grade all
+                            </button>
+                          )}
+                          <button
+                            type="button"
                             className="btn-danger btn-small"
                             onClick={() => setConfirmDelete({ id: a.id, title: a.title })}
                           >
                             Delete
                           </button>
                         </span>
+                        {gradingStatus.get(a.id) && (
+                          <p className={`admin-dashboard-message${gradingError.get(a.id) ? ' error' : ''}`} style={{ marginTop: '4px', width: '100%' }}>
+                            {gradingStatus.get(a.id)}
+                          </p>
+                        )}
                       </>
                     )}
                   </li>
@@ -486,7 +572,11 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
               })
             )}
           </ul>
-        )}
+          <p className="prereq-note" style={{ marginTop: '8px', fontSize: '0.9em' }}>
+            Token usage is shown after each grading run. Account usage & limits:{' '}
+            <a href="https://platform.openai.com/usage" target="_blank" rel="noopener noreferrer">platform.openai.com/usage</a> (free to view).
+          </p>
+        </>)}
       </div>}
 
       {/* All submissions — grouped by assignment */}
@@ -560,7 +650,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                                   <input
                                     type="number"
                                     min={0}
-                                    max={100}
+                                    max={10}
                                     step={0.5}
                                     className="admin-score-input"
                                     value={g.score}
@@ -629,6 +719,9 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
           )}
         </div>
       )}
+
+      {/* Hidden file input for reference notebook uploads */}
+      <input ref={refInputRef} type="file" accept=".ipynb" style={{ display: 'none' }} onChange={handleRefFileSelected} />
 
       {confirmDelete && (
         <ConfirmDialog
