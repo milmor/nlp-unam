@@ -233,7 +233,7 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
                           </button>
                         ) : '—'}
                       </td>
-                      <td>{sub?.score != null ? sub.score : '–'}</td>
+                      <td>{sub?.score != null ? `${sub.score}/10` : '–'}</td>
                       <td className="feedback-cell">
                         {sub?.feedback ? (() => {
                           const text = sub.feedback;

@@ -8,6 +8,7 @@ export interface Course {
 }
 
 export interface Assignment {
+  reference_notebook?: string | null;
   id: number;
   title: string;
   description?: string | null;
