@@ -59,6 +59,14 @@ body {
     color: var(--text-primary);
     line-height: 1.7;
     transition: background-color 0.3s ease, color 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Main content grows so footer stays at bottom; no blank space below footer */
+.main {
+    flex: 1 0 auto;
 }
 
 h1, h2, h3, h4 {
@@ -1057,6 +1065,11 @@ ol.article-list,
     width: 100%;
     box-sizing: border-box;
     margin-top: 1.25rem;
+}
+
+/* Submissions page: no extra space below footer */
+.submissions-page-section .container > .detail-card:last-child {
+    margin-bottom: 0;
 }
 
 /* Auth forms */

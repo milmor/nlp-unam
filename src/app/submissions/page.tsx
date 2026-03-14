@@ -64,7 +64,7 @@ export default function SubmissionsPage() {
   const showDashboard = !recovering && selectedCourse && (authState === 'admin' || authState === 'student');
 
   return (
-    <section className="section">
+    <section className="section submissions-page-section">
       <div className="container">
         <div className={isAuthView ? 'submissions-auth-wrapper' : ''}>
           <h2>Homework Submissions</h2>
