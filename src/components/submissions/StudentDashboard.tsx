@@ -13,6 +13,8 @@ interface Props {
 }
 
 const BUCKET = 'student-notebooks';
+/** Max notebook size (MB). Must match Supabase Storage bucket limit. */
+const MAX_NOTEBOOK_MB = 2;
 
 export default function StudentDashboard({ user, course, onLogout, onBack }: Props) {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -115,6 +117,11 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
       setStatus(assignmentId, 'Only .ipynb files are accepted.', true);
       return;
     }
+    const maxBytes = MAX_NOTEBOOK_MB * 1024 * 1024;
+    if (file.size > maxBytes) {
+      setStatus(assignmentId, `File too large. Maximum size is ${MAX_NOTEBOOK_MB} MB.`, true);
+      return;
+    }
 
     const sb = getSupabase();
     if (!sb) return setStatus(assignmentId, 'Auth service unavailable.', true);
@@ -162,6 +169,9 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
       </div>
       <p className="prereq-note dashboard-user-line">
         Logged in as <strong>{user.email}</strong>
+      </p>
+      <p className="prereq-note" style={{ marginBottom: '0.5rem' }}>
+        Maximum notebook size: <strong>{MAX_NOTEBOOK_MB} MB</strong>. Only <code>.ipynb</code> files are accepted.
       </p>
 
       {/* Hidden file input shared by all rows */}
