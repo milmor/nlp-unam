@@ -64,8 +64,8 @@ export default function SubmissionsPage() {
   const showDashboard = !recovering && selectedCourse && (authState === 'admin' || authState === 'student');
 
   return (
-    <section className="section submissions-page-section">
-      <div className="container">
+    <section className={`section submissions-page-section${showDashboard ? ' submissions-page-section--dashboard' : ''}`}>
+      <div className="container container--submissions">
         <div className={isAuthView ? 'submissions-auth-wrapper' : ''}>
           <h2>Homework Submissions</h2>
           {isAuthView && (
@@ -74,54 +74,51 @@ export default function SubmissionsPage() {
             </p>
           )}
 
-          <div className="detail-card submissions-main-card">
-            {authState === 'loading' && <p className="prereq-note">Loading…</p>}
-
-            {recovering && <ResetPasswordForm onDone={handleResetDone} />}
-
-            {!recovering && authState === 'unauthenticated' && <AuthPanel onAuth={handleUser} />}
-
-            {showCourseSelector && user && (
-              <CourseSelector
-                user={user}
-                isAdmin={authState === 'admin'}
-                onSelect={setSelectedCourse}
-                onLogout={handleLogout}
-              />
-            )}
-
-            {showDashboard && user && authState === 'student' && (
-              <StudentDashboard
-                user={user}
-                course={selectedCourse!}
-                onLogout={handleLogout}
-                onBack={() => setSelectedCourse(null)}
-              />
-            )}
-
-            {showDashboard && user && authState === 'admin' && (
-              <AdminDashboard
-                user={user}
-                course={selectedCourse!}
-                onLogout={handleLogout}
-                onBack={() => setSelectedCourse(null)}
-              />
-            )}
-          </div>
+          {showDashboard && user ? (
+            <div className="submissions-dashboard-wrap">
+              {authState === 'student' && (
+                <StudentDashboard
+                  user={user}
+                  course={selectedCourse!}
+                  onLogout={handleLogout}
+                  onBack={() => setSelectedCourse(null)}
+                />
+              )}
+              {authState === 'admin' && (
+                <AdminDashboard
+                  user={user}
+                  course={selectedCourse!}
+                  onLogout={handleLogout}
+                  onBack={() => setSelectedCourse(null)}
+                />
+              )}
+            </div>
+          ) : (
+            <div className="detail-card submissions-main-card">
+              {authState === 'loading' && <p className="prereq-note">Loading…</p>}
+              {recovering && <ResetPasswordForm onDone={handleResetDone} />}
+              {!recovering && authState === 'unauthenticated' && <AuthPanel onAuth={handleUser} />}
+              {showCourseSelector && user && (
+                <CourseSelector
+                  user={user}
+                  isAdmin={authState === 'admin'}
+                  onSelect={setSelectedCourse}
+                  onLogout={handleLogout}
+                />
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Resource usage — admin only, course selected */}
         {authState === 'admin' && selectedCourse && (
-          <div className="detail-card submissions-api-card">
-            <UsageStats />
-          </div>
-        )}
-
-        {/* API status — admin only, course selected, bottom */}
-        {authState === 'admin' && selectedCourse && (
-          <div className="detail-card submissions-api-card">
-            <ApiStatus />
-          </div>
+          <>
+            <div className="detail-card submissions-api-card">
+              <UsageStats />
+            </div>
+            <div className="detail-card submissions-api-card">
+              <ApiStatus />
+            </div>
+          </>
         )}
       </div>
     </section>

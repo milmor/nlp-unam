@@ -160,7 +160,7 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
     <div className="dashboard">
       <div className="dashboard-header">
         <div className="dashboard-header-left">
-          <button className="btn-secondary btn-small" onClick={onBack} type="button">← Courses</button>
+          <button className="btn-back-courses" onClick={onBack} type="button" aria-label="Back to courses">← Courses</button>
           <h4 className="dashboard-title">{course.name}{course.term ? ` · ${course.term}` : ''}</h4>
         </div>
         <button className="btn-secondary btn-small" onClick={onLogout} type="button">

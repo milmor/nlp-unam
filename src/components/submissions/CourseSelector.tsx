@@ -86,7 +86,7 @@ export default function CourseSelector({ user, isAdmin, onSelect, onLogout }: Pr
   }
 
   return (
-    <div className="dashboard">
+    <div className="dashboard dashboard--course-selector">
       <div className="dashboard-header">
         <h4 className="dashboard-title">{isAdmin ? 'Courses' : 'My courses'}</h4>
         <button className="btn-secondary btn-small" type="button" onClick={onLogout}>Log out</button>
@@ -130,7 +130,7 @@ export default function CourseSelector({ user, isAdmin, onSelect, onLogout }: Pr
           {/* Student: open courses to join */}
           {!isAdmin && openCourses.length > 0 && (
             <>
-              <h5 className="admin-section-title" style={{ marginTop: '1.25rem' }}>Available to join</h5>
+              <h5 className="admin-section-title" style={{ marginTop: '1.75rem', marginBottom: '0.5rem' }}>Available to join</h5>
               <ul className="course-list">
                 {openCourses.map(c => (
                   <li key={c.id} className="course-list-item">
@@ -150,7 +150,7 @@ export default function CourseSelector({ user, isAdmin, onSelect, onLogout }: Pr
           {/* Admin: create new course */}
           {isAdmin && (
             <>
-              <h5 className="admin-section-title" style={{ marginTop: '1.25rem' }}>Create new course</h5>
+              <h5 className="admin-section-title" style={{ marginTop: '1.75rem', marginBottom: '0.5rem' }}>Create new course</h5>
               <form className="admin-assignment-form" onSubmit={handleCreate}>
                 <div className="admin-assignment-fields">
                   <input type="text" placeholder="Course name" value={newName} onChange={e => setNewName(e.target.value)} required disabled={creating} />

@@ -363,7 +363,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
     <div className="dashboard">
       <div className="dashboard-header">
         <div className="dashboard-header-left">
-          <button className="btn-secondary btn-small" onClick={onBack} type="button">← Courses</button>
+          <button className="btn-back-courses" onClick={onBack} type="button" aria-label="Back to courses">← Courses</button>
           {editingCourse ? (
             <div className="course-edit-inline">
               <input
@@ -431,22 +431,28 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
         <p className={`admin-dashboard-message${isError ? ' error' : ''}`}>{message}</p>
       )}
 
-      {/* Tab bar */}
-      <div className="admin-tab-bar">
+      <div className="admin-layout">
+      <nav className="admin-nav" aria-label="Admin sections">
         {(['assignments', 'submissions', 'students'] as AdminTab[]).map(tab => (
           <button
             key={tab}
             type="button"
-            className={`admin-tab${activeTab === tab ? ' admin-tab--active' : ''}`}
+            className={`admin-nav-item${activeTab === tab ? ' admin-nav-item--active' : ''}`}
             onClick={() => setActiveTab(tab)}
           >
-            {tab === 'assignments' && `Assignments (${assignments.length})`}
-            {tab === 'submissions' && `Submissions (${submissions.length})`}
-            {tab === 'students' && `Students (${students.length})`}
+            {tab === 'assignments' && <>Assignments</>}
+            {tab === 'submissions' && <>Submissions</>}
+            {tab === 'students' && <>Students</>}
+            <span className="admin-nav-count">
+              {tab === 'assignments' && assignments.length}
+              {tab === 'submissions' && submissions.length}
+              {tab === 'students' && students.length}
+            </span>
           </button>
         ))}
-      </div>
+      </nav>
 
+      <div className="admin-content">
       {/* Assignments management */}
       {activeTab === 'assignments' && <div className="admin-assignments-section">
         <h5 className="admin-section-title">Assignments</h5>
@@ -719,6 +725,10 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
           )}
         </div>
       )}
+      </div>
+      {/* end .admin-content */}
+      </div>
+      {/* end .admin-layout */}
 
       {/* Hidden file input for reference notebook uploads */}
       <input ref={refInputRef} type="file" accept=".ipynb" style={{ display: 'none' }} onChange={handleRefFileSelected} />

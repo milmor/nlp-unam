@@ -1,0 +1,50 @@
+0000000000000000000000000000000000000000 570dd17e68cc8589bd6f39809d51a490e9d0d92c milmor <mil.mor.mor@gmail.com> 1769845900 -0600	commit (initial): Initial site
+570dd17e68cc8589bd6f39809d51a490e9d0d92c 78d7ab8cfad7718193d35a8bf21a84a7e5d8874a milmor <mil.mor.mor@gmail.com> 1769846799 -0600	commit: clean code
+78d7ab8cfad7718193d35a8bf21a84a7e5d8874a ba2d2b134ee8c22dd256627915950baea41fd075 milmor <mil.mor.mor@gmail.com> 1769887692 -0600	commit: add readings
+ba2d2b134ee8c22dd256627915950baea41fd075 18ee6381c1d7ac95ded70c84a5700e38adabe5da milmor <mil.mor.mor@gmail.com> 1769889590 -0600	commit: add guidelines
+18ee6381c1d7ac95ded70c84a5700e38adabe5da 3c68458fac9456920e445c36749d56660def7aac milmor <mil.mor.mor@gmail.com> 1769889810 -0600	commit: clean page
+3c68458fac9456920e445c36749d56660def7aac 9cfd45e9231a2a815e51ba626155852afb9e05d9 milmor <mil.mor.mor@gmail.com> 1769890407 -0600	commit: add info
+9cfd45e9231a2a815e51ba626155852afb9e05d9 13d781634d3acff6ee946c3189694791a8f19795 milmor <mil.mor.mor@gmail.com> 1769890506 -0600	commit: add info
+13d781634d3acff6ee946c3189694791a8f19795 9d4ec22096709bf1f62be6d8c4902d86b7f01ae3 milmor <mil.mor.mor@gmail.com> 1769890546 -0600	commit: add info
+9d4ec22096709bf1f62be6d8c4902d86b7f01ae3 a2dba8ceea0098d35065ae7420b8fa36abdc3973 milmor <mil.mor.mor@gmail.com> 1769891536 -0600	commit: add prerequisites
+a2dba8ceea0098d35065ae7420b8fa36abdc3973 2eceba8bff5508f1c1acc6bc051cd1c265e7dad6 milmor <mil.mor.mor@gmail.com> 1769986991 -0600	commit: improve guidelines
+2eceba8bff5508f1c1acc6bc051cd1c265e7dad6 4245007eed5d4a059d446132bc1a103557098545 milmor <mil.mor.mor@gmail.com> 1770101143 -0600	commit: add new links
+4245007eed5d4a059d446132bc1a103557098545 57981b5a49a189efcf9b28394c730dbf8efbfd47 milmor <mil.mor.mor@gmail.com> 1770101268 -0600	commit: add new links
+57981b5a49a189efcf9b28394c730dbf8efbfd47 2935e2c820a5d1a9147f4654ca53b063e2992f29 milmor <mil.mor.mor@gmail.com> 1770101768 -0600	commit: add new links
+2935e2c820a5d1a9147f4654ca53b063e2992f29 9237855b369e0adeb0ee9f2c77043e18c176ab1e milmor <mil.mor.mor@gmail.com> 1770962940 -0600	commit: update readings
+9237855b369e0adeb0ee9f2c77043e18c176ab1e 26132bc3aba8bde3706097e632ac599c48ceb05a milmor <mil.mor.mor@gmail.com> 1772245153 -0600	commit: update readings
+26132bc3aba8bde3706097e632ac599c48ceb05a 3ece71ac1db7421d2b14a94090139b185bab16ae milmor <mil.mor.mor@gmail.com> 1772413440 -0600	commit: update readings
+3ece71ac1db7421d2b14a94090139b185bab16ae 488b7e750222971c39be551237a566f829e81ba6 milmor <mil.mor.mor@gmail.com> 1773250253 -0600	commit: add submissions
+488b7e750222971c39be551237a566f829e81ba6 10b7dbd602e15327f0c90141471dc076327bcb8d milmor <mil.mor.mor@gmail.com> 1773252914 -0600	commit: add login
+10b7dbd602e15327f0c90141471dc076327bcb8d e9087dec13ea6341395cb24ce2f6267d04f3a991 milmor <mil.mor.mor@gmail.com> 1773253357 -0600	commit: add login
+e9087dec13ea6341395cb24ce2f6267d04f3a991 7d33cb3091e50b786680e0909ce3ba0d1de13ccb milmor <mil.mor.mor@gmail.com> 1773256755 -0600	commit: add login
+7d33cb3091e50b786680e0909ce3ba0d1de13ccb dd5cb5605699faeb63806e1fd1ddaa1d82fbad27 milmor <mil.mor.mor@gmail.com> 1773292458 -0600	commit: update link
+dd5cb5605699faeb63806e1fd1ddaa1d82fbad27 6380acc05b74cde733f388dba9c49c7d460d3592 milmor <mil.mor.mor@gmail.com> 1773292889 -0600	commit: add users
+6380acc05b74cde733f388dba9c49c7d460d3592 ef624d0d7afd980b39a6313cbbac600959c8d1fa milmor <mil.mor.mor@gmail.com> 1773295037 -0600	commit: add dashboard
+ef624d0d7afd980b39a6313cbbac600959c8d1fa 22050914ba0766934463a6df4a63c166148d2ce4 milmor <mil.mor.mor@gmail.com> 1773297665 -0600	commit: add and delete submissions
+22050914ba0766934463a6df4a63c166148d2ce4 22050914ba0766934463a6df4a63c166148d2ce4 milmor <mil.mor.mor@gmail.com> 1773366061 -0600	reset: moving to HEAD
+22050914ba0766934463a6df4a63c166148d2ce4 85f9af01840cf88293c65e700ad3b6130b52de9e milmor <mil.mor.mor@gmail.com> 1773366345 -0600	commit: add framework
+85f9af01840cf88293c65e700ad3b6130b52de9e 01a413ddee4731641be9ff32c07e3c613c353316 milmor <mil.mor.mor@gmail.com> 1773366534 -0600	commit: migrate to Next.js, remove old HTML site
+01a413ddee4731641be9ff32c07e3c613c353316 5f38003dd1069011f072f812a858c43ba2fbc7b0 milmor <mil.mor.mor@gmail.com> 1773366901 -0600	commit: fix logo
+5f38003dd1069011f072f812a858c43ba2fbc7b0 bdc1edae6907c9de3197647d84ec4ebcd2a57f2d milmor <mil.mor.mor@gmail.com> 1773367267 -0600	commit: fix logo
+bdc1edae6907c9de3197647d84ec4ebcd2a57f2d 50c543d096503ba33016748e0a8cb7ca2ea7ab0a milmor <mil.mor.mor@gmail.com> 1773368209 -0600	commit: add submissions
+50c543d096503ba33016748e0a8cb7ca2ea7ab0a b7880b4fdeef5dcd83cccb55ca6d6c6c8871da28 milmor <mil.mor.mor@gmail.com> 1773368515 -0600	commit: add reset pasword
+b7880b4fdeef5dcd83cccb55ca6d6c6c8871da28 dd5f96492afd0d1d424ea6bc9bb01f0c38839778 milmor <mil.mor.mor@gmail.com> 1773373684 -0600	commit: add upload notebook and deadline functionality
+dd5f96492afd0d1d424ea6bc9bb01f0c38839778 03a59f60f49913100a5a67a9f7393db9d9e50ce8 milmor <mil.mor.mor@gmail.com> 1773374163 -0600	commit: add upload notebook and deadline functionality
+03a59f60f49913100a5a67a9f7393db9d9e50ce8 1d9fe0021a5156479d0dac22c59e34a924ca32b5 milmor <mil.mor.mor@gmail.com> 1773375936 -0600	commit: fix phone dashboard
+1d9fe0021a5156479d0dac22c59e34a924ca32b5 094a2b913c98679bcffe41730cb6ebeaea507a03 milmor <mil.mor.mor@gmail.com> 1773376955 -0600	commit: fix student name
+094a2b913c98679bcffe41730cb6ebeaea507a03 38a2b7de98333c1f9026778b0073eb573fccf277 milmor <mil.mor.mor@gmail.com> 1773378013 -0600	commit: fix frontend style
+38a2b7de98333c1f9026778b0073eb573fccf277 7394a8531acf76e1d09e9b94b37ec3c95d694600 milmor <mil.mor.mor@gmail.com> 1773384439 -0600	commit: add registrations button
+7394a8531acf76e1d09e9b94b37ec3c95d694600 e953574d52ebb7a3517057174f7779d61080f18f milmor <mil.mor.mor@gmail.com> 1773386199 -0600	commit: add db stats and student feedback
+e953574d52ebb7a3517057174f7779d61080f18f ab9a9575f7a5e564d6436ddb557f43283c952702 milmor <mil.mor.mor@gmail.com> 1773386489 -0600	commit: add edit assigments
+ab9a9575f7a5e564d6436ddb557f43283c952702 c189db631b3d96af18590dc4e7a0c83875dc79f2 milmor <mil.mor.mor@gmail.com> 1773386925 -0600	commit: organize assigments
+c189db631b3d96af18590dc4e7a0c83875dc79f2 7b0a51d2163423ee079059e6a6eb0425f5bb00e2 milmor <mil.mor.mor@gmail.com> 1773389183 -0600	commit: add course option
+7b0a51d2163423ee079059e6a6eb0425f5bb00e2 7f870d8bff2b6e2a3a8bf799c6f01f8f7842562a milmor <mil.mor.mor@gmail.com> 1773389845 -0600	commit: fix bug
+7f870d8bff2b6e2a3a8bf799c6f01f8f7842562a 6313ad7c9bca722cd414dd83881f442b92cbb858 milmor <mil.mor.mor@gmail.com> 1773390434 -0600	commit: fix delete functionality
+6313ad7c9bca722cd414dd83881f442b92cbb858 befb2b3e33cd1ea57bc6f35900dcc0998faae66d milmor <mil.mor.mor@gmail.com> 1773434271 -0600	commit: minor fixes
+befb2b3e33cd1ea57bc6f35900dcc0998faae66d 23c4ff9517417c116e4b871ae85035b49835c66d milmor <mil.mor.mor@gmail.com> 1773434612 -0600	commit: minor fixes
+23c4ff9517417c116e4b871ae85035b49835c66d 807cf7c76a61ba1028dba50d6f842848b2dc2d18 milmor <mil.mor.mor@gmail.com> 1773435828 -0600	commit: add google login
+807cf7c76a61ba1028dba50d6f842848b2dc2d18 fd9794478bb0ccab4b5b162df7ca675b3f96be83 milmor <mil.mor.mor@gmail.com> 1773449465 -0600	commit: add reference nb and agent
+fd9794478bb0ccab4b5b162df7ca675b3f96be83 04e83b5219f0aed08757ca7d5a08c5650a28ec49 milmor <mil.mor.mor@gmail.com> 1773450345 -0600	commit: fix yml
+04e83b5219f0aed08757ca7d5a08c5650a28ec49 72ce6986f01aa63e41d0630a98e03d79bc47ec38 milmor <mil.mor.mor@gmail.com> 1773457963 -0600	commit: add max nb size
+72ce6986f01aa63e41d0630a98e03d79bc47ec38 7af88e9a2245f0002042623fb7bc85562a755686 milmor <mil.mor.mor@gmail.com> 1773468561 -0600	commit: fix footer space
