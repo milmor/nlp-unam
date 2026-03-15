@@ -20,10 +20,11 @@ interface Props {
   onBack: () => void;
 }
 
-type AdminTab = 'assignments' | 'submissions' | 'students';
+type AdminTab = 'assignments' | 'students';
 
 export default function AdminDashboard({ user, course, onLogout, onBack }: Props) {
   const [activeTab, setActiveTab] = useState<AdminTab>('assignments');
+  const [showAddAssignmentForm, setShowAddAssignmentForm] = useState(false);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<AdminSubmission[]>([]);
   const [students, setStudents] = useState<EnrolledStudent[]>([]);
@@ -71,6 +72,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
       description: a.description ?? '',
       deadline,
     }));
+    setExpandedAssignments(prev => new Set(prev).add(a.id));
   }
 
   function cancelEdit(id: number) {
@@ -237,6 +239,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
     setNewTitle('');
     setNewDesc('');
     setNewDeadline('');
+    setShowAddAssignmentForm(false);
     loadData();
   }
 
@@ -487,7 +490,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
 
       <div className="admin-layout">
       <nav className="admin-nav" aria-label="Admin sections">
-        {(['assignments', 'submissions', 'students'] as AdminTab[]).map(tab => (
+        {(['assignments', 'students'] as AdminTab[]).map(tab => (
           <button
             key={tab}
             type="button"
@@ -495,11 +498,9 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
             onClick={() => setActiveTab(tab)}
           >
             {tab === 'assignments' && <>Assignments</>}
-            {tab === 'submissions' && <>Submissions</>}
             {tab === 'students' && <>Students</>}
             <span className="admin-nav-count">
               {tab === 'assignments' && assignments.length}
-              {tab === 'submissions' && submissions.length}
               {tab === 'students' && students.length}
             </span>
           </button>
@@ -507,192 +508,167 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
       </nav>
 
       <div className="admin-content">
-      {/* Assignments management */}
-      {activeTab === 'assignments' && <div className="admin-assignments-section">
-        <h5 className="admin-section-title">Assignments</h5>
-        <form className="admin-assignment-form" onSubmit={handleAddAssignment}>
-          <div className="admin-assignment-fields">
-            <input
-              type="text"
-              placeholder="Title"
-              value={newTitle}
-              onChange={e => setNewTitle(e.target.value)}
-              required
-            />
-            <input
-              type="text"
-              placeholder="Description (optional)"
-              value={newDesc}
-              onChange={e => setNewDesc(e.target.value)}
-            />
-            <input
-              type="datetime-local"
-              title="Deadline (optional)"
-              value={newDeadline}
-              onChange={e => setNewDeadline(e.target.value)}
-            />
-          </div>
-          <button type="submit" className="btn-primary btn-small">Add</button>
-        </form>
-
-        {loading ? (
-          <p className="prereq-note">Loading…</p>
-        ) : (
-          <>
-          <ul className="admin-list">
-            {assignments.length === 0 ? (
-              <li className="admin-list-empty">No assignments defined.</li>
-            ) : (
-              assignments.map(a => {
-                const draft = editingAssignment.get(a.id);
-                const isEditing = !!draft;
-                const isPast = a.deadline ? new Date(a.deadline) < new Date() : false;
-                return (
-                  <li key={a.id} className={`admin-assignment-item${isEditing ? ' admin-assignment-item--editing' : ''}`}>
-                    {isEditing ? (
-                      <div className="admin-assignment-edit-form">
-                        <input
-                          type="text"
-                          placeholder="Title"
-                          value={draft.title}
-                          onChange={e => updateDraft(a.id, 'title', e.target.value)}
-                          required
-                        />
-                        <input
-                          type="text"
-                          placeholder="Description (optional)"
-                          value={draft.description}
-                          onChange={e => updateDraft(a.id, 'description', e.target.value)}
-                        />
-                        <input
-                          type="datetime-local"
-                          title="Deadline (optional)"
-                          value={draft.deadline}
-                          onChange={e => updateDraft(a.id, 'deadline', e.target.value)}
-                        />
-                        <div className="admin-assignment-actions">
-                          <button type="button" className="btn-primary btn-small" onClick={() => saveEdit(a.id)}>
-                            Save
-                          </button>
-                          <button type="button" className="btn-secondary btn-small" onClick={() => cancelEdit(a.id)}>
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <span>
-                          <strong>{a.title}</strong>
-                          {a.description ? `: ${a.description}` : ''}
-                          {a.deadline && (
-                            <span className={`deadline-badge${isPast ? ' deadline-past' : ''}`}>
-                              {isPast ? '⏰ Closed' : '⏰ Due'}{' '}
-                              {new Date(a.deadline).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
-                            </span>
-                          )}
-                        </span>
-                        <span className="admin-assignment-actions">
-                          <button type="button" className="btn-secondary btn-small" onClick={() => startEdit(a)}>
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            className="btn-secondary btn-small"
-                            onClick={() => triggerRefUpload(a.id)}
-                            title={a.reference_notebook ? 'Replace reference notebook' : 'Upload reference notebook'}
-                          >
-                            {a.reference_notebook ? '📄 Reference ✓' : '📄 Reference'}
-                          </button>
-                          {a.reference_notebook && gradingAssignmentId !== a.id && (
-                            <>
-                              <label className="admin-plagiarism-threshold">
-                                <span className="admin-plagiarism-threshold-label">Plagiarism:</span>
-                                <select
-                                  value={plagiarismThresholdPct}
-                                  onChange={e => setPlagiarismThresholdPct(Number(e.target.value))}
-                                  title="Overlap % above which to flag (higher = fewer false positives)"
-                                  className="admin-plagiarism-threshold-select"
-                                >
-                                  <option value={40}>40%</option>
-                                  <option value={50}>50%</option>
-                                  <option value={60}>60%</option>
-                                  <option value={70}>70%</option>
-                                  <option value={80}>80%</option>
-                                </select>
-                              </label>
-                              <button
-                                type="button"
-                                className="btn-primary btn-small"
-                                onClick={() => handleGradeAll(a.id)}
-                              >
-                                ✨ Grade all
-                              </button>
-                            </>
-                          )}
-                          {gradingAssignmentId === a.id && (
-                            <button
-                              type="button"
-                              className="btn-danger btn-small"
-                              onClick={() => handleStopGrading(a.id)}
-                            >
-                              Stop grading
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            className="btn-danger btn-small"
-                            onClick={() => setConfirmDelete({ id: a.id, title: a.title })}
-                          >
-                            Delete
-                          </button>
-                        </span>
-                        {gradingStatus.get(a.id) && (
-                          <p className={`admin-dashboard-message${gradingError.get(a.id) ? ' error' : ''}`} style={{ marginTop: '4px', width: '100%' }}>
-                            {gradingStatus.get(a.id)}
-                          </p>
-                        )}
-                      </>
-                    )}
-                  </li>
-                );
-              })
+      {/* Assignments: add button + form (when open) + accordion with submissions */}
+      {activeTab === 'assignments' && (
+        <div className="admin-assignments-section">
+          <div className="admin-section-head">
+            <h5 className="admin-section-title">Assignments</h5>
+            {!showAddAssignmentForm && (
+              <button
+                type="button"
+                className="btn-primary btn-small"
+                onClick={() => setShowAddAssignmentForm(true)}
+              >
+                Add assignment
+              </button>
             )}
-          </ul>
-          <p className="prereq-note" style={{ marginTop: '8px', fontSize: '0.9em' }}>
-            Usage (in / out) is shown after each run. Account usage & limits:{' '}
-            <a href="https://REDACTED/usage" target="_blank" rel="noopener noreferrer">REDACTED/usage</a> (free to view).
-          </p>
-        </>)}
-      </div>}
+          </div>
 
-      {/* All submissions — grouped by assignment */}
-      {activeTab === 'submissions' && <div className="admin-submissions-section">
-        <h5 className="admin-section-title">Submissions by assignment</h5>
-        {loading ? (
-          <p className="prereq-note">Loading…</p>
-        ) : assignments.length === 0 ? (
-          <p className="prereq-note" style={{ fontStyle: 'italic' }}>No assignments yet.</p>
-        ) : (
+          {showAddAssignmentForm && (
+            <form className="admin-assignment-form admin-assignment-form--new" onSubmit={handleAddAssignment}>
+              <div className="admin-assignment-fields">
+                <input
+                  type="text"
+                  placeholder="Title"
+                  value={newTitle}
+                  onChange={e => setNewTitle(e.target.value)}
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Description (optional)"
+                  value={newDesc}
+                  onChange={e => setNewDesc(e.target.value)}
+                />
+                <input
+                  type="datetime-local"
+                  title="Deadline (optional)"
+                  value={newDeadline}
+                  onChange={e => setNewDeadline(e.target.value)}
+                />
+              </div>
+              <div className="admin-assignment-form-actions">
+                <button type="submit" className="btn-primary btn-small">Create assignment</button>
+                <button type="button" className="btn-secondary btn-small" onClick={() => { setShowAddAssignmentForm(false); setNewTitle(''); setNewDesc(''); setNewDeadline(''); }}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+
+          {loading ? (
+            <p className="prereq-note">Loading…</p>
+          ) : assignments.length === 0 ? (
+            <p className="prereq-note admin-list-empty-standalone">No assignments yet. Click “Add assignment” to create one.</p>
+          ) : (
+          <>
           <ul className="admin-accordion">
             {assignments.map(a => {
               const assignSubs = submissions.filter(s => s.assignment_id === a.id);
               const count = assignSubs.length;
               const isOpen = expandedAssignments.has(a.id);
+              const draft = editingAssignment.get(a.id);
+              const isEditing = !!draft;
+              const isPast = a.deadline ? new Date(a.deadline) < new Date() : false;
               return (
-                <li key={a.id} className="admin-accordion-item">
-                  <button
-                    type="button"
-                    className="admin-accordion-header"
-                    onClick={() => toggleAssignment(a.id)}
-                  >
-                    <span>
-                      <strong>{a.title}</strong>
-                      <span className="admin-accordion-count">{count} submission{count !== 1 ? 's' : ''}</span>
+                <li key={a.id} className={`admin-accordion-item${isEditing ? ' admin-accordion-item--editing' : ''}`}>
+                  <div className="admin-accordion-header-row">
+                    <button
+                      type="button"
+                      className="admin-accordion-header"
+                      onClick={() => toggleAssignment(a.id)}
+                    >
+                      <span>
+                        <strong>{a.title}</strong>
+                        {a.deadline && (
+                          <span className={`deadline-badge${isPast ? ' deadline-past' : ''}`}>
+                            {isPast ? '⏰ Closed' : '⏰ Due'}{' '}
+                            {new Date(a.deadline).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                          </span>
+                        )}
+                        <span className="admin-accordion-count">{count} submission{count !== 1 ? 's' : ''}</span>
+                      </span>
+                      <span className="admin-accordion-chevron">{isOpen ? '▲' : '▼'}</span>
+                    </button>
+                    <span className="admin-accordion-actions" onClick={e => e.stopPropagation()}>
+                      <button type="button" className="btn-secondary btn-small" onClick={() => startEdit(a)} title="Edit assignment">
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-secondary btn-small"
+                        onClick={() => triggerRefUpload(a.id)}
+                        title={a.reference_notebook ? 'Replace reference notebook' : 'Upload reference notebook'}
+                      >
+                        {a.reference_notebook ? '📄 Ref ✓' : '📄 Ref'}
+                      </button>
+                      {a.reference_notebook && gradingAssignmentId !== a.id && (
+                        <>
+                          <label className="admin-plagiarism-threshold">
+                            <span className="admin-plagiarism-threshold-label">Plag.:</span>
+                            <select
+                              value={plagiarismThresholdPct}
+                              onChange={e => setPlagiarismThresholdPct(Number(e.target.value))}
+                              title="Plagiarism threshold %"
+                              className="admin-plagiarism-threshold-select"
+                            >
+                              <option value={40}>40%</option>
+                              <option value={50}>50%</option>
+                              <option value={60}>60%</option>
+                              <option value={70}>70%</option>
+                              <option value={80}>80%</option>
+                            </select>
+                          </label>
+                          <button type="button" className="btn-primary btn-small" onClick={() => handleGradeAll(a.id)}>
+                            ✨ Grade
+                          </button>
+                        </>
+                      )}
+                      {gradingAssignmentId === a.id && (
+                        <button type="button" className="btn-danger btn-small" onClick={() => handleStopGrading(a.id)}>
+                          Stop
+                        </button>
+                      )}
+                      <button type="button" className="btn-danger btn-small" onClick={() => setConfirmDelete({ id: a.id, title: a.title })} title="Delete assignment">
+                        Delete
+                      </button>
                     </span>
-                    <span className="admin-accordion-chevron">{isOpen ? '▲' : '▼'}</span>
-                  </button>
+                  </div>
+                  {gradingStatus.get(a.id) && (
+                    <p className={`admin-dashboard-message admin-accordion-grade-msg${gradingError.get(a.id) ? ' error' : ''}`}>
+                      {gradingStatus.get(a.id)}
+                    </p>
+                  )}
 
                   {isOpen && (
+                    <div className="admin-accordion-body">
+                      {isEditing && draft && (
+                        <div className="admin-assignment-edit-form">
+                          <input
+                            type="text"
+                            placeholder="Title"
+                            value={draft.title}
+                            onChange={e => updateDraft(a.id, 'title', e.target.value)}
+                            required
+                          />
+                          <input
+                            type="text"
+                            placeholder="Description (optional)"
+                            value={draft.description}
+                            onChange={e => updateDraft(a.id, 'description', e.target.value)}
+                          />
+                          <input
+                            type="datetime-local"
+                            title="Deadline (optional)"
+                            value={draft.deadline}
+                            onChange={e => updateDraft(a.id, 'deadline', e.target.value)}
+                          />
+                          <div className="admin-assignment-actions">
+                            <button type="button" className="btn-primary btn-small" onClick={() => saveEdit(a.id)}>Save</button>
+                            <button type="button" className="btn-secondary btn-small" onClick={() => cancelEdit(a.id)}>Cancel</button>
+                          </div>
+                        </div>
+                      )}
                     <div className="dashboard-table-wrapper admin-table-responsive">
                       <table className="dashboard-table admin-submissions-table">
                         <thead>
@@ -802,17 +778,24 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                         </tbody>
                       </table>
                     </div>
+                    </div>
                   )}
                 </li>
               );
             })}
           </ul>
-        )}
-      </div>}
+          <p className="prereq-note admin-usage-note" style={{ marginTop: '0.75rem', fontSize: '0.85em' }}>
+            Usage (in / out) is shown after each run.
+          </p>
+          </>
+          )}
+        </div>
+      )}
 
-      {/* Students enrolled in this course */}
+      {/* Students */}
       {activeTab === 'students' && (
         <div className="admin-assignments-section">
+          <h5 className="admin-section-title">Students</h5>
           {loading ? (
             <p className="prereq-note">Loading…</p>
           ) : students.length === 0 ? (
