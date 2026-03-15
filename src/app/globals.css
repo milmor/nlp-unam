@@ -1778,6 +1778,83 @@ ol.article-list,
     border-top: 1px solid var(--border-color);
 }
 
+/* Admin accordion: mobile-first layout so actions aren't crammed */
+@media (max-width: 768px) {
+    .admin-accordion-header-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        padding: 0;
+    }
+
+    .admin-accordion-header {
+        padding: 1rem 1rem 0.75rem;
+        flex: none;
+    }
+
+    .admin-accordion-header > span:first-of-type {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        align-items: flex-start;
+        min-width: 0;
+    }
+
+    .admin-accordion-header strong {
+        display: block;
+        word-break: break-word;
+    }
+
+    .admin-accordion-header .deadline-badge {
+        margin-left: 0;
+    }
+
+    .admin-accordion-count {
+        margin-left: 0;
+        margin-top: 0.15rem;
+    }
+
+    .admin-accordion-chevron {
+        margin-left: auto;
+    }
+
+    .admin-accordion-actions {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+        padding: 0 1rem 1rem;
+        align-items: stretch;
+    }
+
+    .admin-accordion-actions .btn-small,
+    .admin-accordion-actions .btn-primary.btn-small,
+    .admin-accordion-actions .btn-danger.btn-small {
+        min-height: 44px;
+        font-size: 0.85rem;
+        padding: 0.5rem 0.65rem;
+        margin: 0;
+    }
+
+    .admin-accordion-actions .admin-plagiarism-threshold {
+        grid-column: span 2;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-height: 44px;
+        padding: 0.25rem 0;
+    }
+
+    .admin-accordion-actions .admin-plagiarism-threshold-select {
+        flex: 0 0 auto;
+    }
+
+    /* Grade + Stop: each can span or sit in grid */
+    .admin-accordion-actions .btn-primary.btn-small:not(.btn-danger),
+    .admin-accordion-actions .btn-danger.btn-small {
+        grid-column: span 1;
+    }
+}
+
 /* Mobile: card layout for admin tables (no horizontal scroll, app-like) */
 @media (max-width: 640px) {
     .admin-table-responsive {
