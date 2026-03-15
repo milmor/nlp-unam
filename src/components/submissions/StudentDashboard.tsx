@@ -99,7 +99,7 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
     if (!sb) return;
     setRequestingVerification(verificationModal.submissionId);
     try {
-      const { error } = await sb.rpc('request_submission_verification', {
+      const { data: accepted, error } = await sb.rpc('request_submission_verification', {
         sub_id: verificationModal.submissionId,
         student_comment: verificationComment.trim() || null,
       });
@@ -107,6 +107,9 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
       setVerificationModal(null);
       setVerificationComment('');
       await loadData();
+      if (accepted === false) {
+        alert('You can only request verification once per submission. Your previous request is already recorded.');
+      }
     } catch (e) {
       alert('Could not submit request: ' + (e instanceof Error ? e.message : String(e)));
     } finally {
