@@ -21,6 +21,11 @@ dist/
 # SQL (run in Supabase as needed; not needed in frontend repo)
 *.sql
 
+# Docs that describe DB/setup (repo is public; keep these local only)
+docs/verification-setup.md
+docs/*-setup.md
+docs/*-rpc*.md
+
 # next-env.d.ts is auto-generated, but conventionally committed
 # Leave it tracked so TypeScript picks it up in CI
 
