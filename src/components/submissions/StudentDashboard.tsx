@@ -37,6 +37,8 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
   const [uploading, setUploading] = useState<Set<number>>(new Set());
   const [viewingNotebook, setViewingNotebook] = useState<{ title: string; notebook: Record<string, unknown> } | null>(null);
   const [loadingNotebook, setLoadingNotebook] = useState(false);
+  const [requestingVerification, setRequestingVerification] = useState<number | null>(null);
+  const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? '').replace(/\/+$/, '');
 
   // One hidden file input, re-used for each assignment
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -51,7 +53,7 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
         sb.from('assignments').select('id, title, deadline').eq('course_id', course.id).order('id'),
         sb
           .from('submissions')
-          .select('id, assignment_id, notebook_url, score, feedback, created_at')
+          .select('id, assignment_id, notebook_url, score, feedback, created_at, verification_requested, verification_requested_at')
           .eq('student_id', user.id)
           .order('created_at', { ascending: false }),
       ]);
@@ -83,6 +85,35 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
       return idx !== -1 ? pathOrUrl.slice(idx + marker.length) : pathOrUrl;
     }
     return pathOrUrl;
+  }
+
+  async function requestVerification(submissionId: number) {
+    if (!API_URL) {
+      alert('Verification is not configured. Please contact your instructor.');
+      return;
+    }
+    const sb = getSupabase();
+    if (!sb) return;
+    setRequestingVerification(submissionId);
+    try {
+      const { data: sessionData } = await sb.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) {
+        alert('Please sign in again and try again.');
+        return;
+      }
+      const res = await fetch(`${API_URL}/request-verification?submission_id=${submissionId}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail ?? data.message ?? 'Request failed');
+      await loadData();
+    } catch (e) {
+      alert('Could not submit request: ' + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setRequestingVerification(null);
+    }
   }
 
   async function viewNotebook(pathOrUrl: string, title: string) {
@@ -274,6 +305,20 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
                             >
                               View feedback
                             </button>
+                            {sub.score != null && (
+                              sub.verification_requested ? (
+                                <span className="verification-badge verification-requested">Verification requested</span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="feedback-view-btn"
+                                  onClick={() => requestVerification(sub.id)}
+                                  disabled={requestingVerification === sub.id}
+                                >
+                                  {requestingVerification === sub.id ? 'Requesting…' : 'Request verification'}
+                                </button>
+                              )
+                            )}
                           </div>
                         ) : '–'}
                       </td>

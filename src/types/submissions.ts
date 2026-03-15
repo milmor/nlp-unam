@@ -23,6 +23,8 @@ export interface Submission {
   score: number | null;
   feedback: string | null;
   created_at: string;
+  verification_requested?: boolean;
+  verification_requested_at?: string | null;
 }
 
 export interface AdminSubmission {
@@ -32,6 +34,8 @@ export interface AdminSubmission {
   score?: number | null;
   feedback?: string | null;
   created_at: string;
+  verification_requested?: boolean;
+  verification_requested_at?: string | null;
   student?: { email: string; name: string | null; role: string | null } | null;
   assignment?: { title: string } | null;
 }

@@ -1923,6 +1923,25 @@ ol.article-list,
     text-decoration: underline;
 }
 
+.verification-badge {
+    display: inline-block;
+    font-size: var(--sub-tiny, 0.75rem);
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    margin-top: 4px;
+}
+
+.verification-badge.verification-requested {
+    color: var(--accent-primary);
+    background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+
+.admin-verification-badge {
+    margin-bottom: 4px;
+}
+
 /* Student feedback modal: readable full view */
 .feedback-modal-overlay {
     position: fixed;
