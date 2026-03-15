@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { getSupabase } from '@/lib/supabase';
 import type { Assignment, Submission, Course } from '@/types/submissions';
+import NotebookViewer from './NotebookViewer';
 
 interface Props {
   user: User;
@@ -38,6 +39,9 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
   const [uploadStatus, setUploadStatus] = useState<Map<number, string>>(new Map());
   const [uploadError, setUploadError] = useState<Map<number, boolean>>(new Map());
   const [uploading, setUploading] = useState<Set<number>>(new Set());
+  const [viewingNotebook, setViewingNotebook] = useState<{ title: string; notebook: Record<string, unknown> } | null>(null);
+  const [notebookViewMode, setNotebookViewMode] = useState<'notebook' | 'json'>('notebook');
+  const [loadingNotebook, setLoadingNotebook] = useState(false);
 
   // One hidden file input, re-used for each assignment
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -77,22 +81,46 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
     }
   }
 
-  async function openNotebook(pathOrUrl: string) {
-    const sb = getSupabase();
-    if (!sb) return;
-    // Legacy rows stored the full public URL; extract just the path after the bucket name
-    let storagePath = pathOrUrl;
+  function getStoragePath(pathOrUrl: string): string {
     const marker = `/${BUCKET}/`;
     if (pathOrUrl.startsWith('https://')) {
       const idx = pathOrUrl.indexOf(marker);
-      storagePath = idx !== -1 ? pathOrUrl.slice(idx + marker.length) : pathOrUrl;
+      return idx !== -1 ? pathOrUrl.slice(idx + marker.length) : pathOrUrl;
     }
+    return pathOrUrl;
+  }
+
+  async function openNotebook(pathOrUrl: string) {
+    const sb = getSupabase();
+    if (!sb) return;
+    const storagePath = getStoragePath(pathOrUrl);
     const { data, error } = await sb.storage.from(BUCKET).createSignedUrl(storagePath, 60);
     if (error || !data?.signedUrl) {
       alert('Could not open notebook: ' + (error?.message ?? 'unknown error'));
       return;
     }
     window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
+  }
+
+  async function viewNotebook(pathOrUrl: string, title: string) {
+    const storagePath = getStoragePath(pathOrUrl);
+    setLoadingNotebook(true);
+    setViewingNotebook(null);
+    try {
+      const sb = getSupabase();
+      if (!sb) throw new Error('Not configured');
+      const { data, error } = await sb.storage.from(BUCKET).createSignedUrl(storagePath, 60);
+      if (error || !data?.signedUrl) throw new Error(error?.message ?? 'No URL');
+      const res = await fetch(data.signedUrl);
+      if (!res.ok) throw new Error('Fetch failed');
+      const json = await res.json();
+      setViewingNotebook({ title, notebook: json });
+      setNotebookViewMode('notebook');
+    } catch (e) {
+      alert('Could not load notebook: ' + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setLoadingNotebook(false);
+    }
   }
 
   function setStatus(assignmentId: number, msg: string, isError = false) {
@@ -234,13 +262,23 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
                       </td>
                       <td>
                         {sub?.notebook_url ? (
-                          <button
-                            type="button"
-                            className="btn-secondary btn-small"
-                            onClick={() => openNotebook(sub.notebook_url!)}
-                          >
-                            View ↗
-                          </button>
+                          <span className="admin-notebook-actions">
+                            <button
+                              type="button"
+                              className="btn-secondary btn-small"
+                              onClick={() => viewNotebook(sub.notebook_url!, a.title)}
+                              disabled={loadingNotebook}
+                            >
+                              {loadingNotebook ? '…' : 'View'}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-secondary btn-small"
+                              onClick={() => openNotebook(sub.notebook_url!)}
+                            >
+                              Open ↗
+                            </button>
+                          </span>
                         ) : '—'}
                       </td>
                       <td>{sub?.score != null ? `${sub.score}/10` : '–'}</td>
@@ -295,6 +333,42 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
               )}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {viewingNotebook && (
+        <div className="notebook-modal-overlay" onClick={() => setViewingNotebook(null)}>
+          <div className="notebook-modal" onClick={e => e.stopPropagation()}>
+            <div className="notebook-modal-header">
+              <h5 className="notebook-modal-title">{viewingNotebook.title}</h5>
+              <span className="notebook-modal-actions">
+                <button
+                  type="button"
+                  className={notebookViewMode === 'notebook' ? 'btn-primary btn-small' : 'btn-secondary btn-small'}
+                  onClick={() => setNotebookViewMode('notebook')}
+                >
+                  Notebook
+                </button>
+                <button
+                  type="button"
+                  className={notebookViewMode === 'json' ? 'btn-primary btn-small' : 'btn-secondary btn-small'}
+                  onClick={() => setNotebookViewMode('json')}
+                >
+                  JSON
+                </button>
+                <button type="button" className="btn-secondary btn-small" onClick={() => setViewingNotebook(null)}>
+                  Close
+                </button>
+              </span>
+            </div>
+            <div className="notebook-modal-body">
+              {notebookViewMode === 'json' ? (
+                <pre className="notebook-json-view"><code>{JSON.stringify(viewingNotebook.notebook, null, 2)}</code></pre>
+              ) : (
+                <NotebookViewer notebook={viewingNotebook.notebook} />
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

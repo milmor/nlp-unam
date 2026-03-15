@@ -5,6 +5,7 @@ import type { User } from '@supabase/supabase-js';
 import { getSupabase } from '@/lib/supabase';
 import type { Assignment, AdminSubmission, Course } from '@/types/submissions';
 import ConfirmDialog from './ConfirmDialog';
+import NotebookViewer from './NotebookViewer';
 
 interface EnrolledStudent {
   student_id: string;
@@ -103,21 +104,55 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
 
   const BUCKET = 'student-notebooks';
 
-  async function openNotebook(pathOrUrl: string) {
-    const sb = getSupabase();
-    if (!sb) return;
-    let storagePath = pathOrUrl;
+  function getStoragePath(pathOrUrl: string): string {
     const marker = `/${BUCKET}/`;
     if (pathOrUrl.startsWith('https://')) {
       const idx = pathOrUrl.indexOf(marker);
-      storagePath = idx !== -1 ? pathOrUrl.slice(idx + marker.length) : pathOrUrl;
+      return idx !== -1 ? pathOrUrl.slice(idx + marker.length) : pathOrUrl;
     }
+    return pathOrUrl;
+  }
+
+  async function openNotebook(pathOrUrl: string) {
+    const sb = getSupabase();
+    if (!sb) return;
+    const storagePath = getStoragePath(pathOrUrl);
     const { data, error } = await sb.storage.from(BUCKET).createSignedUrl(storagePath, 60);
     if (error || !data?.signedUrl) {
       alert('Could not open notebook: ' + (error?.message ?? 'unknown error'));
       return;
     }
     window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
+  }
+
+  async function viewNotebook(pathOrUrl: string, title: string) {
+    const storagePath = getStoragePath(pathOrUrl);
+    setLoadingNotebook(true);
+    setViewingNotebook(null);
+    try {
+      let json: Record<string, unknown>;
+      if (API_URL && API_SECRET) {
+        const res = await fetch(`${API_URL}/notebook?path=${encodeURIComponent(storagePath)}`, {
+          headers: { 'x-api-key': API_SECRET },
+        });
+        if (!res.ok) throw new Error(await res.text());
+        json = await res.json();
+      } else {
+        const sb = getSupabase();
+        if (!sb) throw new Error('Not configured');
+        const { data, error } = await sb.storage.from(BUCKET).createSignedUrl(storagePath, 60);
+        if (error || !data?.signedUrl) throw new Error(error?.message ?? 'No URL');
+        const res = await fetch(data.signedUrl);
+        if (!res.ok) throw new Error('Fetch failed');
+        json = await res.json();
+      }
+      setViewingNotebook({ title, notebook: json });
+      setNotebookViewMode('notebook');
+    } catch (e) {
+      alert('Could not load notebook: ' + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setLoadingNotebook(false);
+    }
   }
 
   function showMsg(text: string, error = false) {
@@ -259,6 +294,9 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
   const [gradingStatus, setGradingStatus] = useState<Map<number, string>>(new Map());
   const [gradingError, setGradingError]   = useState<Map<number, boolean>>(new Map());
   const [gradingAssignmentId, setGradingAssignmentId] = useState<number | null>(null);
+  const [viewingNotebook, setViewingNotebook] = useState<{ title: string; notebook: Record<string, unknown> } | null>(null);
+  const [notebookViewMode, setNotebookViewMode] = useState<'notebook' | 'json'>('notebook');
+  const [loadingNotebook, setLoadingNotebook] = useState(false);
 
   const API_URL    = (process.env.NEXT_PUBLIC_API_URL ?? '').replace(/\/+$/, '');
   const API_SECRET = process.env.NEXT_PUBLIC_API_SECRET ?? '';
@@ -675,13 +713,23 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                                 </td>
                                 <td data-label="Notebook">
                                   {sub.notebook_url ? (
-                                    <button
-                                      type="button"
-                                      className="btn-secondary btn-small"
-                                      onClick={() => openNotebook(sub.notebook_url!)}
-                                    >
-                                      Open ↗
-                                    </button>
+                                    <span className="admin-notebook-actions">
+                                      <button
+                                        type="button"
+                                        className="btn-secondary btn-small"
+                                        onClick={() => viewNotebook(sub.notebook_url!, sub.student?.name || sub.student?.email || 'Notebook')}
+                                        disabled={loadingNotebook}
+                                      >
+                                        {loadingNotebook ? '…' : 'View'}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="btn-secondary btn-small"
+                                        onClick={() => openNotebook(sub.notebook_url!)}
+                                      >
+                                        Open ↗
+                                      </button>
+                                    </span>
                                   ) : '—'}
                                 </td>
                                 <td data-label="Score">
@@ -773,6 +821,42 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
           onConfirm={confirmDeleteAssignment}
           onCancel={() => setConfirmDelete(null)}
         />
+      )}
+
+      {viewingNotebook && (
+        <div className="notebook-modal-overlay" onClick={() => setViewingNotebook(null)}>
+          <div className="notebook-modal" onClick={e => e.stopPropagation()}>
+            <div className="notebook-modal-header">
+              <h5 className="notebook-modal-title">{viewingNotebook.title}</h5>
+              <span className="notebook-modal-actions">
+                <button
+                  type="button"
+                  className={notebookViewMode === 'notebook' ? 'btn-primary btn-small' : 'btn-secondary btn-small'}
+                  onClick={() => setNotebookViewMode('notebook')}
+                >
+                  Notebook
+                </button>
+                <button
+                  type="button"
+                  className={notebookViewMode === 'json' ? 'btn-primary btn-small' : 'btn-secondary btn-small'}
+                  onClick={() => setNotebookViewMode('json')}
+                >
+                  JSON
+                </button>
+                <button type="button" className="btn-secondary btn-small" onClick={() => setViewingNotebook(null)}>
+                  Close
+                </button>
+              </span>
+            </div>
+            <div className="notebook-modal-body">
+              {notebookViewMode === 'json' ? (
+                <pre className="notebook-json-view"><code>{JSON.stringify(viewingNotebook.notebook, null, 2)}</code></pre>
+              ) : (
+                <NotebookViewer notebook={viewingNotebook.notebook} />
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
