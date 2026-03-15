@@ -199,8 +199,8 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
   }
 
   return (
-    <div className="dashboard">
-      <div className="dashboard-header">
+    <div className="dashboard student-dashboard">
+      <div className="dashboard-header student-dashboard-header">
         <div className="dashboard-header-left">
           <button className="btn-back-courses" onClick={onBack} type="button" aria-label="Back to courses">← Courses</button>
           <h4 className="dashboard-title">{course.name}{course.term ? ` · ${course.term}` : ''}</h4>
@@ -229,127 +229,229 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
       {error && <p className="prereq-note" style={{ color: '#b00020' }}>{error}</p>}
 
       {!loading && !error && (
-        <div className="dashboard-table-wrapper">
-          <table className="dashboard-table">
-            <thead>
-              <tr>
-                <th>Assignment</th>
-                <th>Deadline</th>
-                <th>Status</th>
-                <th>Notebook</th>
-                <th>Grade</th>
-                <th>Feedback</th>
-                <th>Upload</th>
-              </tr>
-            </thead>
-            <tbody>
-              {assignments.length === 0 ? (
+        <>
+          {/* Desktop: table */}
+          <div className="dashboard-table-wrapper student-dashboard-table-wrap">
+            <table className="dashboard-table">
+              <thead>
                 <tr>
-                      <td colSpan={7} style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>
-                    No assignments yet.
-                  </td>
+                  <th>Assignment</th>
+                  <th>Deadline</th>
+                  <th>Status</th>
+                  <th>Notebook</th>
+                  <th>Grade</th>
+                  <th>Feedback</th>
+                  <th>Upload</th>
                 </tr>
-              ) : (
-                assignments.map(a => {
-                  const sub = latestByAssignment.get(a.id);
-                  const isUploading = uploading.has(a.id);
-                  const statusMsg = uploadStatus.get(a.id) ?? '';
-                  const statusIsErr = uploadError.get(a.id) ?? false;
-                  const isPastDeadline = a.deadline ? new Date(a.deadline) < new Date() : false;
-                  const uploadBlocked = isPastDeadline;
+              </thead>
+              <tbody>
+                {assignments.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>
+                      No assignments yet.
+                    </td>
+                  </tr>
+                ) : (
+                  assignments.map(a => {
+                    const sub = latestByAssignment.get(a.id);
+                    const isUploading = uploading.has(a.id);
+                    const statusMsg = uploadStatus.get(a.id) ?? '';
+                    const statusIsErr = uploadError.get(a.id) ?? false;
+                    const isPastDeadline = a.deadline ? new Date(a.deadline) < new Date() : false;
+                    const uploadBlocked = isPastDeadline;
 
-                  return (
-                    <tr key={a.id}>
-                      <td>{a.title}</td>
-                      <td>
-                        {a.deadline ? (
-                          <span className={isPastDeadline ? 'deadline-badge deadline-past' : 'deadline-badge'}>
-                            {isPastDeadline ? '⏰ Closed ' : '⏰ '}
-                            {new Date(a.deadline).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
-                          </span>
-                        ) : '—'}
-                      </td>
-                      <td>
-                        {sub ? 'Submitted' : isPastDeadline
-                          ? <span style={{ color: '#b00020' }}>Not submitted</span>
-                          : 'Not submitted'}
-                      </td>
-                      <td>
-                        {sub?.notebook_url ? (
-                          <button
-                            type="button"
-                            className="btn-secondary btn-small"
-                            onClick={() => viewNotebook(sub.notebook_url!, a.title)}
-                            disabled={loadingNotebook}
-                          >
-                            {loadingNotebook ? '…' : 'View'}
-                          </button>
-                        ) : '—'}
-                      </td>
-                      <td>{sub?.score != null ? `${sub.score}/10` : '–'}</td>
-                      <td className="feedback-cell">
-                        {sub?.feedback ? (
-                          <div className="feedback-preview">
-                            <span className="feedback-preview-text">
-                              {sub.feedback.length > FEEDBACK_PREVIEW_CHARS
-                                ? sub.feedback.slice(0, FEEDBACK_PREVIEW_CHARS).trim() + '…'
-                                : sub.feedback}
+                    return (
+                      <tr key={a.id}>
+                        <td>{a.title}</td>
+                        <td>
+                          {a.deadline ? (
+                            <span className={isPastDeadline ? 'deadline-badge deadline-past' : 'deadline-badge'}>
+                              {isPastDeadline ? '⏰ Closed ' : '⏰ '}
+                              {new Date(a.deadline).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
                             </span>
+                          ) : '—'}
+                        </td>
+                        <td>
+                          {sub ? 'Submitted' : isPastDeadline
+                            ? <span style={{ color: '#b00020' }}>Not submitted</span>
+                            : 'Not submitted'}
+                        </td>
+                        <td>
+                          {sub?.notebook_url ? (
                             <button
                               type="button"
-                              className="feedback-view-btn"
-                              onClick={() => setFeedbackModal({
-                                assignmentTitle: a.title,
-                                score: sub?.score ?? null,
-                                feedback: sub.feedback ?? '',
-                              })}
+                              className="btn-secondary btn-small"
+                              onClick={() => viewNotebook(sub.notebook_url!, a.title)}
+                              disabled={loadingNotebook}
                             >
-                              View feedback
+                              {loadingNotebook ? '…' : 'View'}
                             </button>
-                            {sub.score != null && (
-                              sub.verification_requested ? (
-                                <span className="verification-badge verification-requested">Verification requested</span>
-                              ) : (
-                                <button
-                                  type="button"
-                                  className="feedback-view-btn feedback-view-btn-verification"
-                                  onClick={() => openVerificationModal(sub.id, a.title)}
-                                  disabled={requestingVerification === sub.id}
-                                >
-                                  {requestingVerification === sub.id ? 'Requesting…' : 'Request verification'}
-                                </button>
-                              )
-                            )}
-                          </div>
-                        ) : '–'}
-                      </td>
-                      <td>
+                          ) : '—'}
+                        </td>
+                        <td>{sub?.score != null ? `${sub.score}/10` : '–'}</td>
+                        <td className="feedback-cell">
+                          {sub?.feedback ? (
+                            <div className="feedback-preview">
+                              <span className="feedback-preview-text">
+                                {sub.feedback.length > FEEDBACK_PREVIEW_CHARS
+                                  ? sub.feedback.slice(0, FEEDBACK_PREVIEW_CHARS).trim() + '…'
+                                  : sub.feedback}
+                              </span>
+                              <button
+                                type="button"
+                                className="feedback-view-btn"
+                                onClick={() => setFeedbackModal({
+                                  assignmentTitle: a.title,
+                                  score: sub?.score ?? null,
+                                  feedback: sub.feedback ?? '',
+                                })}
+                              >
+                                View feedback
+                              </button>
+                              {sub.score != null && (
+                                sub.verification_requested ? (
+                                  <span className="verification-badge verification-requested">Verification requested</span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className="feedback-view-btn feedback-view-btn-verification"
+                                    onClick={() => openVerificationModal(sub.id, a.title)}
+                                    disabled={requestingVerification === sub.id}
+                                  >
+                                    {requestingVerification === sub.id ? 'Requesting…' : 'Request verification'}
+                                  </button>
+                                )
+                              )}
+                            </div>
+                          ) : '–'}
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            className="btn-primary btn-small"
+                            onClick={() => triggerUpload(a.id)}
+                            disabled={isUploading || uploadBlocked}
+                            title={uploadBlocked ? 'Deadline has passed' : undefined}
+                            style={{ whiteSpace: 'nowrap' }}
+                          >
+                            {isUploading ? 'Uploading…' : uploadBlocked ? 'Closed' : sub ? 'Re-upload' : 'Upload .ipynb'}
+                          </button>
+                          {statusMsg && (
+                            <p
+                              className="auth-message"
+                              style={{ color: statusIsErr ? '#b00020' : 'var(--text-muted)', marginTop: '4px' }}
+                            >
+                              {statusMsg}
+                            </p>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile: app-like cards */}
+          <div className="student-dashboard-cards">
+            {assignments.length === 0 ? (
+              <p className="student-cards-empty">No assignments yet.</p>
+            ) : (
+              assignments.map(a => {
+                const sub = latestByAssignment.get(a.id);
+                const isUploading = uploading.has(a.id);
+                const statusMsg = uploadStatus.get(a.id) ?? '';
+                const statusIsErr = uploadError.get(a.id) ?? false;
+                const isPastDeadline = a.deadline ? new Date(a.deadline) < new Date() : false;
+                const uploadBlocked = isPastDeadline;
+
+                return (
+                  <article key={a.id} className="student-assignment-card">
+                    <h5 className="student-card-title">{a.title}</h5>
+                    <div className="student-card-meta">
+                      {a.deadline ? (
+                        <span className={isPastDeadline ? 'deadline-badge deadline-past' : 'deadline-badge'}>
+                          {isPastDeadline ? '⏰ Closed ' : '⏰ '}
+                          {new Date(a.deadline).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                        </span>
+                      ) : null}
+                      <span className={`student-card-status ${isPastDeadline && !sub ? 'student-card-status--past' : ''}`}>
+                        {sub ? 'Submitted' : isPastDeadline ? 'Not submitted' : 'Not submitted'}
+                      </span>
+                    </div>
+                    <div className="student-card-grade-row">
+                      <span className="student-card-grade-label">Grade</span>
+                      <span className="student-card-grade">{sub?.score != null ? `${sub.score}/10` : '–'}</span>
+                    </div>
+                    {sub?.feedback && (
+                      <div className="student-card-feedback">
+                        <p className="student-card-feedback-preview">
+                          {sub.feedback.length > FEEDBACK_PREVIEW_CHARS
+                            ? sub.feedback.slice(0, FEEDBACK_PREVIEW_CHARS).trim() + '…'
+                            : sub.feedback}
+                        </p>
+                        <div className="student-card-feedback-actions">
+                          <button
+                            type="button"
+                            className="student-card-feedback-btn"
+                            onClick={() => setFeedbackModal({
+                              assignmentTitle: a.title,
+                              score: sub?.score ?? null,
+                              feedback: sub.feedback ?? '',
+                            })}
+                          >
+                            View full feedback
+                          </button>
+                          {sub.score != null && (
+                            sub.verification_requested ? (
+                              <span className="student-card-verification-badge">Verification requested</span>
+                            ) : (
+                              <button
+                                type="button"
+                                className="student-card-verification-btn"
+                                onClick={() => openVerificationModal(sub.id, a.title)}
+                                disabled={requestingVerification === sub.id}
+                              >
+                                {requestingVerification === sub.id ? 'Requesting…' : 'Request verification'}
+                              </button>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    <div className="student-card-actions">
+                      {sub?.notebook_url && (
                         <button
                           type="button"
-                          className="btn-primary btn-small"
-                          onClick={() => triggerUpload(a.id)}
-                          disabled={isUploading || uploadBlocked}
-                          title={uploadBlocked ? 'Deadline has passed' : undefined}
-                          style={{ whiteSpace: 'nowrap' }}
+                          className="student-card-btn btn-secondary"
+                          onClick={() => viewNotebook(sub.notebook_url!, a.title)}
+                          disabled={loadingNotebook}
                         >
-                          {isUploading ? 'Uploading…' : uploadBlocked ? 'Closed' : sub ? 'Re-upload' : 'Upload .ipynb'}
+                          {loadingNotebook ? '…' : 'View notebook'}
                         </button>
-                        {statusMsg && (
-                          <p
-                            className="auth-message"
-                            style={{ color: statusIsErr ? '#b00020' : 'var(--text-muted)', marginTop: '4px' }}
-                          >
-                            {statusMsg}
-                          </p>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                      )}
+                      <button
+                        type="button"
+                        className="student-card-btn btn-primary"
+                        onClick={() => triggerUpload(a.id)}
+                        disabled={isUploading || uploadBlocked}
+                        title={uploadBlocked ? 'Deadline has passed' : undefined}
+                      >
+                        {isUploading ? 'Uploading…' : uploadBlocked ? 'Closed' : sub ? 'Re-upload' : 'Upload .ipynb'}
+                      </button>
+                    </div>
+                    {statusMsg && (
+                      <p className={`student-card-status-msg ${statusIsErr ? 'student-card-status-msg--err' : ''}`}>
+                        {statusMsg}
+                      </p>
+                    )}
+                  </article>
+                );
+              })
+            )}
+          </div>
+        </>
       )}
 
       {feedbackModal && (
