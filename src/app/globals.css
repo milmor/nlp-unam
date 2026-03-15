@@ -1152,6 +1152,36 @@ ol.article-list,
     padding-bottom: 3rem;
 }
 
+/* Prevent horizontal overflow on submissions page (especially mobile) */
+.submissions-page-section {
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
+.submissions-page-section .container--submissions {
+    box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+    .submissions-page-section .container--submissions {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+}
+
+.submissions-page-section--dashboard .container--submissions {
+    max-width: min(1280px, 100% - 2rem);
+}
+
+.dashboard,
+.submissions-dashboard-wrap,
+.admin-layout,
+.admin-content {
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
 /* Auth forms */
 .auth-form {
     display: flex;
@@ -1621,6 +1651,90 @@ ol.article-list,
 
 .admin-accordion-item .dashboard-table-wrapper {
     border-top: 1px solid var(--border-color);
+}
+
+/* Mobile: card layout for admin tables (no horizontal scroll, app-like) */
+@media (max-width: 640px) {
+    .admin-table-responsive {
+        overflow-x: visible;
+        margin-left: -2px;
+        margin-right: -2px;
+    }
+
+    .admin-table-responsive .dashboard-table,
+    .admin-table-responsive .admin-submissions-table,
+    .admin-table-responsive .admin-students-table {
+        min-width: 0;
+        display: block;
+    }
+
+    .admin-table-responsive thead {
+        display: none;
+    }
+
+    .admin-table-responsive tbody tr {
+        display: block;
+        padding: 0.85rem 1rem;
+        margin-bottom: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        background: var(--bg-primary);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+
+    .admin-table-responsive tbody tr:last-child {
+        margin-bottom: 0;
+    }
+
+    .admin-table-responsive td {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.35rem 0.5rem;
+        padding: 0.4rem 0 0.35rem;
+        border: none;
+        border-bottom: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
+        font-size: var(--sub-body, 0.9rem);
+    }
+
+    .admin-table-responsive td:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .admin-table-responsive td::before {
+        content: attr(data-label);
+        font-size: var(--sub-small, 0.8rem);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--text-muted);
+        flex: 0 0 100%;
+        margin-bottom: -0.2rem;
+    }
+
+    .admin-table-responsive td:first-child::before {
+        margin-top: 0;
+    }
+
+    .admin-table-responsive .admin-score-input {
+        width: 4rem;
+    }
+
+    .admin-table-responsive .admin-feedback-input {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .admin-table-empty {
+        display: block !important;
+        padding: 1.25rem 1rem !important;
+        text-align: center;
+    }
+
+    .admin-table-responsive td[colspan]::before {
+        display: none;
+    }
 }
 
 .admin-table-empty {

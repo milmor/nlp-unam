@@ -645,7 +645,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                   </button>
 
                   {isOpen && (
-                    <div className="dashboard-table-wrapper">
+                    <div className="dashboard-table-wrapper admin-table-responsive">
                       <table className="dashboard-table admin-submissions-table">
                         <thead>
                           <tr>
@@ -664,7 +664,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                             const role = sub.student?.role ? ` (${sub.student.role})` : '';
                             return (
                               <tr key={sub.id}>
-                                <td>
+                                <td data-label="Student">
                                   {sub.student?.name
                                     ? <><strong>{sub.student.name}</strong>{role}</>
                                     : (sub.student?.email ?? '—') + role
@@ -673,7 +673,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                                     {sub.student?.email ?? ''}
                                   </span>
                                 </td>
-                                <td>
+                                <td data-label="Notebook">
                                   {sub.notebook_url ? (
                                     <button
                                       type="button"
@@ -684,7 +684,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                                     </button>
                                   ) : '—'}
                                 </td>
-                                <td>
+                                <td data-label="Score">
                                   <input
                                     type="number"
                                     min={0}
@@ -695,7 +695,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                                     onChange={e => handleScoreChange(sub.id, e.target.value)}
                                   />
                                 </td>
-                                <td>
+                                <td data-label="Feedback">
                                   <input
                                     type="text"
                                     className="admin-feedback-input"
@@ -704,7 +704,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                                     onChange={e => handleFeedbackChange(sub.id, e.target.value)}
                                   />
                                 </td>
-                                <td>{sub.created_at ? new Date(sub.created_at).toLocaleDateString() : '—'}</td>
+                                <td data-label="Submitted">{sub.created_at ? new Date(sub.created_at).toLocaleDateString() : '—'}</td>
                               </tr>
                             );
                           })}
@@ -727,8 +727,8 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
           ) : students.length === 0 ? (
             <p className="prereq-note" style={{ fontStyle: 'italic' }}>No students enrolled yet.</p>
           ) : (
-            <div className="dashboard-table-wrapper">
-              <table className="dashboard-table">
+            <div className="dashboard-table-wrapper admin-table-responsive">
+              <table className="dashboard-table admin-students-table">
                 <thead>
                   <tr>
                     <th>Name</th>
@@ -744,10 +744,10 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                     ).length;
                     return (
                       <tr key={s.student_id}>
-                        <td><strong>{s.profile?.name ?? '—'}</strong></td>
-                        <td>{s.profile?.email ?? '—'}</td>
-                        <td>{s.enrolled_at ? new Date(s.enrolled_at).toLocaleDateString() : '—'}</td>
-                        <td>{subCount} / {assignments.length}</td>
+                        <td data-label="Name"><strong>{s.profile?.name ?? '—'}</strong></td>
+                        <td data-label="Email">{s.profile?.email ?? '—'}</td>
+                        <td data-label="Enrolled">{s.enrolled_at ? new Date(s.enrolled_at).toLocaleDateString() : '—'}</td>
+                        <td data-label="Submissions">{subCount} / {assignments.length}</td>
                       </tr>
                     );
                   })}
