@@ -258,6 +258,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
   const pendingRefAssignId = useRef<number | null>(null);
   const [gradingStatus, setGradingStatus] = useState<Map<number, string>>(new Map());
   const [gradingError, setGradingError]   = useState<Map<number, boolean>>(new Map());
+  const [gradingAssignmentId, setGradingAssignmentId] = useState<number | null>(null);
 
   const API_URL    = (process.env.NEXT_PUBLIC_API_URL ?? '').replace(/\/+$/, '');
   const API_SECRET = process.env.NEXT_PUBLIC_API_SECRET ?? '';
@@ -294,6 +295,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
   async function handleGradeAll(assignmentId: number, force = false) {
     if (!API_URL) { setGradeMsg(assignmentId, 'Grading service not configured.', true); return; }
     setGradeMsg(assignmentId, 'Grading in progress…');
+    setGradingAssignmentId(assignmentId);
     try {
       const res = await fetch(`${API_URL}/grade/${assignmentId}${force ? '?force=true' : ''}`, {
         method: 'POST',
@@ -305,7 +307,13 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
       const usageStr = t && (t.prompt_tokens || t.completion_tokens)
         ? ` · ${(t.prompt_tokens || 0).toLocaleString()} in / ${(t.completion_tokens || 0).toLocaleString()} out`
         : '';
-      setGradeMsg(assignmentId, `Done — ${data.graded} graded, ${data.errors} errors${usageStr}`);
+      const suffix = data.aborted ? ' (stopped)' : '';
+      setGradeMsg(
+        assignmentId,
+        data.aborted
+          ? `Stopped — ${data.graded} graded, ${data.errors} errors${usageStr}${suffix}`
+          : `Done — ${data.graded} graded, ${data.errors} errors${usageStr}`,
+      );
       loadData();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -313,6 +321,21 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
         ? ' — Service unreachable. Check your configuration.'
         : '';
       setGradeMsg(assignmentId, `Grading failed: ${msg}${hint}`, true);
+    } finally {
+      setGradingAssignmentId(null);
+    }
+  }
+
+  async function handleStopGrading(assignmentId: number) {
+    if (!API_URL) return;
+    setGradeMsg(assignmentId, 'Stopping after current submission…');
+    try {
+      await fetch(`${API_URL}/grade/${assignmentId}/abort`, {
+        method: 'POST',
+        headers: API_SECRET ? { 'x-api-key': API_SECRET } : {},
+      });
+    } catch {
+      setGradeMsg(assignmentId, 'Stop requested (request failed; grading may still stop).');
     }
   }
 
@@ -549,13 +572,22 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                           >
                             {a.reference_notebook ? '📄 Reference ✓' : '📄 Reference'}
                           </button>
-                          {a.reference_notebook && (
+                          {a.reference_notebook && gradingAssignmentId !== a.id && (
                             <button
                               type="button"
                               className="btn-primary btn-small"
                               onClick={() => handleGradeAll(a.id)}
                             >
                               ✨ Grade all
+                            </button>
+                          )}
+                          {gradingAssignmentId === a.id && (
+                            <button
+                              type="button"
+                              className="btn-danger btn-small"
+                              onClick={() => handleStopGrading(a.id)}
+                            >
+                              Stop grading
                             </button>
                           )}
                           <button
