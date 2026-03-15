@@ -38,7 +38,6 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
   const [viewingNotebook, setViewingNotebook] = useState<{ title: string; notebook: Record<string, unknown> } | null>(null);
   const [loadingNotebook, setLoadingNotebook] = useState(false);
   const [requestingVerification, setRequestingVerification] = useState<number | null>(null);
-  const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? '').replace(/\/+$/, '');
 
   // One hidden file input, re-used for each assignment
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -88,26 +87,12 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
   }
 
   async function requestVerification(submissionId: number) {
-    if (!API_URL) {
-      alert('Verification is not configured. Please contact your instructor.');
-      return;
-    }
     const sb = getSupabase();
     if (!sb) return;
     setRequestingVerification(submissionId);
     try {
-      const { data: sessionData } = await sb.auth.getSession();
-      const token = sessionData.session?.access_token;
-      if (!token) {
-        alert('Please sign in again and try again.');
-        return;
-      }
-      const res = await fetch(`${API_URL}/request-verification?submission_id=${submissionId}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail ?? data.message ?? 'Request failed');
+      const { error } = await sb.rpc('request_submission_verification', { sub_id: submissionId });
+      if (error) throw new Error(error.message);
       await loadData();
     } catch (e) {
       alert('Could not submit request: ' + (e instanceof Error ? e.message : String(e)));

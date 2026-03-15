@@ -18,6 +18,9 @@ dist/
 .env.production.local
 !.env.example
 
+# SQL (run in Supabase as needed; not needed in frontend repo)
+*.sql
+
 # next-env.d.ts is auto-generated, but conventionally committed
 # Leave it tracked so TypeScript picks it up in CI
 
