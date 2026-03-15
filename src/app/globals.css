@@ -1851,6 +1851,28 @@ ol.article-list,
     flex-wrap: wrap;
 }
 
+.admin-plagiarism-threshold {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.admin-plagiarism-threshold-label {
+    font-size: var(--sub-small, 0.8rem);
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.admin-plagiarism-threshold-select {
+    padding: 4px 8px;
+    font-size: var(--sub-small, 0.82rem);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
 @media (max-width: 600px) {
     .admin-assignment-item > span:first-child {
         width: 100%;

@@ -282,6 +282,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
   const [gradingStatus, setGradingStatus] = useState<Map<number, string>>(new Map());
   const [gradingError, setGradingError]   = useState<Map<number, boolean>>(new Map());
   const [gradingAssignmentId, setGradingAssignmentId] = useState<number | null>(null);
+  const [plagiarismThresholdPct, setPlagiarismThresholdPct] = useState(60); // 60% default to reduce false positives (similar to reference)
   const [viewingNotebook, setViewingNotebook] = useState<{ title: string; notebook: Record<string, unknown> } | null>(null);
   const [notebookViewMode, setNotebookViewMode] = useState<'notebook' | 'json'>('notebook');
   const [loadingNotebook, setLoadingNotebook] = useState(false);
@@ -323,8 +324,11 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
     if (!API_URL) { setGradeMsg(assignmentId, 'Grading service not configured.', true); return; }
     setGradeMsg(assignmentId, 'Grading in progress…');
     setGradingAssignmentId(assignmentId);
+    const params = new URLSearchParams();
+    if (force) params.set('force', 'true');
+    params.set('plagiarism_threshold', String(plagiarismThresholdPct / 100));
     try {
-      const res = await fetch(`${API_URL}/grade/${assignmentId}${force ? '?force=true' : ''}`, {
+      const res = await fetch(`${API_URL}/grade/${assignmentId}?${params}`, {
         method: 'POST',
         headers: API_SECRET ? { 'x-api-key': API_SECRET } : {},
       });
@@ -600,13 +604,30 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                             {a.reference_notebook ? '📄 Reference ✓' : '📄 Reference'}
                           </button>
                           {a.reference_notebook && gradingAssignmentId !== a.id && (
-                            <button
-                              type="button"
-                              className="btn-primary btn-small"
-                              onClick={() => handleGradeAll(a.id)}
-                            >
-                              ✨ Grade all
-                            </button>
+                            <>
+                              <label className="admin-plagiarism-threshold">
+                                <span className="admin-plagiarism-threshold-label">Plagiarism:</span>
+                                <select
+                                  value={plagiarismThresholdPct}
+                                  onChange={e => setPlagiarismThresholdPct(Number(e.target.value))}
+                                  title="Overlap % above which to flag (higher = fewer false positives)"
+                                  className="admin-plagiarism-threshold-select"
+                                >
+                                  <option value={40}>40%</option>
+                                  <option value={50}>50%</option>
+                                  <option value={60}>60%</option>
+                                  <option value={70}>70%</option>
+                                  <option value={80}>80%</option>
+                                </select>
+                              </label>
+                              <button
+                                type="button"
+                                className="btn-primary btn-small"
+                                onClick={() => handleGradeAll(a.id)}
+                              >
+                                ✨ Grade all
+                              </button>
+                            </>
                           )}
                           {gradingAssignmentId === a.id && (
                             <button
