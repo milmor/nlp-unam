@@ -37,6 +37,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
   const [signupsOpen, setSignupsOpen] = useState<boolean | null>(null);
   const [signupsToggling, setSignupsToggling] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<{ id: number; title: string } | null>(null);
+  const [confirmGrade, setConfirmGrade] = useState<{ assignmentId: number; assignmentTitle: string } | null>(null);
 
   // Course name/term inline editing
   const [editingCourse, setEditingCourse] = useState(false);
@@ -619,7 +620,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                               <option value={80}>80%</option>
                             </select>
                           </label>
-                          <button type="button" className="btn-primary btn-small" onClick={() => handleGradeAll(a.id)}>
+                          <button type="button" className="btn-primary btn-small" onClick={() => setConfirmGrade({ assignmentId: a.id, assignmentTitle: a.title })}>
                             ✨ Grade
                           </button>
                         </>
@@ -732,28 +733,25 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                                         )}
                                       </div>
                                     )}
-                                    <textarea
-                                      className="admin-feedback-input"
-                                      placeholder="Feedback"
-                                      value={g.feedback}
-                                      onChange={e => handleFeedbackChange(sub.id, e.target.value)}
-                                      rows={2}
-                                      title="Edit feedback"
-                                    />
-                                    {g.feedback.length > 120 && (
-                                      <button
-                                        type="button"
-                                        className="admin-feedback-expand-btn"
-                                        onClick={() => setEditingFeedbackFor({
-                                          subId: sub.id,
-                                          feedback: g.feedback,
-                                          studentLabel: sub.student?.name || sub.student?.email || `Submission ${sub.id}`,
-                                        })}
-                                        title="Expand to edit long feedback"
-                                      >
-                                        Expand
-                                      </button>
+                                    {g.feedback ? (
+                                      <span className="admin-feedback-preview" title={g.feedback}>
+                                        {g.feedback.length > 55 ? g.feedback.slice(0, 55).trim() + '…' : g.feedback}
+                                      </span>
+                                    ) : (
+                                      <span className="admin-feedback-empty">No feedback</span>
                                     )}
+                                    <button
+                                      type="button"
+                                      className="admin-feedback-expand-btn admin-feedback-open-btn"
+                                      onClick={() => setEditingFeedbackFor({
+                                        subId: sub.id,
+                                        feedback: g.feedback,
+                                        studentLabel: sub.student?.name || sub.student?.email || `Submission ${sub.id}`,
+                                      })}
+                                      title="View or edit feedback"
+                                    >
+                                      {g.feedback ? 'View / Edit feedback' : 'Add feedback'}
+                                    </button>
                                     {sub.verification_requested && (
                                       <button
                                         type="button"
@@ -881,6 +879,20 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
           confirmLabel="Delete"
           onConfirm={confirmDeleteAssignment}
           onCancel={() => setConfirmDelete(null)}
+        />
+      )}
+
+      {confirmGrade && (
+        <ConfirmDialog
+          title="Grade all submissions?"
+          message={`Grade all submissions for "${confirmGrade.assignmentTitle}"? This may take a while. Already-graded submissions will be skipped unless you re-run with force.`}
+          confirmLabel="Grade all"
+          confirmVariant="primary"
+          onConfirm={() => {
+            handleGradeAll(confirmGrade.assignmentId);
+            setConfirmGrade(null);
+          }}
+          onCancel={() => setConfirmGrade(null)}
         />
       )}
 

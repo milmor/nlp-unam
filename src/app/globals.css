@@ -1177,6 +1177,7 @@ ol.article-list,
 .submissions-dashboard-wrap,
 .admin-layout,
 .admin-content {
+    width: 100%;
     max-width: 100%;
     min-width: 0;
     box-sizing: border-box;
@@ -1482,6 +1483,8 @@ ol.article-list,
 .admin-assignments-section,
 .admin-submissions-section {
     margin-top: 0.5rem;
+    width: 100%;
+    min-width: 0;
 }
 
 .admin-assignments-section .admin-list,
@@ -1496,6 +1499,8 @@ ol.article-list,
     gap: 0.75rem;
     flex-wrap: wrap;
     margin-bottom: 0.75rem;
+    width: 100%;
+    min-width: 0;
 }
 
 .admin-section-title {
@@ -1616,9 +1621,8 @@ ol.article-list,
 .admin-feedback-cell {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
     min-width: 0;
-    max-width: 280px;
 }
 
 .admin-feedback-input {
@@ -1664,6 +1668,42 @@ ol.article-list,
     text-decoration: underline;
 }
 
+.admin-feedback-open-btn {
+    padding: 0.4rem 0.65rem;
+    border: 1px solid color-mix(in srgb, var(--accent-primary) 40%, transparent);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+    font-size: var(--sub-small, 0.82rem);
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.admin-feedback-open-btn:hover {
+    background: color-mix(in srgb, var(--accent-primary) 18%, transparent);
+    border-color: var(--accent-primary);
+    text-decoration: none;
+}
+
+.admin-feedback-preview {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: var(--sub-small, 0.82rem);
+    color: var(--text-secondary);
+    line-height: 1.4;
+    margin-bottom: 2px;
+    max-width: 100%;
+}
+
+.admin-feedback-empty {
+    display: block;
+    font-size: var(--sub-small, 0.82rem);
+    color: var(--text-muted);
+    font-style: italic;
+    margin-bottom: 2px;
+}
+
 .feedback-edit-modal {
     background: var(--bg-primary);
     border: 1px solid var(--border-color);
@@ -1687,6 +1727,8 @@ ol.article-list,
     display: flex;
     flex-direction: column;
     gap: 6px;
+    width: 100%;
+    min-width: 0;
 }
 
 .admin-accordion-item {
@@ -1694,6 +1736,9 @@ ol.article-list,
     border-radius: 8px;
     overflow: hidden;
     margin-bottom: 0.5rem;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .admin-accordion-header-row {
@@ -1703,6 +1748,9 @@ ol.article-list,
     gap: 0.5rem;
     background: color-mix(in srgb, var(--border-color) 25%, transparent);
     border-bottom: 1px solid var(--border-color);
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .admin-accordion-header {
