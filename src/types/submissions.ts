@@ -25,6 +25,7 @@ export interface Submission {
   created_at: string;
   verification_requested?: boolean;
   verification_requested_at?: string | null;
+  verification_comment?: string | null;
 }
 
 export interface AdminSubmission {
@@ -36,6 +37,7 @@ export interface AdminSubmission {
   created_at: string;
   verification_requested?: boolean;
   verification_requested_at?: string | null;
+  verification_comment?: string | null;
   student?: { email: string; name: string | null; role: string | null } | null;
   assignment?: { title: string } | null;
 }

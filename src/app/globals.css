@@ -1942,6 +1942,109 @@ ol.article-list,
     margin-bottom: 4px;
 }
 
+.verification-requested-block {
+    margin-bottom: 0.5rem;
+}
+
+.verification-student-comment {
+    font-size: var(--sub-tiny, 0.8rem);
+    color: var(--text-secondary);
+    margin: 0.35rem 0 0;
+    padding: 0.5rem 0.6rem;
+    background: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+    border-left: 3px solid var(--accent-primary);
+    border-radius: 0 6px 6px 0;
+    line-height: 1.45;
+    max-width: 32rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* Student verification request modal */
+.verification-request-modal {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    max-width: 480px;
+    width: 100%;
+    box-shadow: 0 12px 40px var(--shadow-color);
+    animation: confirm-in 0.2s ease;
+    overflow: hidden;
+}
+
+.verification-explanation {
+    font-size: var(--sub-body, 0.9375rem);
+    line-height: 1.6;
+    color: var(--text-secondary);
+    margin: 0 0 1.25rem;
+    padding: 1rem 1.1rem;
+    background: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent-primary) 22%, transparent);
+    border-radius: 10px;
+}
+
+.verification-form-group {
+    margin-bottom: 1.25rem;
+}
+
+.verification-label {
+    display: block;
+    font-size: var(--sub-body, 0.9rem);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.4rem;
+}
+
+.verification-optional {
+    font-weight: 400;
+    color: var(--text-muted);
+}
+
+.verification-comment-input {
+    width: 100%;
+    padding: 0.65rem 0.75rem;
+    font: inherit;
+    font-size: var(--sub-body, 0.9rem);
+    line-height: 1.5;
+    color: var(--text-primary);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    resize: vertical;
+    min-height: 5rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.verification-comment-input::placeholder {
+    color: var(--text-muted);
+}
+
+.verification-comment-input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 18%, transparent);
+}
+
+.verification-char-hint {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+    text-align: right;
+}
+
+.verification-modal-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    padding-top: 0.25rem;
+}
+
+.feedback-view-btn-verification {
+    margin-top: 4px;
+}
+
 /* Student feedback modal: readable full view */
 .feedback-modal-overlay {
     position: fixed;

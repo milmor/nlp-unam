@@ -38,6 +38,8 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
   const [viewingNotebook, setViewingNotebook] = useState<{ title: string; notebook: Record<string, unknown> } | null>(null);
   const [loadingNotebook, setLoadingNotebook] = useState(false);
   const [requestingVerification, setRequestingVerification] = useState<number | null>(null);
+  const [verificationModal, setVerificationModal] = useState<{ submissionId: number; assignmentTitle: string } | null>(null);
+  const [verificationComment, setVerificationComment] = useState('');
 
   // One hidden file input, re-used for each assignment
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -52,7 +54,7 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
         sb.from('assignments').select('id, title, deadline').eq('course_id', course.id).order('id'),
         sb
           .from('submissions')
-          .select('id, assignment_id, notebook_url, score, feedback, created_at, verification_requested, verification_requested_at')
+          .select('id, assignment_id, notebook_url, score, feedback, created_at, verification_requested, verification_requested_at, verification_comment')
           .eq('student_id', user.id)
           .order('created_at', { ascending: false }),
       ]);
@@ -86,13 +88,24 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
     return pathOrUrl;
   }
 
-  async function requestVerification(submissionId: number) {
+  function openVerificationModal(submissionId: number, assignmentTitle: string) {
+    setVerificationComment('');
+    setVerificationModal({ submissionId, assignmentTitle });
+  }
+
+  async function submitVerificationRequest() {
+    if (!verificationModal) return;
     const sb = getSupabase();
     if (!sb) return;
-    setRequestingVerification(submissionId);
+    setRequestingVerification(verificationModal.submissionId);
     try {
-      const { error } = await sb.rpc('request_submission_verification', { sub_id: submissionId });
+      const { error } = await sb.rpc('request_submission_verification', {
+        sub_id: verificationModal.submissionId,
+        student_comment: verificationComment.trim() || null,
+      });
       if (error) throw new Error(error.message);
+      setVerificationModal(null);
+      setVerificationComment('');
       await loadData();
     } catch (e) {
       alert('Could not submit request: ' + (e instanceof Error ? e.message : String(e)));
@@ -296,8 +309,8 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
                               ) : (
                                 <button
                                   type="button"
-                                  className="feedback-view-btn"
-                                  onClick={() => requestVerification(sub.id)}
+                                  className="feedback-view-btn feedback-view-btn-verification"
+                                  onClick={() => openVerificationModal(sub.id, a.title)}
                                   disabled={requestingVerification === sub.id}
                                 >
                                   {requestingVerification === sub.id ? 'Requesting…' : 'Request verification'}
@@ -353,6 +366,52 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
               )}
               <div className="feedback-modal-text">
                 {feedbackModal.feedback}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {verificationModal && (
+        <div className="feedback-modal-overlay" onClick={() => setVerificationModal(null)}>
+          <div className="verification-request-modal" onClick={e => e.stopPropagation()}>
+            <div className="feedback-modal-header">
+              <h5 className="feedback-modal-title">Request grade verification</h5>
+              <button type="button" className="btn-secondary btn-small" onClick={() => setVerificationModal(null)}>
+                Cancel
+              </button>
+            </div>
+            <div className="feedback-modal-body">
+              <p className="verification-explanation">
+                If you believe your grade does not reflect your work, you can request a manual review. An instructor will review your submission and may adjust the grade. Use this only when you have a specific reason (e.g. the feedback does not match your solution, or part of your notebook was not considered).
+              </p>
+              <div className="verification-form-group">
+                <label htmlFor="verification-comment" className="verification-label">
+                  Your comment <span className="verification-optional">(optional)</span>
+                </label>
+                <textarea
+                  id="verification-comment"
+                  className="verification-comment-input"
+                  placeholder="E.g. The feedback says X but my approach in cell 3 was Y…"
+                  value={verificationComment}
+                  onChange={e => setVerificationComment(e.target.value)}
+                  rows={4}
+                  maxLength={2000}
+                />
+                <span className="verification-char-hint">{verificationComment.length}/2000</span>
+              </div>
+              <div className="verification-modal-actions">
+                <button type="button" className="btn-secondary" onClick={() => setVerificationModal(null)}>
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={submitVerificationRequest}
+                  disabled={requestingVerification === verificationModal.submissionId}
+                >
+                  {requestingVerification === verificationModal.submissionId ? 'Submitting…' : 'Submit request'}
+                </button>
               </div>
             </div>
           </div>

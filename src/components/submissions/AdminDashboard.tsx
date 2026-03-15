@@ -177,7 +177,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
         sb
           .from('submissions')
           .select(
-            'id, assignment_id, notebook_url, score, feedback, created_at, verification_requested, verification_requested_at, student:profiles!submissions_student_id_fkey(email, name, role), assignment:assignments!fk_assignment(title, course_id)'
+            'id, assignment_id, notebook_url, score, feedback, created_at, verification_requested, verification_requested_at, verification_comment, student:profiles!submissions_student_id_fkey(email, name, role), assignment:assignments!fk_assignment(title, course_id)'
           )
           .order('created_at', { ascending: false }),
       ]);
@@ -747,9 +747,14 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                                 <td data-label="Feedback">
                                   <div className="admin-feedback-cell">
                                     {sub.verification_requested && (
-                                      <span className="verification-badge verification-requested admin-verification-badge">
-                                        Verification requested
-                                      </span>
+                                      <div className="verification-requested-block">
+                                        <span className="verification-badge verification-requested admin-verification-badge">
+                                          Verification requested
+                                        </span>
+                                        {sub.verification_comment && (
+                                          <p className="verification-student-comment">{sub.verification_comment}</p>
+                                        )}
+                                      </div>
                                     )}
                                     <textarea
                                       className="admin-feedback-input"
@@ -780,7 +785,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                                         onClick={async () => {
                                           const sb = getSupabase();
                                           if (!sb) return;
-                                          await sb.from('submissions').update({ verification_requested: false, verification_requested_at: null }).eq('id', sub.id);
+                                          await sb.from('submissions').update({ verification_requested: false, verification_requested_at: null, verification_comment: null }).eq('id', sub.id);
                                           loadData();
                                         }}
                                         title="Mark verification as resolved"
