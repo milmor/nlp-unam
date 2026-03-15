@@ -23,24 +23,19 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Expanded feedback per assignment
-  const [expandedFeedback, setExpandedFeedback] = useState<Set<number>>(new Set());
-  const toggleFeedback = useCallback((id: number) => {
-    setExpandedFeedback(prev => {
-      const s = new Set(prev);
-      s.has(id) ? s.delete(id) : s.add(id);
-      return s;
-    });
-  }, []);
+  const [feedbackModal, setFeedbackModal] = useState<{
+    assignmentTitle: string;
+    score: number | null;
+    feedback: string;
+  } | null>(null);
 
-  const PREVIEW_LEN = 80;
+  const FEEDBACK_PREVIEW_CHARS = 48;
 
   // Per-assignment upload state: assignmentId → status message
   const [uploadStatus, setUploadStatus] = useState<Map<number, string>>(new Map());
   const [uploadError, setUploadError] = useState<Map<number, boolean>>(new Map());
   const [uploading, setUploading] = useState<Set<number>>(new Set());
   const [viewingNotebook, setViewingNotebook] = useState<{ title: string; notebook: Record<string, unknown> } | null>(null);
-  const [notebookViewMode, setNotebookViewMode] = useState<'notebook' | 'json'>('notebook');
   const [loadingNotebook, setLoadingNotebook] = useState(false);
 
   // One hidden file input, re-used for each assignment
@@ -90,18 +85,6 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
     return pathOrUrl;
   }
 
-  async function openNotebook(pathOrUrl: string) {
-    const sb = getSupabase();
-    if (!sb) return;
-    const storagePath = getStoragePath(pathOrUrl);
-    const { data, error } = await sb.storage.from(BUCKET).createSignedUrl(storagePath, 60);
-    if (error || !data?.signedUrl) {
-      alert('Could not open notebook: ' + (error?.message ?? 'unknown error'));
-      return;
-    }
-    window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
-  }
-
   async function viewNotebook(pathOrUrl: string, title: string) {
     const storagePath = getStoragePath(pathOrUrl);
     setLoadingNotebook(true);
@@ -115,7 +98,6 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
       if (!res.ok) throw new Error('Fetch failed');
       const json = await res.json();
       setViewingNotebook({ title, notebook: json });
-      setNotebookViewMode('notebook');
     } catch (e) {
       alert('Could not load notebook: ' + (e instanceof Error ? e.message : String(e)));
     } finally {
@@ -262,50 +244,38 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
                       </td>
                       <td>
                         {sub?.notebook_url ? (
-                          <span className="admin-notebook-actions">
-                            <button
-                              type="button"
-                              className="btn-secondary btn-small"
-                              onClick={() => viewNotebook(sub.notebook_url!, a.title)}
-                              disabled={loadingNotebook}
-                            >
-                              {loadingNotebook ? '…' : 'View'}
-                            </button>
-                            <button
-                              type="button"
-                              className="btn-secondary btn-small"
-                              onClick={() => openNotebook(sub.notebook_url!)}
-                            >
-                              Open ↗
-                            </button>
-                          </span>
+                          <button
+                            type="button"
+                            className="btn-secondary btn-small"
+                            onClick={() => viewNotebook(sub.notebook_url!, a.title)}
+                            disabled={loadingNotebook}
+                          >
+                            {loadingNotebook ? '…' : 'View'}
+                          </button>
                         ) : '—'}
                       </td>
                       <td>{sub?.score != null ? `${sub.score}/10` : '–'}</td>
                       <td className="feedback-cell">
-                        {sub?.feedback ? (() => {
-                          const text = sub.feedback;
-                          const isLong = text.length > PREVIEW_LEN;
-                          const expanded = expandedFeedback.has(a.id);
-                          return (
-                            <>
-                              <span className="feedback-text">
-                                {isLong && !expanded
-                                  ? text.slice(0, PREVIEW_LEN) + '…'
-                                  : text}
-                              </span>
-                              {isLong && (
-                                <button
-                                  type="button"
-                                  className="read-more-btn"
-                                  onClick={() => toggleFeedback(a.id)}
-                                >
-                                  {expanded ? 'Show less ↑' : 'Show more ↓'}
-                                </button>
-                              )}
-                            </>
-                          );
-                        })() : '–'}
+                        {sub?.feedback ? (
+                          <div className="feedback-preview">
+                            <span className="feedback-preview-text">
+                              {sub.feedback.length > FEEDBACK_PREVIEW_CHARS
+                                ? sub.feedback.slice(0, FEEDBACK_PREVIEW_CHARS).trim() + '…'
+                                : sub.feedback}
+                            </span>
+                            <button
+                              type="button"
+                              className="feedback-view-btn"
+                              onClick={() => setFeedbackModal({
+                                assignmentTitle: a.title,
+                                score: sub?.score ?? null,
+                                feedback: sub.feedback ?? '',
+                              })}
+                            >
+                              View feedback
+                            </button>
+                          </div>
+                        ) : '–'}
                       </td>
                       <td>
                         <button
@@ -336,37 +306,40 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
         </div>
       )}
 
+      {feedbackModal && (
+        <div className="feedback-modal-overlay" onClick={() => setFeedbackModal(null)}>
+          <div className="feedback-modal" onClick={e => e.stopPropagation()}>
+            <div className="feedback-modal-header">
+              <h5 className="feedback-modal-title">{feedbackModal.assignmentTitle}</h5>
+              <button type="button" className="btn-secondary btn-small" onClick={() => setFeedbackModal(null)}>
+                Close
+              </button>
+            </div>
+            <div className="feedback-modal-body">
+              {feedbackModal.score != null && (
+                <div className="feedback-score-badge">
+                  Score: <strong>{feedbackModal.score}/10</strong>
+                </div>
+              )}
+              <div className="feedback-modal-text">
+                {feedbackModal.feedback}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {viewingNotebook && (
         <div className="notebook-modal-overlay" onClick={() => setViewingNotebook(null)}>
           <div className="notebook-modal" onClick={e => e.stopPropagation()}>
             <div className="notebook-modal-header">
               <h5 className="notebook-modal-title">{viewingNotebook.title}</h5>
-              <span className="notebook-modal-actions">
-                <button
-                  type="button"
-                  className={notebookViewMode === 'notebook' ? 'btn-primary btn-small' : 'btn-secondary btn-small'}
-                  onClick={() => setNotebookViewMode('notebook')}
-                >
-                  Notebook
-                </button>
-                <button
-                  type="button"
-                  className={notebookViewMode === 'json' ? 'btn-primary btn-small' : 'btn-secondary btn-small'}
-                  onClick={() => setNotebookViewMode('json')}
-                >
-                  JSON
-                </button>
-                <button type="button" className="btn-secondary btn-small" onClick={() => setViewingNotebook(null)}>
-                  Close
-                </button>
-              </span>
+              <button type="button" className="btn-secondary btn-small" onClick={() => setViewingNotebook(null)}>
+                Close
+              </button>
             </div>
             <div className="notebook-modal-body">
-              {notebookViewMode === 'json' ? (
-                <pre className="notebook-json-view"><code>{JSON.stringify(viewingNotebook.notebook, null, 2)}</code></pre>
-              ) : (
-                <NotebookViewer notebook={viewingNotebook.notebook} />
-              )}
+              <NotebookViewer notebook={viewingNotebook.notebook} />
             </div>
           </div>
         </div>

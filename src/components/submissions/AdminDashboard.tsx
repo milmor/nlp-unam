@@ -113,18 +113,6 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
     return pathOrUrl;
   }
 
-  async function openNotebook(pathOrUrl: string) {
-    const sb = getSupabase();
-    if (!sb) return;
-    const storagePath = getStoragePath(pathOrUrl);
-    const { data, error } = await sb.storage.from(BUCKET).createSignedUrl(storagePath, 60);
-    if (error || !data?.signedUrl) {
-      alert('Could not open notebook: ' + (error?.message ?? 'unknown error'));
-      return;
-    }
-    window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
-  }
-
   async function viewNotebook(pathOrUrl: string, title: string) {
     const storagePath = getStoragePath(pathOrUrl);
     setLoadingNotebook(true);
@@ -297,6 +285,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
   const [viewingNotebook, setViewingNotebook] = useState<{ title: string; notebook: Record<string, unknown> } | null>(null);
   const [notebookViewMode, setNotebookViewMode] = useState<'notebook' | 'json'>('notebook');
   const [loadingNotebook, setLoadingNotebook] = useState(false);
+  const [editingFeedbackFor, setEditingFeedbackFor] = useState<{ subId: number; feedback: string; studentLabel: string } | null>(null);
 
   const API_URL    = (process.env.NEXT_PUBLIC_API_URL ?? '').replace(/\/+$/, '');
   const API_SECRET = process.env.NEXT_PUBLIC_API_SECRET ?? '';
@@ -713,23 +702,14 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                                 </td>
                                 <td data-label="Notebook">
                                   {sub.notebook_url ? (
-                                    <span className="admin-notebook-actions">
-                                      <button
-                                        type="button"
-                                        className="btn-secondary btn-small"
-                                        onClick={() => viewNotebook(sub.notebook_url!, sub.student?.name || sub.student?.email || 'Notebook')}
-                                        disabled={loadingNotebook}
-                                      >
-                                        {loadingNotebook ? '…' : 'View'}
-                                      </button>
-                                      <button
-                                        type="button"
-                                        className="btn-secondary btn-small"
-                                        onClick={() => openNotebook(sub.notebook_url!)}
-                                      >
-                                        Open ↗
-                                      </button>
-                                    </span>
+                                    <button
+                                      type="button"
+                                      className="btn-secondary btn-small"
+                                      onClick={() => viewNotebook(sub.notebook_url!, sub.student?.name || sub.student?.email || 'Notebook')}
+                                      disabled={loadingNotebook}
+                                    >
+                                      {loadingNotebook ? '…' : 'View'}
+                                    </button>
                                   ) : '—'}
                                 </td>
                                 <td data-label="Score">
@@ -744,13 +724,30 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                                   />
                                 </td>
                                 <td data-label="Feedback">
-                                  <input
-                                    type="text"
-                                    className="admin-feedback-input"
-                                    placeholder="Feedback"
-                                    value={g.feedback}
-                                    onChange={e => handleFeedbackChange(sub.id, e.target.value)}
-                                  />
+                                  <div className="admin-feedback-cell">
+                                    <textarea
+                                      className="admin-feedback-input"
+                                      placeholder="Feedback"
+                                      value={g.feedback}
+                                      onChange={e => handleFeedbackChange(sub.id, e.target.value)}
+                                      rows={2}
+                                      title="Edit feedback"
+                                    />
+                                    {g.feedback.length > 120 && (
+                                      <button
+                                        type="button"
+                                        className="admin-feedback-expand-btn"
+                                        onClick={() => setEditingFeedbackFor({
+                                          subId: sub.id,
+                                          feedback: g.feedback,
+                                          studentLabel: sub.student?.name || sub.student?.email || `Submission ${sub.id}`,
+                                        })}
+                                        title="Expand to edit long feedback"
+                                      >
+                                        Expand
+                                      </button>
+                                    )}
+                                  </div>
                                 </td>
                                 <td data-label="Submitted">{sub.created_at ? new Date(sub.created_at).toLocaleDateString() : '—'}</td>
                               </tr>
@@ -812,6 +809,41 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
 
       {/* Hidden file input for reference notebook uploads */}
       <input ref={refInputRef} type="file" accept=".ipynb" style={{ display: 'none' }} onChange={handleRefFileSelected} />
+
+      {editingFeedbackFor && (
+        <div className="feedback-modal-overlay" onClick={() => setEditingFeedbackFor(null)}>
+          <div className="feedback-edit-modal" onClick={e => e.stopPropagation()}>
+            <div className="feedback-modal-header">
+              <h5 className="feedback-modal-title">Edit feedback — {editingFeedbackFor.studentLabel}</h5>
+              <span className="notebook-modal-actions">
+                <button
+                  type="button"
+                  className="btn-primary btn-small"
+                  onClick={() => {
+                    handleFeedbackChange(editingFeedbackFor.subId, editingFeedbackFor.feedback);
+                    setEditingFeedbackFor(null);
+                  }}
+                >
+                  Save
+                </button>
+                <button type="button" className="btn-secondary btn-small" onClick={() => setEditingFeedbackFor(null)}>
+                  Cancel
+                </button>
+              </span>
+            </div>
+            <div className="feedback-modal-body">
+              <textarea
+                className="admin-feedback-input admin-feedback-input-expanded"
+                placeholder="Feedback"
+                value={editingFeedbackFor.feedback}
+                onChange={e => setEditingFeedbackFor(prev => prev ? { ...prev, feedback: e.target.value } : null)}
+                rows={8}
+                autoFocus
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {confirmDelete && (
         <ConfirmDialog
