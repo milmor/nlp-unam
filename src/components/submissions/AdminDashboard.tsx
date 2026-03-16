@@ -40,7 +40,6 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
   const [confirmGrade, setConfirmGrade] = useState<{ assignmentId: number; assignmentTitle: string } | null>(null);
 
   // Course name/term inline editing
-  const [editingCourse, setEditingCourse] = useState(false);
   const [courseName, setCourseName] = useState(course.name);
   const [courseTerm, setCourseTerm] = useState(course.term ?? '');
   const [savingCourse, setSavingCourse] = useState(false);
@@ -56,7 +55,6 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
       .eq('id', course.id);
     setSavingCourse(false);
     if (error) showMsg('Failed to save course: ' + error.message, true);
-    else setEditingCourse(false);
   }
 
   // Inline assignment editing: id → { title, description, deadline }
@@ -289,6 +287,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
   const [plagiarismThresholdPct, setPlagiarismThresholdPct] = useState(60); // 60% default to reduce false positives (similar to reference)
   const [viewingNotebook, setViewingNotebook] = useState<{ title: string; notebook: Record<string, unknown> } | null>(null);
   const [notebookViewMode, setNotebookViewMode] = useState<'notebook' | 'json'>('notebook');
+  const [showCourseSettings, setShowCourseSettings] = useState(false);
   const [loadingNotebook, setLoadingNotebook] = useState(false);
   const [editingFeedbackFor, setEditingFeedbackFor] = useState<{ subId: number; feedback: string; studentLabel: string } | null>(null);
 
@@ -419,10 +418,37 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
 
   return (
     <div className="dashboard">
-      <div className="dashboard-header">
-        <div className="dashboard-header-left">
-          <button className="btn-back-courses" onClick={onBack} type="button" aria-label="Back to courses">← Courses</button>
-          {editingCourse ? (
+      <header className="dashboard-header admin-dashboard-header">
+        <div className="dashboard-header-primary">
+          <button className="btn-back-courses" onClick={onBack} type="button" aria-label="Back to courses">
+            ← Courses
+          </button>
+          <span className="dashboard-header-sep" aria-hidden />
+          <h1 className="dashboard-title">{courseName}{courseTerm ? ` · ${courseTerm}` : ''}</h1>
+        </div>
+        <div className="dashboard-header-actions">
+          <button
+            type="button"
+            className={showCourseSettings ? 'btn-primary btn-small' : 'btn-secondary btn-small'}
+            onClick={() => setShowCourseSettings(v => !v)}
+          >
+            {showCourseSettings ? 'Hide settings' : 'Course settings'}
+          </button>
+          <button type="button" className="btn-logout" onClick={onLogout}>
+            Log out
+          </button>
+        </div>
+      </header>
+      <div className="dashboard-header-meta">
+        <span className="dashboard-user-line">Logged in as <strong>{user.email}</strong></span>
+        <span className="admin-badge">Admin</span>
+      </div>
+
+      {/* Course settings (collapsed by default): edit course + signup toggle */}
+      {showCourseSettings && (
+        <div className="course-settings-card">
+          <div className="course-settings-section">
+            <span className="course-settings-label">Edit course</span>
             <div className="course-edit-inline">
               <input
                 type="text"
@@ -443,45 +469,29 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
               <button type="button" className="btn-primary btn-small" onClick={saveCourse} disabled={savingCourse}>
                 {savingCourse ? '…' : 'Save'}
               </button>
-              <button type="button" className="btn-secondary btn-small" onClick={() => { setEditingCourse(false); setCourseName(course.name); setCourseTerm(course.term ?? ''); }}>
+              <button type="button" className="btn-secondary btn-small" onClick={() => { setCourseName(course.name); setCourseTerm(course.term ?? ''); }}>
                 Cancel
               </button>
             </div>
-          ) : (
-            <>
-              <h4 className="dashboard-title">{courseName}{courseTerm ? ` · ${courseTerm}` : ''}</h4>
-              <button type="button" className="btn-secondary btn-small" onClick={() => setEditingCourse(true)}>
-                Edit
+          </div>
+          {signupsOpen !== null && (
+            <div className="signup-toggle-row">
+              <span className="signup-toggle-label">
+                New registrations:
+                <span className={`signup-status-badge${signupsOpen ? ' open' : ' closed'}`}>
+                  {signupsOpen ? 'Open' : 'Closed'}
+                </span>
+              </span>
+              <button
+                type="button"
+                className={signupsOpen ? 'btn-secondary btn-small' : 'btn-primary btn-small'}
+                onClick={toggleSignups}
+                disabled={signupsToggling}
+              >
+                {signupsToggling ? '…' : signupsOpen ? 'Close registrations' : 'Open registrations'}
               </button>
-            </>
+            </div>
           )}
-        </div>
-        <button className="btn-secondary btn-small" onClick={onLogout} type="button">
-          Log out
-        </button>
-      </div>
-      <p className="prereq-note dashboard-user-line">
-        Logged in as <strong>{user.email}</strong>{' '}
-        <span className="admin-badge">Admin</span>
-      </p>
-
-      {/* Signup toggle */}
-      {signupsOpen !== null && (
-        <div className="signup-toggle-row">
-          <span className="signup-toggle-label">
-            New registrations:
-            <span className={`signup-status-badge${signupsOpen ? ' open' : ' closed'}`}>
-              {signupsOpen ? 'Open' : 'Closed'}
-            </span>
-          </span>
-          <button
-            type="button"
-            className={signupsOpen ? 'btn-secondary btn-small' : 'btn-primary btn-small'}
-            onClick={toggleSignups}
-            disabled={signupsToggling}
-          >
-            {signupsToggling ? '…' : signupsOpen ? 'Close registrations' : 'Open registrations'}
-          </button>
         </div>
       )}
 

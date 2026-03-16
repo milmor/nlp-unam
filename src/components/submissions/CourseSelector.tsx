@@ -24,6 +24,7 @@ export default function CourseSelector({ user, isAdmin, onSelect, onLogout }: Pr
   const [newTerm, setNewTerm] = useState('');
   const [newDesc, setNewDesc] = useState('');
   const [creating, setCreating] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   function showMsg(text: string, error = false) { setMessage(text); setIsError(error); }
 
@@ -147,19 +148,61 @@ export default function CourseSelector({ user, isAdmin, onSelect, onLogout }: Pr
             </>
           )}
 
-          {/* Admin: create new course */}
+          {/* Admin: create new course (collapsed by default) */}
           {isAdmin && (
-            <>
-              <h5 className="admin-section-title" style={{ marginTop: '1.75rem', marginBottom: '0.5rem' }}>Create new course</h5>
-              <form className="admin-assignment-form" onSubmit={handleCreate}>
-                <div className="admin-assignment-fields">
-                  <input type="text" placeholder="Course name" value={newName} onChange={e => setNewName(e.target.value)} required disabled={creating} />
-                  <input type="text" placeholder="Term (e.g. 2025-1)" value={newTerm} onChange={e => setNewTerm(e.target.value)} disabled={creating} />
-                  <input type="text" placeholder="Description (optional)" value={newDesc} onChange={e => setNewDesc(e.target.value)} disabled={creating} />
-                </div>
-                <button type="submit" className="btn-primary btn-small" disabled={creating}>Create &amp; open</button>
-              </form>
-            </>
+            <div className="course-create-wrap">
+              {!showCreateForm ? (
+                <button
+                  type="button"
+                  className="btn-primary btn-small"
+                  onClick={() => setShowCreateForm(true)}
+                >
+                  New course
+                </button>
+              ) : (
+                <>
+                  <div className="course-create-header">
+                    <h5 className="admin-section-title">Create new course</h5>
+                    <button
+                      type="button"
+                      className="btn-secondary btn-small"
+                      onClick={() => setShowCreateForm(false)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                  <form className="admin-assignment-form" onSubmit={handleCreate}>
+                    <div className="admin-assignment-fields">
+                      <input
+                        type="text"
+                        placeholder="Course name"
+                        value={newName}
+                        onChange={e => setNewName(e.target.value)}
+                        required
+                        disabled={creating}
+                      />
+                      <input
+                        type="text"
+                        placeholder="Term (e.g. 2025-1)"
+                        value={newTerm}
+                        onChange={e => setNewTerm(e.target.value)}
+                        disabled={creating}
+                      />
+                      <input
+                        type="text"
+                        placeholder="Description (optional)"
+                        value={newDesc}
+                        onChange={e => setNewDesc(e.target.value)}
+                        disabled={creating}
+                      />
+                    </div>
+                    <button type="submit" className="btn-primary btn-small" disabled={creating}>
+                      {creating ? 'Creating…' : 'Create & open'}
+                    </button>
+                  </form>
+                </>
+              )}
+            </div>
           )}
         </>
       )}
