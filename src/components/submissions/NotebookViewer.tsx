@@ -30,6 +30,18 @@ interface Props {
 export default function NotebookViewer({ notebook, className = '' }: Props) {
   const cells = notebook?.cells ?? [];
 
+  const codeTheme = {
+    ...oneDark,
+    'code[class*="language-"]': {
+      ...oneDark['code[class*="language-"]'],
+      background: 'transparent',
+    },
+    'pre[class*="language-"]': {
+      ...oneDark['pre[class*="language-"]'],
+      background: 'transparent',
+    },
+  } as typeof oneDark;
+
   return (
     <div className={`notebook-viewer ${className}`}>
       {cells.map((cell, idx) => {
@@ -46,7 +58,7 @@ export default function NotebookViewer({ notebook, className = '' }: Props) {
             <div key={idx} className="notebook-viewer-cell notebook-viewer-code">
               <SyntaxHighlighter
                 language="python"
-                style={oneDark}
+                style={codeTheme}
                 customStyle={{ margin: 0, background: 'transparent' }}
                 wrapLongLines
               >
