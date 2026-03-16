@@ -2663,6 +2663,48 @@ ol.article-list,
     border-color: color-mix(in srgb, #e57373 40%, transparent);
 }
 
+/* Admin: backend status (grading service up/down) */
+.admin-backend-status-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding: 0.5rem 0;
+    margin-bottom: 0.25rem;
+    font-size: var(--sub-small, 0.85rem);
+}
+
+.admin-backend-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 0.35rem;
+    flex-shrink: 0;
+}
+
+.admin-backend-dot--checking {
+    background: var(--text-muted);
+    animation: admin-backend-pulse 1s ease-in-out infinite;
+}
+
+.admin-backend-dot--up {
+    background: #2e7d32;
+}
+
+.admin-backend-dot--down {
+    background: #b00020;
+}
+
+@keyframes admin-backend-pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+.admin-backend-label {
+    color: var(--text-secondary);
+}
+
 /* Confirm dialog */
 .confirm-overlay {
     position: fixed;
