@@ -2,6 +2,8 @@
 
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 /** Jupyter notebook cell (minimal type for viewing) */
 type NbCell = {
@@ -42,7 +44,14 @@ export default function NotebookViewer({ notebook, className = '' }: Props) {
         if (cell.cell_type === 'code') {
           return (
             <div key={idx} className="notebook-viewer-cell notebook-viewer-code">
-              <pre><code>{source}</code></pre>
+              <SyntaxHighlighter
+                language="python"
+                style={oneDark}
+                customStyle={{ margin: 0, background: 'transparent' }}
+                wrapLongLines
+              >
+                {source}
+              </SyntaxHighlighter>
             </div>
           );
         }
