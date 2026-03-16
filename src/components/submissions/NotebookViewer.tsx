@@ -3,7 +3,7 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { oneDark, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 /** Jupyter notebook cell (minimal type for viewing) */
 type NbCell = {
@@ -30,7 +30,7 @@ interface Props {
 export default function NotebookViewer({ notebook, className = '' }: Props) {
   const cells = notebook?.cells ?? [];
 
-  const codeTheme = {
+  const darkTheme = {
     ...oneDark,
     'code[class*="language-"]': {
       ...oneDark['code[class*="language-"]'],
@@ -41,6 +41,25 @@ export default function NotebookViewer({ notebook, className = '' }: Props) {
       background: 'transparent',
     },
   } as typeof oneDark;
+
+  const lightTheme = {
+    ...vs,
+    'code[class*="language-"]': {
+      ...vs['code[class*="language-"]'],
+      background: 'transparent',
+      color: 'var(--text-primary)',
+    },
+    'pre[class*="language-"]': {
+      ...vs['pre[class*="language-"]'],
+      background: 'transparent',
+    },
+  } as typeof vs;
+
+  const isDark =
+    typeof window !== 'undefined' &&
+    document.documentElement.getAttribute('data-theme') === 'dark';
+
+  const codeTheme = isDark ? darkTheme : lightTheme;
 
   return (
     <div className={`notebook-viewer ${className}`}>
