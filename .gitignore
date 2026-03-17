@@ -22,6 +22,7 @@ dist/
 
 docs/*-setup.md
 docs/*-rpc*.md
+docs/architecture-diagram.md
 
 # next-env.d.ts is auto-generated, but conventionally committed
 # Leave it tracked so TypeScript picks it up in CI

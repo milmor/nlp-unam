@@ -85,12 +85,15 @@ export default function ApiStatus() {
   return (
     <>
       <h3>API and storage</h3>
+      <p className="api-status-intro">
+        Grading service status and response time.
+      </p>
       <div className="admin-backend-status-row">
         <span className="signup-toggle-label">
           Backend:
           <span
             className={`admin-backend-dot admin-backend-dot--${status === 'checking' ? 'checking' : status === 'running' ? 'up' : 'down'}`}
-            title={status === 'running' ? 'Grading service is up' : status === 'error' ? 'Unreachable (may be sleeping on free tier)' : 'Checking…'}
+            title={status === 'running' ? 'Grading service is up' : status === 'error' ? 'Service unavailable' : 'Checking…'}
             aria-hidden
           />
           <span className="admin-backend-label">{backendLabel}</span>
@@ -105,6 +108,12 @@ export default function ApiStatus() {
           {status === 'checking' ? '…' : 'Check'}
         </button>
       </div>
+      {responseTimeMs != null && status !== 'checking' && (
+        <div className="api-response-time" role="status">
+          <span className="api-response-time-label">Response time:</span>{' '}
+          <strong className="api-response-time-value">{formatDuration(responseTimeMs)}</strong>
+        </div>
+      )}
       <p className="api-status-text">{statusText}</p>
       {detail && <p className="api-message">{detail}</p>}
     </>
