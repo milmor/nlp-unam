@@ -6,6 +6,7 @@ import { getSupabase } from '@/lib/supabase';
 import type { Assignment, AdminSubmission, Course } from '@/types/submissions';
 import ConfirmDialog from './ConfirmDialog';
 import NotebookViewer from './NotebookViewer';
+import UsageStats from './UsageStats';
 
 interface EnrolledStudent {
   student_id: string;
@@ -20,7 +21,7 @@ interface Props {
   onBack: () => void;
 }
 
-type AdminTab = 'assignments' | 'students';
+type AdminTab = 'assignments' | 'students' | 'course-settings';
 
 export default function AdminDashboard({ user, course, onLogout, onBack }: Props) {
   const [activeTab, setActiveTab] = useState<AdminTab>('assignments');
@@ -287,7 +288,6 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
   const [plagiarismThresholdPct, setPlagiarismThresholdPct] = useState(60); // 60% default to reduce false positives (similar to reference)
   const [viewingNotebook, setViewingNotebook] = useState<{ title: string; notebook: Record<string, unknown> } | null>(null);
   const [notebookViewMode, setNotebookViewMode] = useState<'notebook' | 'json'>('notebook');
-  const [showCourseSettings, setShowCourseSettings] = useState(false);
   const [loadingNotebook, setLoadingNotebook] = useState(false);
   const [editingFeedbackFor, setEditingFeedbackFor] = useState<{ subId: number; feedback: string; studentLabel: string } | null>(null);
 
@@ -427,13 +427,6 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
           <h1 className="dashboard-title">{courseName}{courseTerm ? ` · ${courseTerm}` : ''}</h1>
         </div>
         <div className="dashboard-header-actions">
-          <button
-            type="button"
-            className={showCourseSettings ? 'btn-primary btn-small' : 'btn-secondary btn-small'}
-            onClick={() => setShowCourseSettings(v => !v)}
-          >
-            {showCourseSettings ? 'Hide settings' : 'Course settings'}
-          </button>
           <button type="button" className="btn-logout" onClick={onLogout}>
             Log out
           </button>
@@ -444,64 +437,13 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
         <span className="admin-badge">Admin</span>
       </div>
 
-      {/* Course settings (collapsed by default): edit course + signup toggle */}
-      {showCourseSettings && (
-        <div className="course-settings-card">
-          <div className="course-settings-section">
-            <span className="course-settings-label">Edit course</span>
-            <div className="course-edit-inline">
-              <input
-                type="text"
-                value={courseName}
-                onChange={e => setCourseName(e.target.value)}
-                placeholder="Course name"
-                disabled={savingCourse}
-                className="course-edit-input"
-              />
-              <input
-                type="text"
-                value={courseTerm}
-                onChange={e => setCourseTerm(e.target.value)}
-                placeholder="Term (e.g. 2025-1)"
-                disabled={savingCourse}
-                className="course-edit-input course-edit-input--term"
-              />
-              <button type="button" className="btn-primary btn-small" onClick={saveCourse} disabled={savingCourse}>
-                {savingCourse ? '…' : 'Save'}
-              </button>
-              <button type="button" className="btn-secondary btn-small" onClick={() => { setCourseName(course.name); setCourseTerm(course.term ?? ''); }}>
-                Cancel
-              </button>
-            </div>
-          </div>
-          {signupsOpen !== null && (
-            <div className="signup-toggle-row">
-              <span className="signup-toggle-label">
-                New registrations:
-                <span className={`signup-status-badge${signupsOpen ? ' open' : ' closed'}`}>
-                  {signupsOpen ? 'Open' : 'Closed'}
-                </span>
-              </span>
-              <button
-                type="button"
-                className={signupsOpen ? 'btn-secondary btn-small' : 'btn-primary btn-small'}
-                onClick={toggleSignups}
-                disabled={signupsToggling}
-              >
-                {signupsToggling ? '…' : signupsOpen ? 'Close registrations' : 'Open registrations'}
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
       {message && (
         <p className={`admin-dashboard-message${isError ? ' error' : ''}`}>{message}</p>
       )}
 
       <div className="admin-layout">
       <nav className="admin-nav" aria-label="Admin sections">
-        {(['assignments', 'students'] as AdminTab[]).map(tab => (
+        {(['assignments', 'students', 'course-settings'] as AdminTab[]).map(tab => (
           <button
             key={tab}
             type="button"
@@ -510,15 +452,78 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
           >
             {tab === 'assignments' && <>Assignments</>}
             {tab === 'students' && <>Students</>}
+            {tab === 'course-settings' && <>Course settings</>}
             <span className="admin-nav-count">
               {tab === 'assignments' && assignments.length}
               {tab === 'students' && students.length}
+              {tab === 'course-settings' && null}
             </span>
           </button>
         ))}
       </nav>
 
       <div className="admin-content">
+      {activeTab === 'course-settings' && (
+        <>
+          <div className="course-settings-card">
+            <div className="course-settings-section">
+              <span className="course-settings-label">Edit course</span>
+              <div className="course-edit-inline">
+                <input
+                  type="text"
+                  value={courseName}
+                  onChange={e => setCourseName(e.target.value)}
+                  placeholder="Course name"
+                  disabled={savingCourse}
+                  className="course-edit-input"
+                />
+                <input
+                  type="text"
+                  value={courseTerm}
+                  onChange={e => setCourseTerm(e.target.value)}
+                  placeholder="Term (e.g. 2025-1)"
+                  disabled={savingCourse}
+                  className="course-edit-input course-edit-input--term"
+                />
+                <button type="button" className="btn-primary btn-small" onClick={saveCourse} disabled={savingCourse}>
+                  {savingCourse ? '…' : 'Save'}
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary btn-small"
+                  onClick={() => { setCourseName(course.name); setCourseTerm(course.term ?? ''); }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+
+            {signupsOpen !== null && (
+              <div className="signup-toggle-row">
+                <span className="signup-toggle-label">
+                  New registrations:
+                  <span className={`signup-status-badge${signupsOpen ? ' open' : ' closed'}`}>
+                    {signupsOpen ? 'Open' : 'Closed'}
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  className={signupsOpen ? 'btn-secondary btn-small' : 'btn-primary btn-small'}
+                  onClick={toggleSignups}
+                  disabled={signupsToggling}
+                >
+                  {signupsToggling ? '…' : signupsOpen ? 'Close registrations' : 'Open registrations'}
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="detail-card submissions-api-card" style={{ marginTop: '1rem' }}>
+            <UsageStats />
+          </div>
+        </>
+      )}
+
       {/* Assignments: add button + form (when open) + accordion with submissions */}
       {activeTab === 'assignments' && (
         <div className="admin-assignments-section">

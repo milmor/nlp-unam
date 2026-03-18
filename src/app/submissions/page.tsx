@@ -9,7 +9,6 @@ import CourseSelector from '@/components/submissions/CourseSelector';
 import StudentDashboard from '@/components/submissions/StudentDashboard';
 import AdminDashboard from '@/components/submissions/AdminDashboard';
 import ApiStatus from '@/components/submissions/ApiStatus';
-import UsageStats from '@/components/submissions/UsageStats';
 import ResetPasswordForm from '@/components/submissions/ResetPasswordForm';
 
 export default function SubmissionsPage() {
@@ -112,9 +111,6 @@ export default function SubmissionsPage() {
 
         {authState === 'admin' && selectedCourse && (
           <>
-            <div className="detail-card submissions-api-card">
-              <UsageStats />
-            </div>
             <div className="detail-card submissions-api-card">
               <ApiStatus />
             </div>
