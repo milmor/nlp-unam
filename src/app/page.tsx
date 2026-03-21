@@ -265,7 +265,10 @@ export default function Home() {
                   <td>11</td>
                   <td>
                     <strong>Generative Models: VAEs &amp; GANs</strong>
-                    <p>Variational autoencoders, generative adversarial networks</p>
+                    <p>
+                      Variational autoencoders, GANs, discrete latents (VQ-VAE), and VQGAN—bridging to latent
+                      diffusion
+                    </p>
                   </td>
                   <td>
                     <strong>Readings:</strong><br />
@@ -273,13 +276,26 @@ export default function Home() {
                     <a href="https://arxiv.org/pdf/1312.6114">Auto-Encoding Variational Bayes</a><br />
                     2.{' '}
                     <a href="https://arxiv.org/pdf/1406.2661">Generative Adversarial Networks</a>
+                    <br />
+                    3.{' '}
+                    <a href="https://arxiv.org/abs/1711.00937">Neural Discrete Representation Learning</a>{' '}
+                    (VQ-VAE)<br />
+                    4.{' '}
+                    <a href="https://arxiv.org/abs/1906.00446">Generating Diverse High-Fidelity Images with VQ-VAE-2</a>
+                    <br />
+                    5.{' '}
+                    <a href="https://arxiv.org/abs/2012.09841">Taming Transformers for High-Resolution Image Synthesis</a>{' '}
+                    (VQGAN)
                   </td>
                 </tr>
                 <tr>
                   <td>12</td>
                   <td>
                     <strong>Generative Models: Diffusion</strong>
-                    <p>Diffusion models, DALL-E, Stable Diffusion, text-to-image generation</p>
+                    <p>
+                      Diffusion and score-based SDEs, latent diffusion (Stable Diffusion), guidance, DiT/SiT,
+                      text-to-image generation
+                    </p>
                   </td>
                   <td>
                     <strong>Readings:</strong><br />
@@ -293,6 +309,16 @@ export default function Home() {
                     <a href="https://arxiv.org/pdf/2212.09748">Scalable Diffusion Models with Transformers</a>{' '}(DiT paper)<br />
                     5.{' '}
                     <a href="https://arxiv.org/pdf/2207.12598">Classifier-Free Diffusion Guidance</a>
+                    <br />
+                    6.{' '}
+                    <a href="https://arxiv.org/abs/2011.13456">
+                      Score-Based Generative Modeling through Stochastic Differential Equations
+                    </a>
+                    <br />
+                    7.{' '}
+                    <a href="https://arxiv.org/abs/2401.08740">
+                      SiT: Exploring Flow and Diffusion-based Generative Models with Scalable Interpolant Transformers
+                    </a>
                   </td>
                 </tr>
                 <tr>

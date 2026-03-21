@@ -1024,12 +1024,33 @@ td a {
     color: var(--text-primary);
 }
 
-/* Article list in guidelines */
+/* Article list in guidelines (ordered or by-subject unordered) */
 ol.article-list,
-.prereq-info ol.article-list {
+ul.article-list,
+.prereq-info ol.article-list,
+.prereq-info ul.article-list {
     padding-left: 2.5rem !important;
     margin-left: 0.5rem !important;
     margin-bottom: 1.5rem;
+}
+
+.prereq-info .article-by-subject h5 {
+    margin-top: 1.25rem;
+    margin-bottom: 0.35rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.prereq-info .article-by-subject h5:first-child {
+    margin-top: 0;
+}
+
+.prereq-info .article-subject-note {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 0 0 0.5rem 0;
+    line-height: 1.45;
 }
 
 .prereq-info .article-list li {
