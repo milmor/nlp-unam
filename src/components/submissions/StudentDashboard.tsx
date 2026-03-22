@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { getSupabase } from '@/lib/supabase';
+import { formatCourseDateTime } from '@/lib/datetime';
 import type { Assignment, Submission, Course } from '@/types/submissions';
 import NotebookViewer from './NotebookViewer';
 
@@ -165,6 +166,12 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
       return;
     }
 
+    const assignment = assignments.find(a => a.id === assignmentId);
+    if (assignment?.deadline && new Date(assignment.deadline).getTime() < Date.now()) {
+      setStatus(assignmentId, 'Deadline has passed. Submission was not accepted.', true);
+      return;
+    }
+
     const sb = getSupabase();
     if (!sb) return setStatus(assignmentId, 'Auth service unavailable.', true);
 
@@ -267,7 +274,7 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
                           {a.deadline ? (
                             <span className={isPastDeadline ? 'deadline-badge deadline-past' : 'deadline-badge'}>
                               {isPastDeadline ? '⏰ Closed ' : '⏰ '}
-                              {new Date(a.deadline).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+                              {formatCourseDateTime(a.deadline)}
                             </span>
                           ) : '—'}
                         </td>
@@ -373,7 +380,7 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
                       {a.deadline ? (
                         <span className={isPastDeadline ? 'deadline-badge deadline-past' : 'deadline-badge'}>
                           {isPastDeadline ? '⏰ Closed ' : '⏰ '}
-                          {new Date(a.deadline).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                          {formatCourseDateTime(a.deadline)}
                         </span>
                       ) : null}
                       <span className={`student-card-status ${isPastDeadline && !sub ? 'student-card-status--past' : ''}`}>

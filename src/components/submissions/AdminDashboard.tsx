@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, FormEvent } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { getSupabase } from '@/lib/supabase';
+import { formatCourseDateTime } from '@/lib/datetime';
 import type { Assignment, AdminSubmission, Course } from '@/types/submissions';
 import ConfirmDialog from './ConfirmDialog';
 import NotebookViewer from './NotebookViewer';
@@ -599,7 +600,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                         {a.deadline && (
                           <span className={`deadline-badge${isPast ? ' deadline-past' : ''}`}>
                             {isPast ? '⏰ Closed' : '⏰ Due'}{' '}
-                            {new Date(a.deadline).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                            {formatCourseDateTime(a.deadline)}
                           </span>
                         )}
                         <span className="admin-accordion-count">{count} submission{count !== 1 ? 's' : ''}</span>
@@ -784,7 +785,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                                     )}
                                   </div>
                                 </td>
-                                <td data-label="Submitted">{sub.created_at ? new Date(sub.created_at).toLocaleDateString() : '—'}</td>
+                                <td data-label="Submitted">{formatCourseDateTime(sub.created_at)}</td>
                               </tr>
                             );
                           })}
