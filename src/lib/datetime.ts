@@ -2,6 +2,8 @@
  * Optional fixed IANA timezone for displaying timestamps (deadlines, submissions).
  * If unset, the browser's local timezone is used (Supabase still stores UTC).
  *
+ * Static export: value must be present at **build** time (e.g. GitHub Actions `env` on `npm run build`),
+ * not only as a repo secret with no workflow wiring.
  */
 const DISPLAY_TIMEZONE =
   typeof process !== 'undefined' && process.env.NEXT_PUBLIC_DISPLAY_TIMEZONE
