@@ -1,22 +1,24 @@
+/** Display zone for deadlines & submissions (Supabase stores UTC). */
+const DISPLAY_TIMEZONE = 'America/Mexico_City';
+
 /**
- * Optional fixed IANA timezone for displaying timestamps (deadlines, submissions).
- * If unset, the browser's local timezone is used (Supabase still stores UTC).
- *
- * Static export: value must be present at **build** time (e.g. GitHub Actions `env` on `npm run build`),
- * not only as a repo secret with no workflow wiring.
+ * Parse Supabase/Postgres timestamps. Naive strings (no Z / ±offset) are treated as UTC —
+ * otherwise JS interprets them as local wall time and times look wrong in Mexico.
  */
-const DISPLAY_TIMEZONE =
-  typeof process !== 'undefined' && process.env.NEXT_PUBLIC_DISPLAY_TIMEZONE
-    ? process.env.NEXT_PUBLIC_DISPLAY_TIMEZONE
-    : undefined;
+export function parseCourseDate(iso: string): Date {
+  let s = iso.trim().replace(/\s+/, 'T');
+  const hasZone = /[zZ]$/.test(s) || /[+-]\d{2}:?\d{2}$/.test(s);
+  if (!hasZone) s = s.endsWith('Z') ? s : `${s}Z`;
+  return new Date(s);
+}
 
 export function formatCourseDateTime(iso: string | null | undefined): string {
   if (!iso) return '—';
-  const d = new Date(iso);
+  const d = parseCourseDate(iso);
   if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleString(undefined, {
+  return d.toLocaleString('es-MX', {
     dateStyle: 'short',
     timeStyle: 'short',
-    ...(DISPLAY_TIMEZONE ? { timeZone: DISPLAY_TIMEZONE } : {}),
+    timeZone: DISPLAY_TIMEZONE,
   });
 }

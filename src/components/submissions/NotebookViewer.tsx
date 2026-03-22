@@ -77,19 +77,13 @@ function renderSingleOutput(out: NbOutput, idx: number): React.ReactNode {
 
     const parts: React.ReactNode[] = [];
 
-    if (png) {
+    const imageMime = png ? 'image/png' : jpeg ? 'image/jpeg' : null;
+    const imageB64 = png ?? jpeg;
+    if (imageMime && imageB64) {
       parts.push(
         <div key={`${idx}-img`} className="notebook-viewer-output notebook-viewer-output--image">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={`data:image/png;base64,${png.replace(/\s/g, '')}`} alt="" />
-        </div>
-      );
-    }
-    if (jpeg) {
-      parts.push(
-        <div key={`${idx}-jpg`} className="notebook-viewer-output notebook-viewer-output--image">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={`data:image/jpeg;base64,${jpeg.replace(/\s/g, '')}`} alt="" />
+          <img src={`data:${imageMime};base64,${imageB64.replace(/\s/g, '')}`} alt="" />
         </div>
       );
     }
@@ -98,7 +92,6 @@ function renderSingleOutput(out: NbOutput, idx: number): React.ReactNode {
         <div
           key={`${idx}-svg`}
           className="notebook-viewer-output notebook-viewer-output--svg"
-          // SVG from student notebooks: display only (trusted admin/student viewer context)
           dangerouslySetInnerHTML={{ __html: svg }}
         />
       );
@@ -115,13 +108,7 @@ function renderSingleOutput(out: NbOutput, idx: number): React.ReactNode {
         </div>
       );
     }
-    if (plain && parts.length === 0) {
-      parts.push(
-        <pre key={`${idx}-plain`} className="notebook-viewer-output notebook-viewer-output--text">
-          {plain}
-        </pre>
-      );
-    } else if (plain && (png || jpeg || svg || html)) {
+    if (plain && (parts.length === 0 || png || jpeg || svg || html)) {
       parts.push(
         <pre key={`${idx}-plain`} className="notebook-viewer-output notebook-viewer-output--text">
           {plain}

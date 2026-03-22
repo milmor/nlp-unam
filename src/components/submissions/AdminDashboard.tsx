@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, FormEvent } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { getSupabase } from '@/lib/supabase';
-import { formatCourseDateTime } from '@/lib/datetime';
+import { formatCourseDateTime, parseCourseDate } from '@/lib/datetime';
 import type { Assignment, AdminSubmission, Course } from '@/types/submissions';
 import ConfirmDialog from './ConfirmDialog';
 import NotebookViewer from './NotebookViewer';
@@ -65,7 +65,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
 
   function startEdit(a: Assignment) {
     const deadline = a.deadline
-      ? new Date(new Date(a.deadline).getTime() - new Date().getTimezoneOffset() * 60000)
+      ? new Date(parseCourseDate(a.deadline).getTime() - new Date().getTimezoneOffset() * 60000)
           .toISOString().slice(0, 16)
       : '';
     setEditingAssignment(prev => new Map(prev).set(a.id, {
@@ -137,26 +137,10 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
           const res = await fetch(`${API_URL}/notebook?path=${encodeURIComponent(storagePath)}`, {
             headers: { 'x-api-key': API_SECRET },
           });
-          if (res.ok) {
-            json = await res.json();
-          } else {
-            const errText = await res.text();
-            throw new Error(errText || `API ${res.status}`);
-          }
-        } catch (apiErr) {
-          // Local dev: API often not running → "Failed to fetch". Fall back to Supabase signed URL (same as when API env is unset).
-          try {
-            json = await loadNotebookJsonFromStorage(storagePath);
-          } catch (storageErr) {
-            const a = apiErr instanceof Error ? apiErr.message : String(apiErr);
-            const s = storageErr instanceof Error ? storageErr.message : String(storageErr);
-            throw new Error(
-              `API: ${a}. Storage fallback: ${s}.` +
-                (a === 'Failed to fetch'
-                  ? ' (Start the grading API locally, or remove NEXT_PUBLIC_API_URL / NEXT_PUBLIC_API_SECRET from .env.local to always use storage.)'
-                  : '')
-            );
-          }
+          if (!res.ok) throw new Error(await res.text());
+          json = await res.json();
+        } catch {
+          json = await loadNotebookJsonFromStorage(storagePath);
         }
       } else {
         json = await loadNotebookJsonFromStorage(storagePath);
@@ -610,7 +594,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
               const isOpen = expandedAssignments.has(a.id);
               const draft = editingAssignment.get(a.id);
               const isEditing = !!draft;
-              const isPast = a.deadline ? new Date(a.deadline) < new Date() : false;
+              const isPast = a.deadline ? parseCourseDate(a.deadline).getTime() < Date.now() : false;
               return (
                 <li key={a.id} className={`admin-accordion-item${isEditing ? ' admin-accordion-item--editing' : ''}`}>
                   <div className="admin-accordion-header-row">

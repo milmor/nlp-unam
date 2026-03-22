@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { getSupabase } from '@/lib/supabase';
-import { formatCourseDateTime } from '@/lib/datetime';
+import { formatCourseDateTime, parseCourseDate } from '@/lib/datetime';
 import type { Assignment, Submission, Course } from '@/types/submissions';
 import NotebookViewer from './NotebookViewer';
 
@@ -167,7 +167,7 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
     }
 
     const assignment = assignments.find(a => a.id === assignmentId);
-    if (assignment?.deadline && new Date(assignment.deadline).getTime() < Date.now()) {
+    if (assignment?.deadline && parseCourseDate(assignment.deadline).getTime() < Date.now()) {
       setStatus(assignmentId, 'Deadline has passed. Submission was not accepted.', true);
       return;
     }
@@ -264,7 +264,7 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
                     const isUploading = uploading.has(a.id);
                     const statusMsg = uploadStatus.get(a.id) ?? '';
                     const statusIsErr = uploadError.get(a.id) ?? false;
-                    const isPastDeadline = a.deadline ? new Date(a.deadline) < new Date() : false;
+                    const isPastDeadline = a.deadline ? parseCourseDate(a.deadline).getTime() < Date.now() : false;
                     const uploadBlocked = isPastDeadline;
 
                     return (
@@ -370,7 +370,7 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
                 const isUploading = uploading.has(a.id);
                 const statusMsg = uploadStatus.get(a.id) ?? '';
                 const statusIsErr = uploadError.get(a.id) ?? false;
-                const isPastDeadline = a.deadline ? new Date(a.deadline) < new Date() : false;
+                const isPastDeadline = a.deadline ? parseCourseDate(a.deadline).getTime() < Date.now() : false;
                 const uploadBlocked = isPastDeadline;
 
                 return (
