@@ -131,20 +131,9 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
     setLoadingNotebook(true);
     setViewingNotebook(null);
     try {
-      let json: Record<string, unknown>;
-      if (API_URL && API_SECRET) {
-        try {
-          const res = await fetch(`${API_URL}/notebook?path=${encodeURIComponent(storagePath)}`, {
-            headers: { 'x-api-key': API_SECRET },
-          });
-          if (!res.ok) throw new Error(await res.text());
-          json = await res.json();
-        } catch {
-          json = await loadNotebookJsonFromStorage(storagePath);
-        }
-      } else {
-        json = await loadNotebookJsonFromStorage(storagePath);
-      }
+      // Always load from Supabase (signed URL). The grading API is slow on cold start in production;
+      // viewing does not need the API — same path as StudentDashboard.
+      const json = await loadNotebookJsonFromStorage(storagePath);
       setViewingNotebook({ title, notebook: json });
       setNotebookViewMode('notebook');
     } catch (e) {
