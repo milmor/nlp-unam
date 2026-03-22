@@ -116,6 +116,16 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
     return pathOrUrl;
   }
 
+  async function loadNotebookJsonFromStorage(storagePath: string): Promise<Record<string, unknown>> {
+    const sb = getSupabase();
+    if (!sb) throw new Error('Not configured');
+    const { data, error } = await sb.storage.from(BUCKET).createSignedUrl(storagePath, 60);
+    if (error || !data?.signedUrl) throw new Error(error?.message ?? 'No signed URL');
+    const res = await fetch(data.signedUrl);
+    if (!res.ok) throw new Error(`Storage fetch failed (${res.status})`);
+    return res.json() as Promise<Record<string, unknown>>;
+  }
+
   async function viewNotebook(pathOrUrl: string, title: string) {
     const storagePath = getStoragePath(pathOrUrl);
     setLoadingNotebook(true);
@@ -123,19 +133,33 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
     try {
       let json: Record<string, unknown>;
       if (API_URL && API_SECRET) {
-        const res = await fetch(`${API_URL}/notebook?path=${encodeURIComponent(storagePath)}`, {
-          headers: { 'x-api-key': API_SECRET },
-        });
-        if (!res.ok) throw new Error(await res.text());
-        json = await res.json();
+        try {
+          const res = await fetch(`${API_URL}/notebook?path=${encodeURIComponent(storagePath)}`, {
+            headers: { 'x-api-key': API_SECRET },
+          });
+          if (res.ok) {
+            json = await res.json();
+          } else {
+            const errText = await res.text();
+            throw new Error(errText || `API ${res.status}`);
+          }
+        } catch (apiErr) {
+          // Local dev: API often not running → "Failed to fetch". Fall back to Supabase signed URL (same as when API env is unset).
+          try {
+            json = await loadNotebookJsonFromStorage(storagePath);
+          } catch (storageErr) {
+            const a = apiErr instanceof Error ? apiErr.message : String(apiErr);
+            const s = storageErr instanceof Error ? storageErr.message : String(storageErr);
+            throw new Error(
+              `API: ${a}. Storage fallback: ${s}.` +
+                (a === 'Failed to fetch'
+                  ? ' (Start the grading API locally, or remove NEXT_PUBLIC_API_URL / NEXT_PUBLIC_API_SECRET from .env.local to always use storage.)'
+                  : '')
+            );
+          }
+        }
       } else {
-        const sb = getSupabase();
-        if (!sb) throw new Error('Not configured');
-        const { data, error } = await sb.storage.from(BUCKET).createSignedUrl(storagePath, 60);
-        if (error || !data?.signedUrl) throw new Error(error?.message ?? 'No URL');
-        const res = await fetch(data.signedUrl);
-        if (!res.ok) throw new Error('Fetch failed');
-        json = await res.json();
+        json = await loadNotebookJsonFromStorage(storagePath);
       }
       setViewingNotebook({ title, notebook: json });
       setNotebookViewMode('notebook');

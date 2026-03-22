@@ -3036,6 +3036,112 @@ ul.article-list,
     white-space: pre;
 }
 
+/* Code cell outputs (Jupyter nbformat) */
+.notebook-viewer-code-cell .notebook-viewer-outputs {
+    margin-top: 0.35rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg-primary) 92%, var(--border-color));
+    overflow: hidden;
+}
+
+.notebook-viewer-output-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.notebook-viewer-output {
+    margin: 0;
+    padding: 0.65rem 0.85rem;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, monospace;
+    color: var(--text-primary);
+    white-space: pre-wrap;
+    word-break: break-word;
+    border-top: 1px solid var(--border-color);
+}
+
+.notebook-viewer-output:first-child,
+.notebook-viewer-output-group:first-child > .notebook-viewer-output:first-child {
+    border-top: none;
+}
+
+.notebook-viewer-output--stream {
+    background: color-mix(in srgb, var(--bg-secondary) 85%, transparent);
+}
+
+.notebook-viewer-output--stderr {
+    color: #b71c1c;
+    background: color-mix(in srgb, #b71c1c 8%, var(--bg-secondary));
+}
+
+[data-theme="dark"] .notebook-viewer-output--stderr {
+    color: #ff8a80;
+    background: color-mix(in srgb, #ff8a80 10%, var(--bg-secondary));
+}
+
+.notebook-viewer-output--text {
+    max-height: 320px;
+    overflow: auto;
+}
+
+.notebook-viewer-output--error {
+    color: #b71c1c;
+    background: color-mix(in srgb, #b71c1c 6%, var(--bg-secondary));
+    max-height: 280px;
+    overflow: auto;
+}
+
+[data-theme="dark"] .notebook-viewer-output--error {
+    color: #ff8a80;
+}
+
+.notebook-viewer-output--image {
+    padding: 0.5rem;
+    text-align: center;
+    background: var(--bg-card);
+}
+
+.notebook-viewer-output--image img {
+    max-width: 100%;
+    height: auto;
+    vertical-align: middle;
+}
+
+.notebook-viewer-output--svg {
+    padding: 0.5rem;
+    overflow: auto;
+    max-height: 360px;
+    background: var(--bg-card);
+}
+
+.notebook-viewer-output--svg svg {
+    max-width: 100%;
+    height: auto;
+}
+
+.notebook-viewer-output--html-wrap {
+    padding: 0;
+    background: var(--bg-card);
+}
+
+.notebook-viewer-output-iframe {
+    display: block;
+    width: 100%;
+    min-height: 120px;
+    max-height: 400px;
+    border: none;
+    background: #fff;
+}
+
+.notebook-viewer-output--fallback {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
 .confirm-message {
     margin: 0 0 1.5rem;
     font-size: 0.92rem;
