@@ -39,6 +39,8 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
   const [signupsOpen, setSignupsOpen] = useState<boolean | null>(null);
   const [signupsToggling, setSignupsToggling] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<{ id: number; title: string } | null>(null);
+  const [confirmRemoveStudent, setConfirmRemoveStudent] = useState<{ id: string; label: string } | null>(null);
+  const [removingStudentId, setRemovingStudentId] = useState<string | null>(null);
   const [confirmGrade, setConfirmGrade] = useState<{ assignmentId: number; assignmentTitle: string } | null>(null);
   const [confirmGradeSelected, setConfirmGradeSelected] = useState<{
     assignmentId: number;
@@ -279,6 +281,26 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
     if (error) return showMsg('Failed to delete: ' + error.message, true);
     showMsg('');
     loadData();
+  }
+
+  async function confirmRemoveStudentFromCourse() {
+    if (!confirmRemoveStudent) return;
+    const sb = getSupabase();
+    if (!sb) return;
+    setRemovingStudentId(confirmRemoveStudent.id);
+    const { error } = await sb
+      .from('enrollments')
+      .delete()
+      .eq('course_id', course.id)
+      .eq('student_id', confirmRemoveStudent.id);
+    setRemovingStudentId(null);
+    if (error) {
+      showMsg('Could not remove student: ' + error.message, true);
+    } else {
+      showMsg('Student removed from this course.');
+      loadData();
+    }
+    setConfirmRemoveStudent(null);
   }
 
   // Save score/feedback on blur — debounced with a ref timer
@@ -1002,6 +1024,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                     <th>Email</th>
                     <th>Enrolled</th>
                     <th>Submissions</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1009,12 +1032,24 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                     const subCount = submissions.filter(sub =>
                       sub.student?.email === s.profile?.email
                     ).length;
+                    const label = s.profile?.name || s.profile?.email || 'this student';
                     return (
                       <tr key={s.student_id}>
                         <td data-label="Name"><strong>{s.profile?.name ?? '—'}</strong></td>
                         <td data-label="Email">{s.profile?.email ?? '—'}</td>
                         <td data-label="Enrolled">{s.enrolled_at ? new Date(s.enrolled_at).toLocaleDateString() : '—'}</td>
                         <td data-label="Submissions">{subCount} / {assignments.length}</td>
+                        <td data-label="Actions">
+                          <button
+                            type="button"
+                            className="btn-danger btn-small"
+                            onClick={() => setConfirmRemoveStudent({ id: s.student_id, label })}
+                            disabled={removingStudentId === s.student_id}
+                            title="Remove from this course"
+                          >
+                            {removingStudentId === s.student_id ? '…' : 'Remove'}
+                          </button>
+                        </td>
                       </tr>
                     );
                   })}
@@ -1074,6 +1109,16 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
           confirmLabel="Delete"
           onConfirm={confirmDeleteAssignment}
           onCancel={() => setConfirmDelete(null)}
+        />
+      )}
+
+      {confirmRemoveStudent && (
+        <ConfirmDialog
+          title="Remove student from course?"
+          message={`Remove "${confirmRemoveStudent.label}" from this course? Their enrollment will be deleted, but existing submissions and grades will be kept for records.`}
+          confirmLabel="Remove"
+          onConfirm={confirmRemoveStudentFromCourse}
+          onCancel={() => setConfirmRemoveStudent(null)}
         />
       )}
 
