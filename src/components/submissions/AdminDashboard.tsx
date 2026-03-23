@@ -40,6 +40,11 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
   const [signupsToggling, setSignupsToggling] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<{ id: number; title: string } | null>(null);
   const [confirmGrade, setConfirmGrade] = useState<{ assignmentId: number; assignmentTitle: string } | null>(null);
+  const [confirmGradeSelected, setConfirmGradeSelected] = useState<{
+    assignmentId: number;
+    assignmentTitle: string;
+    selectedSubmissionIds: number[];
+  } | null>(null);
 
   // Course name/term inline editing
   const [courseName, setCourseName] = useState(course.name);
@@ -140,6 +145,29 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
       alert('Could not load notebook: ' + (e instanceof Error ? e.message : String(e)));
     } finally {
       setLoadingNotebook(false);
+    }
+  }
+
+  async function downloadNotebook(pathOrUrl: string, submissionId: number, title: string) {
+    const storagePath = getStoragePath(pathOrUrl);
+    setDownloadingSubmissionId(submissionId);
+    try {
+      const sb = getSupabase();
+      if (!sb) throw new Error('Not configured');
+      const { data, error } = await sb.storage.from(BUCKET).createSignedUrl(storagePath, 60);
+      if (error || !data?.signedUrl) throw new Error(error?.message ?? 'No signed URL');
+      const safeBase = title.trim().replace(/[^a-zA-Z0-9._-]+/g, '_') || `submission_${submissionId}`;
+      const a = document.createElement('a');
+      a.href = data.signedUrl;
+      a.download = `${safeBase}.ipynb`;
+      a.rel = 'noopener noreferrer';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (e) {
+      alert('Could not download notebook: ' + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setDownloadingSubmissionId(null);
     }
   }
 
@@ -283,10 +311,13 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
   const [gradingStatus, setGradingStatus] = useState<Map<number, string>>(new Map());
   const [gradingError, setGradingError]   = useState<Map<number, boolean>>(new Map());
   const [gradingAssignmentId, setGradingAssignmentId] = useState<number | null>(null);
+  const [selectionModeByAssignment, setSelectionModeByAssignment] = useState<Set<number>>(new Set());
+  const [selectedSubmissionIdsByAssignment, setSelectedSubmissionIdsByAssignment] = useState<Map<number, Set<number>>>(new Map());
   const [plagiarismThresholdPct, setPlagiarismThresholdPct] = useState(60); // 60% default to reduce false positives (similar to reference)
   const [viewingNotebook, setViewingNotebook] = useState<{ title: string; notebook: Record<string, unknown> } | null>(null);
   const [notebookViewMode, setNotebookViewMode] = useState<'notebook' | 'json'>('notebook');
   const [loadingNotebook, setLoadingNotebook] = useState(false);
+  const [downloadingSubmissionId, setDownloadingSubmissionId] = useState<number | null>(null);
   const [editingFeedbackFor, setEditingFeedbackFor] = useState<{ subId: number; feedback: string; studentLabel: string } | null>(null);
 
   const API_URL    = (process.env.NEXT_PUBLIC_API_URL ?? '').replace(/\/+$/, '');
@@ -368,6 +399,85 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
       });
     } catch {
       setGradeMsg(assignmentId, 'Stop requested (request failed; grading may still stop).');
+    }
+  }
+
+  function toggleSelectionMode(assignmentId: number) {
+    setSelectionModeByAssignment(prev => {
+      const next = new Set(prev);
+      if (next.has(assignmentId)) {
+        next.delete(assignmentId);
+        setSelectedSubmissionIdsByAssignment(map => {
+          const m = new Map(map);
+          m.delete(assignmentId);
+          return m;
+        });
+      } else {
+        next.add(assignmentId);
+      }
+      return next;
+    });
+  }
+
+  function setSelectedSubmissionsForAssignment(assignmentId: number, ids: number[]) {
+    setSelectedSubmissionIdsByAssignment(prev => {
+      const next = new Map(prev);
+      next.set(assignmentId, new Set(ids));
+      return next;
+    });
+  }
+
+  function toggleSubmissionSelection(assignmentId: number, submissionId: number) {
+    setSelectedSubmissionIdsByAssignment(prev => {
+      const next = new Map(prev);
+      const current = new Set(next.get(assignmentId) ?? []);
+      if (current.has(submissionId)) current.delete(submissionId);
+      else current.add(submissionId);
+      next.set(assignmentId, current);
+      return next;
+    });
+  }
+
+  async function handleGradeSelected(assignmentId: number, submissionIds: number[], force = false) {
+    if (!API_URL) { setGradeMsg(assignmentId, 'Grading service not configured.', true); return; }
+    if (submissionIds.length === 0) { setGradeMsg(assignmentId, 'No submissions selected.', true); return; }
+    setGradeMsg(assignmentId, `Grading ${submissionIds.length} selected submission(s)…`);
+    setGradingAssignmentId(assignmentId);
+    try {
+      const params = new URLSearchParams();
+      if (force) params.set('force', 'true');
+      params.set('plagiarism_threshold', String(plagiarismThresholdPct / 100));
+      const res = await fetch(`${API_URL}/grade/${assignmentId}/selected?${params}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(API_SECRET ? { 'x-api-key': API_SECRET } : {}),
+        },
+        body: JSON.stringify({ submission_ids: submissionIds }),
+      });
+      const text = await res.text();
+      let data: { graded?: number; skipped?: number; errors?: number; error_details?: Array<{ id: number; error: string }>; tokens_used?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number }; } = {};
+      try { data = JSON.parse(text); } catch { /* keep raw text fallback */ }
+      if (!res.ok) throw new Error((data as { detail?: string })?.detail || text || `HTTP ${res.status}`);
+      const t = data.tokens_used;
+      const tokenPart = t
+        ? ` · ${(t.prompt_tokens || 0).toLocaleString()} in / ${(t.completion_tokens || 0).toLocaleString()} out`
+        : '';
+      setGradeMsg(
+        assignmentId,
+        `Done: ${data.graded ?? 0} graded, ${data.skipped ?? 0} skipped, ${data.errors ?? 0} errors${tokenPart}`
+      );
+      if (data.error_details?.length) {
+        console.warn('Grading errors:', data.error_details);
+      }
+      setSelectionModeByAssignment(prev => { const s = new Set(prev); s.delete(assignmentId); return s; });
+      setSelectedSubmissionIdsByAssignment(prev => { const m = new Map(prev); m.delete(assignmentId); return m; });
+      loadData();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setGradeMsg(assignmentId, `Selected grading failed: ${msg}`, true);
+    } finally {
+      setGradingAssignmentId(null);
     }
   }
 
@@ -584,6 +694,11 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
               const draft = editingAssignment.get(a.id);
               const isEditing = !!draft;
               const isPast = a.deadline ? parseCourseDate(a.deadline).getTime() < Date.now() : false;
+              const isSelectionMode = selectionModeByAssignment.has(a.id);
+              const selectedIds = selectedSubmissionIdsByAssignment.get(a.id) ?? new Set<number>();
+              const selectedCount = selectedIds.size;
+              const selectableIds = assignSubs.filter(s => !!s.notebook_url).map(s => s.id);
+              const allSelected = selectableIds.length > 0 && selectableIds.every(id => selectedIds.has(id));
               return (
                 <li key={a.id} className={`admin-accordion-item${isEditing ? ' admin-accordion-item--editing' : ''}`}>
                   <div className="admin-accordion-header-row">
@@ -636,6 +751,27 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                           <button type="button" className="btn-primary btn-small" onClick={() => setConfirmGrade({ assignmentId: a.id, assignmentTitle: a.title })}>
                             ✨ Grade
                           </button>
+                          <button
+                            type="button"
+                            className={isSelectionMode ? 'btn-primary btn-small' : 'btn-secondary btn-small'}
+                            onClick={() => toggleSelectionMode(a.id)}
+                          >
+                            {isSelectionMode ? 'Cancel select' : 'Select'}
+                          </button>
+                          {isSelectionMode && (
+                            <button
+                              type="button"
+                              className="btn-primary btn-small"
+                              onClick={() => setConfirmGradeSelected({
+                                assignmentId: a.id,
+                                assignmentTitle: a.title,
+                                selectedSubmissionIds: Array.from(selectedIds),
+                              })}
+                              disabled={selectedCount === 0}
+                            >
+                              Grade selected ({selectedCount})
+                            </button>
+                          )}
                         </>
                       )}
                       {gradingAssignmentId === a.id && (
@@ -656,6 +792,26 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
 
                   {isOpen && (
                     <div className="admin-accordion-body">
+                      {isSelectionMode && (
+                        <div className="admin-selection-toolbar">
+                          <span className="admin-selection-count">{selectedCount} selected</span>
+                          <button
+                            type="button"
+                            className="btn-secondary btn-small"
+                            onClick={() => setSelectedSubmissionsForAssignment(a.id, allSelected ? [] : selectableIds)}
+                          >
+                            {allSelected ? 'Clear all' : 'Select all'}
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-secondary btn-small"
+                            onClick={() => setSelectedSubmissionsForAssignment(a.id, [])}
+                            disabled={selectedCount === 0}
+                          >
+                            Clear
+                          </button>
+                        </div>
+                      )}
                       {isEditing && draft && (
                         <div className="admin-assignment-edit-form">
                           <input
@@ -687,6 +843,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                       <table className="dashboard-table admin-submissions-table">
                         <thead>
                           <tr>
+                            {isSelectionMode && <th>Select</th>}
                             <th>Student</th>
                             <th>Notebook</th>
                             <th>Score</th>
@@ -696,12 +853,23 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                         </thead>
                         <tbody>
                           {assignSubs.length === 0 ? (
-                            <tr><td colSpan={5} className="admin-table-empty">No submissions yet.</td></tr>
+                            <tr><td colSpan={isSelectionMode ? 6 : 5} className="admin-table-empty">No submissions yet.</td></tr>
                           ) : assignSubs.map(sub => {
                             const g = grades.get(sub.id) ?? { score: '', feedback: '' };
                             const role = sub.student?.role ? ` (${sub.student.role})` : '';
                             return (
                               <tr key={sub.id}>
+                                {isSelectionMode && (
+                                  <td data-label="Select">
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedIds.has(sub.id)}
+                                      onChange={() => toggleSubmissionSelection(a.id, sub.id)}
+                                      disabled={!sub.notebook_url}
+                                      aria-label={`Select submission ${sub.id}`}
+                                    />
+                                  </td>
+                                )}
                                 <td data-label="Student">
                                   {sub.student?.name
                                     ? <><strong>{sub.student.name}</strong>{role}</>
@@ -713,14 +881,28 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                                 </td>
                                 <td data-label="Notebook">
                                   {sub.notebook_url ? (
-                                    <button
-                                      type="button"
-                                      className="btn-secondary btn-small"
-                                      onClick={() => viewNotebook(sub.notebook_url!, sub.student?.name || sub.student?.email || 'Notebook')}
-                                      disabled={loadingNotebook}
-                                    >
-                                      {loadingNotebook ? '…' : 'View'}
-                                    </button>
+                                    <div className="admin-notebook-actions">
+                                      <button
+                                        type="button"
+                                        className="btn-secondary btn-small"
+                                        onClick={() => viewNotebook(sub.notebook_url!, sub.student?.name || sub.student?.email || 'Notebook')}
+                                        disabled={loadingNotebook}
+                                      >
+                                        {loadingNotebook ? '…' : 'View'}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="btn-secondary btn-small"
+                                        onClick={() => downloadNotebook(
+                                          sub.notebook_url!,
+                                          sub.id,
+                                          sub.student?.name || sub.student?.email || 'Notebook'
+                                        )}
+                                        disabled={downloadingSubmissionId === sub.id}
+                                      >
+                                        {downloadingSubmissionId === sub.id ? '…' : 'Download'}
+                                      </button>
+                                    </div>
                                   ) : '—'}
                                 </td>
                                 <td data-label="Score">
@@ -906,6 +1088,23 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
             setConfirmGrade(null);
           }}
           onCancel={() => setConfirmGrade(null)}
+        />
+      )}
+
+      {confirmGradeSelected && (
+        <ConfirmDialog
+          title="Grade selected submissions?"
+          message={`Grade ${confirmGradeSelected.selectedSubmissionIds.length} selected submission(s) for "${confirmGradeSelected.assignmentTitle}"? This may take a while.`}
+          confirmLabel="Grade selected"
+          confirmVariant="primary"
+          onConfirm={() => {
+            handleGradeSelected(
+              confirmGradeSelected.assignmentId,
+              confirmGradeSelected.selectedSubmissionIds
+            );
+            setConfirmGradeSelected(null);
+          }}
+          onCancel={() => setConfirmGradeSelected(null)}
         />
       )}
 
