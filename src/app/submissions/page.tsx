@@ -93,7 +93,7 @@ export default function SubmissionsPage() {
               )}
             </div>
           ) : (
-            <div className="detail-card submissions-main-card">
+            <div className="detail-card ui-card submissions-main-card">
               {authState === 'loading' && <p className="prereq-note">Loading…</p>}
               {recovering && <ResetPasswordForm onDone={handleResetDone} />}
               {!recovering && authState === 'unauthenticated' && <AuthPanel onAuth={handleUser} />}
@@ -111,7 +111,7 @@ export default function SubmissionsPage() {
 
         {authState === 'admin' && selectedCourse && (
           <>
-            <div className="detail-card submissions-api-card">
+            <div className="detail-card ui-card submissions-api-card">
               <ApiStatus />
             </div>
           </>

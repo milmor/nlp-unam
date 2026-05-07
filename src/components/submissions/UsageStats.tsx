@@ -19,10 +19,10 @@ function fmt(bytes: number) {
 
 function Bar({ usedMB, limitMB }: { usedMB: number; limitMB: number }) {
   const pct = Math.min((usedMB / limitMB) * 100, 100);
-  const color = pct > 85 ? '#b00020' : pct > 60 ? '#e65100' : 'var(--primary)';
+  const tone = pct > 85 ? 'high' : pct > 60 ? 'mid' : 'ok';
   return (
     <div className="usage-bar-track">
-      <div className="usage-bar-fill" style={{ width: `${pct}%`, background: color }} />
+      <div className={`usage-bar-fill usage-bar-fill--${tone}`} style={{ width: `${pct}%` }} />
     </div>
   );
 }
@@ -80,7 +80,7 @@ export default function UsageStats() {
     <div className="usage-stats">
       <h5 className="admin-section-title">Resource usage</h5>
 
-      {error && <p className="prereq-note" style={{ color: '#b00020' }}>{error}</p>}
+      {error && <p className="prereq-note sub-note--error">{error}</p>}
 
       <div className="usage-grid">
         {/* Database */}

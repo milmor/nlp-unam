@@ -103,13 +103,13 @@ export default function CourseSelector({ user, isAdmin, onSelect, onLogout }: Pr
         <>
           {/* Enrolled / existing courses */}
           {courses.length === 0 && !isAdmin ? (
-            <p className="prereq-note" style={{ fontStyle: 'italic' }}>
+            <p className="prereq-note sub-note--italic">
               You are not enrolled in any course yet.{openCourses.length > 0 ? ' Join one below.' : ''}
             </p>
           ) : (
             <ul className="course-list">
               {courses.map(c => (
-                <li key={c.id} className="course-list-item">
+                <li key={c.id} className="course-list-item ui-card ui-card--interactive">
                   <div className="course-list-info">
                     <strong>{c.name}</strong>
                     {c.term && <span className="course-term">{c.term}</span>}
@@ -131,10 +131,10 @@ export default function CourseSelector({ user, isAdmin, onSelect, onLogout }: Pr
           {/* Student: open courses to join */}
           {!isAdmin && openCourses.length > 0 && (
             <>
-              <h5 className="admin-section-title" style={{ marginTop: '1.75rem', marginBottom: '0.5rem' }}>Available to join</h5>
+              <h5 className="admin-section-title course-list-heading">Available to join</h5>
               <ul className="course-list">
                 {openCourses.map(c => (
-                  <li key={c.id} className="course-list-item">
+                  <li key={c.id} className="course-list-item ui-card ui-card--interactive">
                     <div className="course-list-info">
                       <strong>{c.name}</strong>
                       {c.term && <span className="course-term">{c.term}</span>}
@@ -188,12 +188,14 @@ export default function CourseSelector({ user, isAdmin, onSelect, onLogout }: Pr
                         onChange={e => setNewTerm(e.target.value)}
                         disabled={creating}
                       />
-                      <input
-                        type="text"
+                      <textarea
                         placeholder="Description (optional)"
                         value={newDesc}
                         onChange={e => setNewDesc(e.target.value)}
                         disabled={creating}
+                        rows={3}
+                        className="admin-multiline-field"
+                        aria-label="Course description"
                       />
                     </div>
                     <button type="submit" className="btn-primary btn-small" disabled={creating}>

@@ -219,7 +219,7 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
       <p className="prereq-note dashboard-user-line">
         Logged in as <strong>{user.email}</strong>
       </p>
-      <p className="prereq-note" style={{ marginBottom: '0.5rem' }}>
+      <p className="prereq-note student-dashboard-upload-note">
         Maximum notebook size: <strong>{MAX_NOTEBOOK_MB} MB</strong>. Only <code>.ipynb</code> files are accepted.
       </p>
 
@@ -228,12 +228,12 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
         ref={fileInputRef}
         type="file"
         accept=".ipynb"
-        style={{ display: 'none' }}
+        className="u-hidden-file-input"
         onChange={handleFileSelected}
       />
 
       {loading && <p className="prereq-note">Loading…</p>}
-      {error && <p className="prereq-note" style={{ color: '#b00020' }}>{error}</p>}
+      {error && <p className="prereq-note sub-note--error">{error}</p>}
 
       {!loading && !error && (
         <>
@@ -254,7 +254,7 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
               <tbody>
                 {assignments.length === 0 ? (
                   <tr>
-                    <td colSpan={7} style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>
+                    <td colSpan={7} className="student-empty-row">
                       No assignments yet.
                     </td>
                   </tr>
@@ -280,7 +280,7 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
                         </td>
                         <td>
                           {sub ? 'Submitted' : isPastDeadline
-                            ? <span style={{ color: '#b00020' }}>Not submitted</span>
+                            ? <span className="student-status-critical">Not submitted</span>
                             : 'Not submitted'}
                         </td>
                         <td>
@@ -335,18 +335,16 @@ export default function StudentDashboard({ user, course, onLogout, onBack }: Pro
                         <td>
                           <button
                             type="button"
-                            className="btn-primary btn-small"
+                            className="btn-primary btn-small student-upload-btn"
                             onClick={() => triggerUpload(a.id)}
                             disabled={isUploading || uploadBlocked}
                             title={uploadBlocked ? 'Deadline has passed' : undefined}
-                            style={{ whiteSpace: 'nowrap' }}
                           >
                             {isUploading ? 'Uploading…' : uploadBlocked ? 'Closed' : sub ? 'Re-upload' : 'Upload .ipynb'}
                           </button>
                           {statusMsg && (
                             <p
-                              className="auth-message"
-                              style={{ color: statusIsErr ? '#b00020' : 'var(--text-muted)', marginTop: '4px' }}
+                              className={`auth-message student-upload-status${statusIsErr ? ' student-upload-status--error' : ''}`}
                             >
                               {statusMsg}
                             </p>

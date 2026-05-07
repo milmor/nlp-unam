@@ -35,7 +35,7 @@ export default function AuthPanel({ onAuth: _onAuth }: AuthPanelProps) {
   return (
     <div className="google-auth-panel">
       <h3>Student Login</h3>
-      <p className="prereq-note" style={{ marginBottom: '1.5rem' }}>
+      <p className="prereq-note auth-panel-intro">
         Sign in with your Google account to access your course submissions and grades.
       </p>
 
@@ -51,7 +51,7 @@ export default function AuthPanel({ onAuth: _onAuth }: AuthPanelProps) {
       </button>
 
       {message && (
-        <p className={`auth-message${isError ? ' error' : ''}`} style={{ marginTop: '1rem' }}>
+        <p className={`auth-message auth-message--spaced${isError ? ' error' : ''}`}>
           {message}
         </p>
       )}

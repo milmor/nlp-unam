@@ -335,7 +335,8 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
   const [gradingAssignmentId, setGradingAssignmentId] = useState<number | null>(null);
   const [selectionModeByAssignment, setSelectionModeByAssignment] = useState<Set<number>>(new Set());
   const [selectedSubmissionIdsByAssignment, setSelectedSubmissionIdsByAssignment] = useState<Map<number, Set<number>>>(new Map());
-  const [plagiarismThresholdPct, setPlagiarismThresholdPct] = useState(60); // 60% default to reduce false positives (similar to reference)
+  /** Min fingerprint similarity between two student notebooks to flag overlap for the grader (API 0.2–0.95). Higher → fewer alerts. */
+  const [plagiarismThresholdPct, setPlagiarismThresholdPct] = useState(60);
   const [viewingNotebook, setViewingNotebook] = useState<{ title: string; notebook: Record<string, unknown> } | null>(null);
   const [notebookViewMode, setNotebookViewMode] = useState<'notebook' | 'json'>('notebook');
   const [loadingNotebook, setLoadingNotebook] = useState(false);
@@ -648,7 +649,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
             )}
           </div>
 
-          <div className="detail-card submissions-api-card" style={{ marginTop: '1rem' }}>
+          <div className="detail-card submissions-api-card submissions-api-card--tight">
             <UsageStats />
           </div>
         </>
@@ -680,11 +681,13 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                   onChange={e => setNewTitle(e.target.value)}
                   required
                 />
-                <input
-                  type="text"
+                <textarea
                   placeholder="Description (optional)"
                   value={newDesc}
                   onChange={e => setNewDesc(e.target.value)}
+                  rows={3}
+                  className="admin-multiline-field"
+                  aria-label="Assignment description"
                 />
                 <input
                   type="datetime-local"
@@ -700,6 +703,31 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                 </button>
               </div>
             </form>
+          )}
+
+          {!loading && assignments.length > 0 && (
+            <section className="admin-plagiarism-panel" aria-label="Similarity alerts for grading">
+              <div className="admin-plagiarism-panel-header">
+                <span className="admin-plagiarism-panel-title">Student overlap sensitivity</span>
+                <label className="admin-plagiarism-panel-control">
+                  <span className="admin-plagiarism-panel-control-label">
+                    Warn grader when code similarity reaches at least
+                  </span>
+                  <select
+                    id="admin-plagiarism-threshold"
+                    value={plagiarismThresholdPct}
+                    onChange={e => setPlagiarismThresholdPct(Number(e.target.value))}
+                    className="admin-plagiarism-threshold-select admin-plagiarism-panel-select"
+                  >
+                    <option value={40}>40% — more alerts (more sensitive)</option>
+                    <option value={50}>50%</option>
+                    <option value={60}>60% — balanced (default)</option>
+                    <option value={70}>70%</option>
+                    <option value={80}>80% — fewer alerts (more lenient)</option>
+                  </select>
+                </label>
+              </div>
+            </section>
           )}
 
           {loading ? (
@@ -755,21 +783,6 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                       </button>
                       {a.reference_notebook && gradingAssignmentId !== a.id && (
                         <>
-                          <label className="admin-plagiarism-threshold">
-                            <span className="admin-plagiarism-threshold-label">Plag.:</span>
-                            <select
-                              value={plagiarismThresholdPct}
-                              onChange={e => setPlagiarismThresholdPct(Number(e.target.value))}
-                              title="Plagiarism threshold %"
-                              className="admin-plagiarism-threshold-select"
-                            >
-                              <option value={40}>40%</option>
-                              <option value={50}>50%</option>
-                              <option value={60}>60%</option>
-                              <option value={70}>70%</option>
-                              <option value={80}>80%</option>
-                            </select>
-                          </label>
                           <button type="button" className="btn-primary btn-small" onClick={() => setConfirmGrade({ assignmentId: a.id, assignmentTitle: a.title })}>
                             ✨ Grade
                           </button>
@@ -843,11 +856,13 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                             onChange={e => updateDraft(a.id, 'title', e.target.value)}
                             required
                           />
-                          <input
-                            type="text"
+                          <textarea
                             placeholder="Description (optional)"
                             value={draft.description}
                             onChange={e => updateDraft(a.id, 'description', e.target.value)}
+                            rows={3}
+                            className="admin-multiline-field"
+                            aria-label="Assignment description"
                           />
                           <input
                             type="datetime-local"
@@ -897,7 +912,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                                     ? <><strong>{sub.student.name}</strong>{role}</>
                                     : (sub.student?.email ?? '—') + role
                                   }
-                                  <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                                  <span className="admin-email-subtext">
                                     {sub.student?.email ?? ''}
                                   </span>
                                 </td>
@@ -999,7 +1014,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
               );
             })}
           </ul>
-          <p className="prereq-note admin-usage-note" style={{ marginTop: '0.75rem', fontSize: '0.85em' }}>
+          <p className="prereq-note admin-usage-note">
             Usage (in / out) is shown after each run.
           </p>
           </>
@@ -1014,7 +1029,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
           {loading ? (
             <p className="prereq-note">Loading…</p>
           ) : students.length === 0 ? (
-            <p className="prereq-note" style={{ fontStyle: 'italic' }}>No students enrolled yet.</p>
+            <p className="prereq-note sub-note--italic">No students enrolled yet.</p>
           ) : (
             <div className="dashboard-table-wrapper admin-table-responsive">
               <table className="dashboard-table admin-students-table">
@@ -1065,7 +1080,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
       {/* end .admin-layout */}
 
       {/* Hidden file input for reference notebook uploads */}
-      <input ref={refInputRef} type="file" accept=".ipynb" style={{ display: 'none' }} onChange={handleRefFileSelected} />
+      <input ref={refInputRef} type="file" accept=".ipynb" className="u-hidden-file-input" onChange={handleRefFileSelected} />
 
       {editingFeedbackFor && (
         <div className="feedback-modal-overlay" onClick={() => setEditingFeedbackFor(null)}>
@@ -1125,7 +1140,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
       {confirmGrade && (
         <ConfirmDialog
           title="Grade all submissions?"
-          message={`Grade all submissions for "${confirmGrade.assignmentTitle}"? This may take a while. Already-graded submissions will be skipped unless you re-run with force.`}
+          message={`Grade all submissions for "${confirmGrade.assignmentTitle}"? This may take a while. Already-graded submissions will be skipped unless you re-run with force. Student overlap notices use your current threshold (${plagiarismThresholdPct}% or higher similarity).`}
           confirmLabel="Grade all"
           confirmVariant="primary"
           onConfirm={() => {
@@ -1139,7 +1154,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
       {confirmGradeSelected && (
         <ConfirmDialog
           title="Grade selected submissions?"
-          message={`Grade ${confirmGradeSelected.selectedSubmissionIds.length} selected submission(s) for "${confirmGradeSelected.assignmentTitle}"? This may take a while.`}
+          message={`Grade ${confirmGradeSelected.selectedSubmissionIds.length} selected submission(s) for "${confirmGradeSelected.assignmentTitle}"? This may take a while. Overlap notices trigger when similarity between two student notebooks is at least ${plagiarismThresholdPct}%.`}
           confirmLabel="Grade selected"
           confirmVariant="primary"
           onConfirm={() => {

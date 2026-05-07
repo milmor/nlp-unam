@@ -56,7 +56,7 @@ export default function ResetPasswordForm({ onDone }: Props) {
   return (
     <div>
       <h3>Set a new password</h3>
-      <p className="prereq-note" style={{ marginBottom: '1rem' }}>
+      <p className="prereq-note reset-password-intro">
         Choose a new password for your account.
       </p>
 
@@ -91,9 +91,8 @@ export default function ResetPasswordForm({ onDone }: Props) {
       ) : (
         <button
           type="button"
-          className="btn-secondary btn-small"
+          className="btn-secondary btn-small reset-password-done-btn"
           onClick={onDone}
-          style={{ marginTop: '0.75rem' }}
         >
           Go to login
         </button>
