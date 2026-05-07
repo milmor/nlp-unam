@@ -36,7 +36,8 @@
     --shadow-2: 0 6px 18px var(--shadow-color);
     --shadow-3: 0 12px 36px var(--shadow-color);
     --color-danger: #b00020;
-    --color-danger-soft: color-mix(in srgb, #b00020 10%, transparent);
+    --color-danger-strong: #b00020;
+    --color-danger-soft: color-mix(in srgb, var(--color-danger) 10%, transparent);
     --color-warning: #e65100;
     --color-warning-soft: color-mix(in srgb, #e65100 12%, transparent);
     --color-success: #2e7d32;
@@ -62,8 +63,9 @@
     --table-header: #252d4a;
     --table-stripe: #1c2340;
     --quote-bg: #232b48;
-    --color-danger: #ee4c3d;
-    --color-danger-soft: color-mix(in srgb, #ff8a80 14%, transparent);
+    --color-danger: #cf7a70;
+    --color-danger-strong: #bb564c;
+    --color-danger-soft: color-mix(in srgb, var(--color-danger) 14%, transparent);
     --color-warning: #ffb74d;
     --color-warning-soft: color-mix(in srgb, #ffb74d 14%, transparent);
     --color-success: #81c784;
@@ -2172,6 +2174,48 @@ textarea.admin-multiline-field {
     border-left-color: var(--color-danger);
 }
 
+.admin-grading-progress {
+    margin: 0.4rem 1rem 0.5rem;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--bg-secondary) 65%, transparent);
+}
+
+.admin-grading-progress-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.35rem;
+}
+
+.admin-grading-progress-label {
+    font-size: var(--sub-small, 0.82rem);
+    color: var(--text-secondary);
+}
+
+.admin-grading-progress-stats {
+    font-size: var(--sub-tiny, 0.76rem);
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.admin-grading-progress-track {
+    width: 100%;
+    height: 8px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--border-color) 80%, transparent);
+    overflow: hidden;
+}
+
+.admin-grading-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, color-mix(in srgb, var(--accent-primary) 75%, transparent), var(--accent-primary));
+    transition: width 0.35s ease;
+}
+
 /* API status panel */
 .api-status-intro {
     font-size: 0.875rem;
@@ -3510,9 +3554,9 @@ textarea.admin-multiline-field {
 .btn-danger {
     display: inline-block;
     padding: 12px 28px;
-    border: 1px solid var(--color-danger);
+    border: 1px solid var(--color-danger-strong);
     border-radius: var(--radius-sm);
-    background: var(--color-danger);
+    background: var(--color-danger-strong);
     color: #fff;
     font-size: 1rem;
     font-weight: 600;
@@ -3522,8 +3566,8 @@ textarea.admin-multiline-field {
 }
 
 .btn-danger:hover {
-    background: color-mix(in srgb, var(--color-danger) 88%, var(--text-primary) 12%);
-    border-color: color-mix(in srgb, var(--color-danger) 88%, var(--text-primary) 12%);
+    background: color-mix(in srgb, var(--color-danger-strong) 88%, var(--text-primary) 12%);
+    border-color: color-mix(in srgb, var(--color-danger-strong) 88%, var(--text-primary) 12%);
     transform: translateY(-2px);
     box-shadow: var(--shadow-1);
 }

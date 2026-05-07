@@ -23,6 +23,19 @@ interface Props {
 }
 
 type AdminTab = 'assignments' | 'students' | 'course-settings';
+type GradingProgress = {
+  runId: string;
+  status: 'running' | 'completed' | 'aborted' | 'error';
+  total: number;
+  completed: number;
+  graded: number;
+  errors: number;
+  skipped: number;
+  percent: number;
+  elapsedSeconds: number;
+  etaSeconds: number | null;
+  message: string;
+};
 
 export default function AdminDashboard({ user, course, onLogout, onBack }: Props) {
   const [activeTab, setActiveTab] = useState<AdminTab>('assignments');
@@ -332,6 +345,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
   const pendingRefAssignId = useRef<number | null>(null);
   const [gradingStatus, setGradingStatus] = useState<Map<number, string>>(new Map());
   const [gradingError, setGradingError]   = useState<Map<number, boolean>>(new Map());
+  const [gradingProgress, setGradingProgress] = useState<Map<number, GradingProgress>>(new Map());
   const [gradingAssignmentId, setGradingAssignmentId] = useState<number | null>(null);
   const [selectionModeByAssignment, setSelectionModeByAssignment] = useState<Set<number>>(new Set());
   const [selectedSubmissionIdsByAssignment, setSelectedSubmissionIdsByAssignment] = useState<Map<number, Set<number>>>(new Map());
@@ -342,6 +356,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
   const [loadingNotebook, setLoadingNotebook] = useState(false);
   const [downloadingSubmissionId, setDownloadingSubmissionId] = useState<number | null>(null);
   const [editingFeedbackFor, setEditingFeedbackFor] = useState<{ subId: number; feedback: string; studentLabel: string } | null>(null);
+  const progressPollTimersRef = useRef<Map<number, ReturnType<typeof setInterval>>>(new Map());
 
   const API_URL    = (process.env.NEXT_PUBLIC_API_URL ?? '').replace(/\/+$/, '');
   const API_SECRET = process.env.NEXT_PUBLIC_API_SECRET ?? '';
@@ -349,6 +364,69 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
   function setGradeMsg(id: number, msg: string, isErr = false) {
     setGradingStatus(p => new Map(p).set(id, msg));
     setGradingError(p  => new Map(p).set(id, isErr));
+  }
+
+  function createRunId(): string {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    return `grade-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  }
+
+  function stopProgressPolling(assignmentId: number) {
+    const timer = progressPollTimersRef.current.get(assignmentId);
+    if (timer) {
+      clearInterval(timer);
+      progressPollTimersRef.current.delete(assignmentId);
+    }
+  }
+
+  function startProgressPolling(assignmentId: number, runId: string) {
+    stopProgressPolling(assignmentId);
+    const poll = async () => {
+      try {
+        const res = await fetch(`${API_URL}/grade/progress/${encodeURIComponent(runId)}`, {
+          headers: API_SECRET ? { 'x-api-key': API_SECRET } : {},
+        });
+        if (!res.ok) return;
+        const data: {
+          run_id: string;
+          status: 'running' | 'completed' | 'aborted';
+          total: number;
+          completed: number;
+          graded: number;
+          errors: number;
+          skipped: number;
+          percent: number;
+          elapsed_seconds: number;
+          eta_seconds: number | null;
+          message: string;
+        } = await res.json();
+        setGradingProgress(prev => {
+          const next = new Map(prev);
+          next.set(assignmentId, {
+            runId: data.run_id,
+            status: data.status,
+            total: data.total,
+            completed: data.completed,
+            graded: data.graded,
+            errors: data.errors,
+            skipped: data.skipped,
+            percent: data.percent,
+            elapsedSeconds: data.elapsed_seconds,
+            etaSeconds: data.eta_seconds,
+            message: data.message,
+          });
+          return next;
+        });
+        if (data.status !== 'running') stopProgressPolling(assignmentId);
+      } catch {
+        // Keep polling; transient network errors should not kill progress UI.
+      }
+    };
+    void poll();
+    const timer = setInterval(() => { void poll(); }, 1500);
+    progressPollTimersRef.current.set(assignmentId, timer);
   }
 
   function triggerRefUpload(assignmentId: number) {
@@ -379,9 +457,12 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
     if (!API_URL) { setGradeMsg(assignmentId, 'Grading service not configured.', true); return; }
     setGradeMsg(assignmentId, 'Grading in progress…');
     setGradingAssignmentId(assignmentId);
+    const runId = createRunId();
     const params = new URLSearchParams();
     if (force) params.set('force', 'true');
     params.set('plagiarism_threshold', String(plagiarismThresholdPct / 100));
+    params.set('run_id', runId);
+    startProgressPolling(assignmentId, runId);
     try {
       const res = await fetch(`${API_URL}/grade/${assignmentId}?${params}`, {
         method: 'POST',
@@ -400,6 +481,14 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
           ? `Stopped — ${data.graded} graded, ${data.errors} errors${usageStr}${suffix}`
           : `Done — ${data.graded} graded, ${data.errors} errors${usageStr}`,
       );
+      setGradingProgress(prev => {
+        const next = new Map(prev);
+        const current = next.get(assignmentId);
+        if (current) {
+          next.set(assignmentId, { ...current, status: data.aborted ? 'aborted' : 'completed', percent: 100 });
+        }
+        return next;
+      });
       loadData();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -408,6 +497,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
         : '';
       setGradeMsg(assignmentId, `Grading failed: ${msg}${hint}`, true);
     } finally {
+      stopProgressPolling(assignmentId);
       setGradingAssignmentId(null);
     }
   }
@@ -466,10 +556,13 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
     if (submissionIds.length === 0) { setGradeMsg(assignmentId, 'No submissions selected.', true); return; }
     setGradeMsg(assignmentId, `Grading ${submissionIds.length} selected submission(s)…`);
     setGradingAssignmentId(assignmentId);
+    const runId = createRunId();
     try {
       const params = new URLSearchParams();
       if (force) params.set('force', 'true');
       params.set('plagiarism_threshold', String(plagiarismThresholdPct / 100));
+      params.set('run_id', runId);
+      startProgressPolling(assignmentId, runId);
       const res = await fetch(`${API_URL}/grade/${assignmentId}/selected?${params}`, {
         method: 'POST',
         headers: {
@@ -490,6 +583,14 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
         assignmentId,
         `Done: ${data.graded ?? 0} graded, ${data.skipped ?? 0} skipped, ${data.errors ?? 0} errors${tokenPart}`
       );
+      setGradingProgress(prev => {
+        const next = new Map(prev);
+        const current = next.get(assignmentId);
+        if (current) {
+          next.set(assignmentId, { ...current, status: 'completed', percent: 100 });
+        }
+        return next;
+      });
       if (data.error_details?.length) {
         console.warn('Grading errors:', data.error_details);
       }
@@ -500,6 +601,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
       const msg = err instanceof Error ? err.message : String(err);
       setGradeMsg(assignmentId, `Selected grading failed: ${msg}`, true);
     } finally {
+      stopProgressPolling(assignmentId);
       setGradingAssignmentId(null);
     }
   }
@@ -524,6 +626,11 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
     }
     setGrades(initial);
   }, [submissions]);
+
+  useEffect(() => () => {
+    for (const timer of progressPollTimersRef.current.values()) clearInterval(timer);
+    progressPollTimersRef.current.clear();
+  }, []);
 
   function handleScoreChange(id: number, value: string) {
     setGrades(prev => {
@@ -749,6 +856,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
               const selectedCount = selectedIds.size;
               const selectableIds = assignSubs.filter(s => !!s.notebook_url).map(s => s.id);
               const allSelected = selectableIds.length > 0 && selectableIds.every(id => selectedIds.has(id));
+              const progress = gradingProgress.get(a.id);
               return (
                 <li key={a.id} className={`admin-accordion-item${isEditing ? ' admin-accordion-item--editing' : ''}`}>
                   <div className="admin-accordion-header-row">
@@ -823,6 +931,27 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                     <p className={`admin-dashboard-message admin-accordion-grade-msg${gradingError.get(a.id) ? ' error' : ''}`}>
                       {gradingStatus.get(a.id)}
                     </p>
+                  )}
+                  {progress && (
+                    <div className="admin-grading-progress" role="status" aria-live="polite">
+                      <div className="admin-grading-progress-top">
+                        <span className="admin-grading-progress-label">
+                          {progress.message || 'Grading in progress…'}
+                        </span>
+                        <span className="admin-grading-progress-stats">
+                          {progress.completed}/{progress.total}
+                          {progress.etaSeconds != null && progress.status === 'running'
+                            ? ` · ETA ~${Math.max(1, Math.round(progress.etaSeconds))}s`
+                            : ''}
+                        </span>
+                      </div>
+                      <div className="admin-grading-progress-track">
+                        <div
+                          className="admin-grading-progress-fill"
+                          style={{ width: `${Math.max(0, Math.min(100, progress.percent))}%` }}
+                        />
+                      </div>
+                    </div>
                   )}
 
                   {isOpen && (
