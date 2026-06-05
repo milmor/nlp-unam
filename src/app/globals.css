@@ -35,8 +35,8 @@
     --shadow-1: 0 1px 3px var(--shadow-color);
     --shadow-2: 0 6px 18px var(--shadow-color);
     --shadow-3: 0 12px 36px var(--shadow-color);
-    --color-danger: #b00020;
-    --color-danger-strong: #b00020;
+    --color-danger: #bb1836;
+    --color-danger-strong: #b12d45;
     --color-danger-soft: color-mix(in srgb, var(--color-danger) 10%, transparent);
     --color-warning: #e65100;
     --color-warning-soft: color-mix(in srgb, #e65100 12%, transparent);
@@ -63,9 +63,7 @@
     --table-header: #252d4a;
     --table-stripe: #1c2340;
     --quote-bg: #232b48;
-    --color-danger: #cf7a70;
-    --color-danger-strong: #bb564c;
-    --color-danger-soft: color-mix(in srgb, var(--color-danger) 14%, transparent);
+    --color-danger: #e06b7d;
     --color-warning: #ffb74d;
     --color-warning-soft: color-mix(in srgb, #ffb74d 14%, transparent);
     --color-success: #81c784;
