@@ -2293,9 +2293,10 @@ textarea.admin-multiline-field {
 .admin-plagiarism-panel {
     margin: 0 0 1rem;
     padding: 0.85rem 1rem 0.95rem;
-    border: 1px solid color-mix(in srgb, var(--border-color) 85%, var(--accent-primary) 15%);
-    border-radius: 10px;
-    background: color-mix(in srgb, var(--bg-secondary) 88%, var(--accent-primary) 12%);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--border-color) 25%, transparent);
+    box-shadow: var(--shadow-1);
 }
 
 .admin-plagiarism-panel-header {
