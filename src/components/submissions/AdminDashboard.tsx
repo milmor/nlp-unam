@@ -161,8 +161,12 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
     };
     const { error } = await sb.from('assignments').update(payload).eq('id', id);
     if (error) return showMsg('Failed to save: ' + error.message, true);
+    patchAssignment(id, {
+      title: draft.title.trim(),
+      description: draft.description.trim() || null,
+      deadline: draft.deadline ? new Date(draft.deadline).toISOString() : null,
+    });
     cancelEdit(id);
-    loadData();
   }
 
   const BUCKET = 'student-notebooks';
@@ -249,19 +253,44 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
     setSignupsToggling(false);
   }
 
-  async function loadData() {
+  const SUBMISSION_SELECT =
+    'id, assignment_id, notebook_url, score, feedback, created_at, verification_requested, verification_requested_at, verification_comment, student:profiles!submissions_student_id_fkey(email, name, role), assignment:assignments!fk_assignment(title, course_id)';
+
+  function patchAssignment(id: number, patch: Partial<Assignment>) {
+    setAssignments(prev => prev.map(a => (a.id === id ? { ...a, ...patch } : a)));
+  }
+
+  function patchSubmission(id: number, patch: Partial<AdminSubmission>) {
+    setSubmissions(prev => prev.map(s => (s.id === id ? { ...s, ...patch } : s)));
+  }
+
+  async function refreshSubmissionsForAssignment(assignmentId: number) {
     const sb = getSupabase();
     if (!sb) return;
-    setLoading(true);
-    showMsg('');
+    const { data, error } = await sb
+      .from('submissions')
+      .select(SUBMISSION_SELECT)
+      .eq('assignment_id', assignmentId)
+      .order('created_at', { ascending: false });
+    if (error) return;
+    const fresh = (data ?? []) as unknown as AdminSubmission[];
+    setSubmissions(prev => [...prev.filter(s => s.assignment_id !== assignmentId), ...fresh]);
+  }
+
+  async function loadData(options: { silent?: boolean } = {}) {
+    const { silent = false } = options;
+    const sb = getSupabase();
+    if (!sb) return;
+    if (!silent) {
+      setLoading(true);
+      showMsg('');
+    }
     try {
       const [assignRes, subRes] = await Promise.all([
         sb.from('assignments').select('id, title, description, deadline, reference_notebook, rubric, rubric_generated_at').eq('course_id', course.id).order('id'),
         sb
           .from('submissions')
-          .select(
-            'id, assignment_id, notebook_url, score, feedback, created_at, verification_requested, verification_requested_at, verification_comment, student:profiles!submissions_student_id_fkey(email, name, role), assignment:assignments!fk_assignment(title, course_id)'
-          )
+          .select(SUBMISSION_SELECT)
           .order('created_at', { ascending: false }),
       ]);
       if (assignRes.error) throw assignRes.error;
@@ -304,7 +333,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
           : 'Failed to load data.';
       showMsg(msg.includes('rubric') ? `${msg} — run docs/supabase-rubric-migration.sql in Supabase.` : msg, true);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }
 
@@ -326,37 +355,41 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
     setNewDesc('');
     setNewDeadline('');
     setShowAddAssignmentForm(false);
-    loadData();
+    await loadData({ silent: true });
+    showMsg('');
   }
 
   async function confirmDeleteAssignment() {
     if (!confirmDelete) return;
     const sb = getSupabase();
     if (!sb) return;
+    const deletedId = confirmDelete.id;
     setConfirmDelete(null);
     showMsg('Deleting…');
-    const { error } = await sb.from('assignments').delete().eq('id', confirmDelete.id);
+    const { error } = await sb.from('assignments').delete().eq('id', deletedId);
     if (error) return showMsg('Failed to delete: ' + error.message, true);
+    setAssignments(prev => prev.filter(a => a.id !== deletedId));
+    setSubmissions(prev => prev.filter(s => s.assignment_id !== deletedId));
     showMsg('');
-    loadData();
   }
 
   async function confirmRemoveStudentFromCourse() {
     if (!confirmRemoveStudent) return;
+    const studentId = confirmRemoveStudent.id;
     const sb = getSupabase();
     if (!sb) return;
-    setRemovingStudentId(confirmRemoveStudent.id);
+    setRemovingStudentId(studentId);
     const { error } = await sb
       .from('enrollments')
       .delete()
       .eq('course_id', course.id)
-      .eq('student_id', confirmRemoveStudent.id);
+      .eq('student_id', studentId);
     setRemovingStudentId(null);
     if (error) {
       showMsg('Could not remove student: ' + error.message, true);
     } else {
+      setStudents(prev => prev.filter(s => s.student_id !== studentId));
       showMsg('Student removed from this course.');
-      loadData();
     }
     setConfirmRemoveStudent(null);
   }
@@ -405,7 +438,9 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
   }
   const [plagiarismCompareMode, setPlagiarismCompareMode] = useState<PlagiarismCompareMode>('students');
   const [gradingMode, setGradingMode] = useState<GradingMode>('rubric');
+  const [uploadingRefId, setUploadingRefId] = useState<number | null>(null);
   const [generatingRubricId, setGeneratingRubricId] = useState<number | null>(null);
+  const [freshRubricId, setFreshRubricId] = useState<number | null>(null);
   const [rubricPreviewId, setRubricPreviewId] = useState<number | null>(null);
   const [plagiarismCheckAssignmentId, setPlagiarismCheckAssignmentId] = useState<number | null>(null);
   const [plagiarismCheckingId, setPlagiarismCheckingId] = useState<number | null>(null);
@@ -847,18 +882,30 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
     }
     const sb = getSupabase();
     if (!sb) return;
+    setUploadingRefId(assignId);
     setGradeMsg(assignId, 'Uploading reference…');
     const path = `reference/${assignId}_reference.ipynb`;
-    const { error: upErr } = await sb.storage.from('student-notebooks').upload(path, file, { upsert: true, contentType: 'application/json' });
-    if (upErr) { setGradeMsg(assignId, 'Upload failed: ' + upErr.message, true); return; }
-    const { error: dbErr } = await sb.from('assignments').update({
-      reference_notebook: path,
-      rubric: null,
-      rubric_generated_at: null,
-    }).eq('id', assignId);
-    if (dbErr) { setGradeMsg(assignId, 'DB update failed: ' + dbErr.message, true); return; }
-    setGradeMsg(assignId, 'Reference uploaded ✓ — generate a new rubric before grading');
-    loadData();
+    try {
+      const { error: upErr } = await sb.storage.from('student-notebooks').upload(path, file, { upsert: true, contentType: 'application/json' });
+      if (upErr) { setGradeMsg(assignId, 'Upload failed: ' + upErr.message, true); return; }
+      const { error: dbErr } = await sb.from('assignments').update({
+        reference_notebook: path,
+        rubric: null,
+        rubric_generated_at: null,
+      }).eq('id', assignId);
+      if (dbErr) { setGradeMsg(assignId, 'DB update failed: ' + dbErr.message, true); return; }
+      patchAssignment(assignId, {
+        reference_notebook: path,
+        rubric: null,
+        rubric_generated_at: null,
+      });
+      setRubricPreviewId(prev => (prev === assignId ? null : prev));
+      setFreshRubricId(null);
+      setExpandedAssignments(prev => new Set(prev).add(assignId));
+      setGradeMsg(assignId, 'Reference uploaded ✓ — generate a new rubric before grading');
+    } finally {
+      setUploadingRefId(null);
+    }
   }
 
   async function handleGenerateRubric(assignmentId: number) {
@@ -872,12 +919,19 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail ?? 'Unknown error');
+      patchAssignment(assignmentId, {
+        rubric: data.rubric,
+        rubric_generated_at: data.rubric_generated_at,
+      });
       setRubricPreviewId(assignmentId);
+      setFreshRubricId(assignmentId);
       setExpandedAssignments(prev => new Set(prev).add(assignmentId));
       const t = data.tokens_used;
       const usageStr = t?.total_tokens ? ` · ${t.total_tokens.toLocaleString()} tokens` : '';
       setGradeMsg(assignmentId, `Rubric generated ✓${usageStr}`);
-      loadData();
+      window.setTimeout(() => {
+        setFreshRubricId(prev => (prev === assignmentId ? null : prev));
+      }, 1200);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setGradeMsg(assignmentId, `Rubric generation failed: ${msg}`, true);
@@ -949,7 +1003,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
         }
         return next;
       });
-      loadData();
+      await refreshSubmissionsForAssignment(assignmentId);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       const hint = msg === 'Failed to fetch'
@@ -1059,7 +1113,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
       }
       setSelectionModeByAssignment(prev => { const s = new Set(prev); s.delete(assignmentId); return s; });
       setSelectedSubmissionIdsByAssignment(prev => { const m = new Map(prev); m.delete(assignmentId); return m; });
-      loadData();
+      await refreshSubmissionsForAssignment(assignmentId);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setGradeMsg(assignmentId, `Selected grading failed: ${msg}`, true);
@@ -1401,16 +1455,18 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
               const overlapRun = plagiarismResultsByAssignment.get(a.id);
               const hasOverlapResults = !!overlapRun;
               const plagiarismStatus = plagiarismCheckStatus.get(a.id);
+              const isSetupBusy = uploadingRefId === a.id || generatingRubricId === a.id;
               const showAccordionStack = Boolean(
                 gradingStatus.get(a.id)
                 || (plagiarismStatus?.isError && !gradingStatus.get(a.id))
                 || (overlapRun && !plagiarismStatus?.isError)
                 || progress
                 || similarityProgress
+                || isSetupBusy
                 || isOpen,
               );
               return (
-                <li key={a.id} className={`admin-accordion-item${isEditing ? ' admin-accordion-item--editing' : ''}${actionsMenuId === a.id ? ' admin-accordion-item--menu-open' : ''}`}>
+                <li key={a.id} className={`admin-accordion-item${isEditing ? ' admin-accordion-item--editing' : ''}${actionsMenuId === a.id ? ' admin-accordion-item--menu-open' : ''}${isSetupBusy ? ' admin-accordion-item--busy' : ''}`}>
                   <div className="admin-accordion-header-row">
                     <button
                       type="button"
@@ -1426,13 +1482,17 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                           </span>
                         )}
                         <span className="admin-assignment-statuses" aria-label="Assignment setup status">
-                          {a.reference_notebook ? (
+                          {uploadingRefId === a.id ? (
+                            <span className="admin-assignment-status admin-assignment-status--pending" title="Uploading reference notebook">Uploading ref…</span>
+                          ) : a.reference_notebook ? (
                             <span className="admin-assignment-status admin-assignment-status--ok" title="Reference notebook uploaded">Ref</span>
                           ) : (
                             <span className="admin-assignment-status admin-assignment-status--warn" title="No reference notebook">No ref</span>
                           )}
-                          {gradingMode === 'rubric' && a.reference_notebook && (
-                            a.rubric ? (
+                          {gradingMode === 'rubric' && (a.reference_notebook || uploadingRefId === a.id) && (
+                            generatingRubricId === a.id ? (
+                              <span className="admin-assignment-status admin-assignment-status--pending" title="Generating rubric">Rubric…</span>
+                            ) : a.rubric ? (
                               <span className="admin-assignment-status admin-assignment-status--ok" title="Grading rubric ready">Rubric</span>
                             ) : (
                               <span className="admin-assignment-status admin-assignment-status--warn" title="Generate a rubric before grading">No rubric</span>
@@ -1511,16 +1571,19 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                                 type="button"
                                 role="menuitem"
                                 className="admin-assignment-menu-item"
+                                disabled={uploadingRefId != null || generatingRubricId != null}
                                 onClick={() => { setActionsMenuId(null); triggerRefUpload(a.id); }}
                               >
-                                {a.reference_notebook ? 'Replace reference notebook' : 'Upload reference notebook'}
+                                {uploadingRefId === a.id
+                                  ? 'Uploading reference…'
+                                  : a.reference_notebook ? 'Replace reference notebook' : 'Upload reference notebook'}
                               </button>
-                              {a.reference_notebook && (
+                              {(a.reference_notebook || uploadingRefId === a.id) && (
                                 <button
                                   type="button"
                                   role="menuitem"
                                   className="admin-assignment-menu-item"
-                                  disabled={generatingRubricId != null}
+                                  disabled={uploadingRefId != null || generatingRubricId != null || !a.reference_notebook}
                                   onClick={() => { setActionsMenuId(null); void handleGenerateRubric(a.id); }}
                                 >
                                   {generatingRubricId === a.id
@@ -1696,8 +1759,19 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                   {renderRunProgressBar(progress, 'Grading in progress…', 'grading')}
                   {renderRunProgressBar(similarityProgress, 'Checking similarity…', 'similarity')}
 
+                  {isSetupBusy && (
+                    <div className="admin-setup-activity admin-accordion-panel" role="status" aria-live="polite">
+                      <span className="admin-setup-activity-spinner" aria-hidden />
+                      <span>
+                        {uploadingRefId === a.id
+                          ? 'Uploading reference notebook…'
+                          : 'Generating rubric with AI…'}
+                      </span>
+                    </div>
+                  )}
+
                   {isOpen && a.rubric && (
-                    <div className="admin-rubric-panel admin-accordion-panel">
+                    <div className={`admin-rubric-panel admin-accordion-panel${freshRubricId === a.id ? ' admin-rubric-panel--fresh' : ''}`}>
                       <div className="admin-rubric-panel-head">
                         <span className="admin-rubric-panel-title">Grading rubric</span>
                         {a.rubric_generated_at && (
@@ -1916,8 +1990,17 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                                         onClick={async () => {
                                           const sb = getSupabase();
                                           if (!sb) return;
-                                          await sb.from('submissions').update({ verification_requested: false, verification_requested_at: null, verification_comment: null }).eq('id', sub.id);
-                                          loadData();
+                                          const { error } = await sb.from('submissions').update({
+                                            verification_requested: false,
+                                            verification_requested_at: null,
+                                            verification_comment: null,
+                                          }).eq('id', sub.id);
+                                          if (error) return;
+                                          patchSubmission(sub.id, {
+                                            verification_requested: false,
+                                            verification_requested_at: null,
+                                            verification_comment: null,
+                                          });
                                         }}
                                         title="Mark verification as resolved"
                                       >
