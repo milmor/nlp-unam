@@ -2200,6 +2200,31 @@ textarea.admin-multiline-field {
     margin-top: 0.1rem;
 }
 
+.admin-assignment-brief {
+    padding: var(--space-3) var(--space-4);
+    border-left: 3px solid var(--accent-secondary);
+    background: color-mix(in srgb, var(--accent-primary) 4%, var(--bg-card));
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.admin-assignment-brief-label {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.admin-assignment-brief-text {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    white-space: pre-wrap;
+}
+
 .admin-accordion-stack {
     display: flex;
     flex-direction: column;

@@ -1714,6 +1714,12 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                   </div>
                   {showAccordionStack && (
                     <div className="admin-accordion-stack">
+                  {isOpen && !isEditing && a.description?.trim() && (
+                    <div className="admin-assignment-brief">
+                      <span className="admin-assignment-brief-label">Description</span>
+                      <p className="admin-assignment-brief-text">{a.description.trim()}</p>
+                    </div>
+                  )}
                   {isOpen && (() => {
                     const hasReference = !!a.reference_notebook;
                     const checkAllBlocked = assignmentSimilarityBlocked(plagiarismCompareMode, count, hasReference);
