@@ -463,6 +463,43 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
     setGradingError(p  => new Map(p).set(id, isErr));
   }
 
+  function shortenAssignmentTitle(title: string, maxLen = 14): string {
+    const t = title.trim();
+    return t.length <= maxLen ? t : `${t.slice(0, maxLen - 1)}…`;
+  }
+
+  function buildGradebookRows() {
+    const latestByStudentAssignment = new Map<string, AdminSubmission>();
+    for (const sub of submissions) {
+      const email = sub.student?.email;
+      if (!email) continue;
+      const key = `${email}:${sub.assignment_id}`;
+      const prev = latestByStudentAssignment.get(key);
+      if (!prev || new Date(sub.created_at) > new Date(prev.created_at)) {
+        latestByStudentAssignment.set(key, sub);
+      }
+    }
+
+    return students
+      .slice()
+      .sort((a, b) => {
+        const aLabel = a.profile?.name || a.profile?.email || '';
+        const bLabel = b.profile?.name || b.profile?.email || '';
+        return aLabel.localeCompare(bLabel, undefined, { sensitivity: 'base' });
+      })
+      .map(student => {
+        const email = student.profile?.email ?? '';
+        return {
+          student,
+          label: student.profile?.name || student.profile?.email || '—',
+          scores: assignments.map(assignment => {
+            const sub = email ? latestByStudentAssignment.get(`${email}:${assignment.id}`) : undefined;
+            return sub?.score ?? null;
+          }),
+        };
+      });
+  }
+
   function setPlagiarismMsg(assignmentId: number, msg: string, isErr = false) {
     setPlagiarismCheckStatus(prev => new Map(prev).set(assignmentId, { msg, isError: isErr }));
   }
@@ -2035,52 +2072,104 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
       {/* Students */}
       {activeTab === 'students' && (
         <div className="admin-assignments-section">
-          <h5 className="admin-section-title">Students</h5>
           {loading ? (
             <p className="prereq-note">Loading…</p>
           ) : students.length === 0 ? (
-            <p className="prereq-note sub-note--italic">No students enrolled yet.</p>
+            <>
+              <h5 className="admin-section-title">Gradebook</h5>
+              <p className="prereq-note sub-note--italic">No students enrolled yet.</p>
+            </>
           ) : (
-            <div className="dashboard-table-wrapper admin-table-responsive">
-              <table className="dashboard-table admin-students-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Enrolled</th>
-                    <th>Submissions</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {students.map(s => {
-                    const subCount = submissions.filter(sub =>
-                      sub.student?.email === s.profile?.email
-                    ).length;
-                    const label = s.profile?.name || s.profile?.email || 'this student';
-                    return (
-                      <tr key={s.student_id}>
-                        <td data-label="Name"><strong>{s.profile?.name ?? '—'}</strong></td>
-                        <td data-label="Email">{s.profile?.email ?? '—'}</td>
-                        <td data-label="Enrolled">{s.enrolled_at ? new Date(s.enrolled_at).toLocaleDateString() : '—'}</td>
-                        <td data-label="Submissions">{subCount} / {assignments.length}</td>
-                        <td data-label="Actions">
-                          <button
-                            type="button"
-                            className="btn-danger btn-small"
-                            onClick={() => setConfirmRemoveStudent({ id: s.student_id, label })}
-                            disabled={removingStudentId === s.student_id}
-                            title="Remove from this course"
-                          >
-                            {removingStudentId === s.student_id ? '…' : 'Remove'}
-                          </button>
-                        </td>
+            <>
+              <div className="admin-gradebook-section">
+                <h5 className="admin-section-title">Gradebook</h5>
+                {assignments.length === 0 ? (
+                  <p className="prereq-note sub-note--italic">Add assignments to see grades here.</p>
+                ) : (
+                  <div className="dashboard-table-wrapper admin-table-responsive admin-gradebook-wrapper">
+                    <table className="dashboard-table admin-gradebook-table">
+                      <thead>
+                        <tr>
+                          <th className="admin-gradebook-sticky-col" scope="col">Student</th>
+                          {assignments.map(a => (
+                            <th key={a.id} scope="col" title={a.title}>
+                              {shortenAssignmentTitle(a.title)}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {buildGradebookRows().map(row => (
+                          <tr key={row.student.student_id}>
+                            <th className="admin-gradebook-sticky-col" scope="row" title={row.label}>
+                              <span className="admin-gradebook-name">{row.label}</span>
+                              {row.student.profile?.name && row.student.profile?.email && (
+                                <span className="admin-gradebook-email" title={row.student.profile.email}>
+                                  {row.student.profile.email}
+                                </span>
+                              )}
+                            </th>
+                            {row.scores.map((score, index) => (
+                              <td
+                                key={assignments[index].id}
+                                data-label={assignments[index].title}
+                                className={score == null ? 'admin-gradebook-empty' : 'admin-gradebook-score'}
+                              >
+                                {score != null ? score : '—'}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              <div className="admin-enrollment-section">
+                <h5 className="admin-section-title">Enrollment</h5>
+                <div className="dashboard-table-wrapper admin-table-responsive">
+                  <table className="dashboard-table admin-students-table">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Enrolled</th>
+                        <th>Submissions</th>
+                        <th>Actions</th>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                    </thead>
+                    <tbody>
+                      {students.map(s => {
+                        const subCount = submissions.filter(sub =>
+                          sub.student?.email === s.profile?.email
+                        ).length;
+                        const label = s.profile?.name || s.profile?.email || 'this student';
+                        return (
+                          <tr key={s.student_id}>
+                            <td data-label="Name"><strong>{s.profile?.name ?? '—'}</strong></td>
+                            <td data-label="Email">{s.profile?.email ?? '—'}</td>
+                            <td data-label="Enrolled">{s.enrolled_at ? new Date(s.enrolled_at).toLocaleDateString() : '—'}</td>
+                            <td data-label="Submissions">{subCount} / {assignments.length}</td>
+                            <td data-label="Actions">
+                              <button
+                                type="button"
+                                className="btn-danger btn-small"
+                                onClick={() => setConfirmRemoveStudent({ id: s.student_id, label })}
+                                disabled={removingStudentId === s.student_id}
+                                title="Remove from this course"
+                              >
+                                {removingStudentId === s.student_id ? '…' : 'Remove'}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
           )}
         </div>
       )}

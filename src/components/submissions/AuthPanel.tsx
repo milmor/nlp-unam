@@ -35,9 +35,6 @@ export default function AuthPanel({ onAuth: _onAuth }: AuthPanelProps) {
   return (
     <div className="google-auth-panel">
       <h3>Student Login</h3>
-      <p className="prereq-note auth-panel-intro">
-        Sign in with your Google account to access your course submissions and grades.
-      </p>
 
       <button type="button" className="btn-google" onClick={handleGoogleLogin} disabled={busy}>
         <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">

@@ -9,6 +9,7 @@ import CourseSelector from '@/components/submissions/CourseSelector';
 import StudentDashboard from '@/components/submissions/StudentDashboard';
 import AdminDashboard from '@/components/submissions/AdminDashboard';
 import ApiStatus from '@/components/submissions/ApiStatus';
+import GradingPlatformSpotlight from '@/components/submissions/GradingPlatformSpotlight';
 import ResetPasswordForm from '@/components/submissions/ResetPasswordForm';
 
 export default function SubmissionsPage() {
@@ -61,17 +62,14 @@ export default function SubmissionsPage() {
   const isAuthView = authState === 'unauthenticated' || authState === 'loading' || recovering;
   const showCourseSelector = !recovering && (authState === 'admin' || authState === 'student') && !selectedCourse;
   const showDashboard = !recovering && selectedCourse && (authState === 'admin' || authState === 'student');
+  const showGradiumIntro = authState === 'unauthenticated' && !recovering;
 
   return (
     <section className={`section submissions-page-section${showDashboard ? ' submissions-page-section--dashboard' : ''}`}>
       <div className="container container--submissions">
         <div className={isAuthView ? 'submissions-auth-wrapper' : ''}>
           <h2>Homework Submissions</h2>
-          {isAuthView && (
-            <p className="section-intro">
-              Authenticate below to view your submissions and grades for the course programming assignments.
-            </p>
-          )}
+          {showGradiumIntro && <GradingPlatformSpotlight />}
 
           {showDashboard && user ? (
             <div className="submissions-dashboard-wrap">

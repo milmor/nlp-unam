@@ -1113,6 +1113,37 @@ ul.article-list,
     }
 }
 
+/* Gradium — submissions login intro (matches detail-card / course site) */
+.gradium-intro {
+    margin: var(--space-4) 0 var(--space-5);
+    padding: var(--space-5);
+}
+
+.gradium-intro-name {
+    margin: 0 0 var(--space-3);
+    padding-bottom: var(--space-2);
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--accent-secondary);
+    border-bottom: 2px solid var(--accent-primary);
+}
+
+.gradium-intro-tagline {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+.gradium-intro-signin {
+    margin: var(--space-4) 0 0;
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border-color);
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: var(--text-muted);
+}
+
 /* ── Submissions page ────────────────────────────────────────────── */
 
 /* Typography scale: one font, consistent sizes (professional UI) */
@@ -2324,6 +2355,78 @@ textarea.admin-multiline-field {
     }
 }
 
+.admin-gradebook-section {
+    margin-bottom: var(--space-6);
+}
+
+.admin-enrollment-section {
+    margin-top: var(--space-2);
+}
+
+.admin-gradebook-wrapper {
+    max-width: 100%;
+}
+
+.admin-gradebook-table th:not(.admin-gradebook-sticky-col),
+.admin-gradebook-table td {
+    text-align: center;
+    white-space: nowrap;
+}
+
+.admin-gradebook-table .admin-gradebook-sticky-col {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    text-align: left;
+    width: 11.5rem;
+    min-width: 11.5rem;
+    max-width: 11.5rem;
+    overflow: hidden;
+    background: var(--bg-card);
+    box-shadow: 2px 0 4px color-mix(in srgb, var(--shadow-color) 80%, transparent);
+    vertical-align: middle;
+}
+
+.admin-gradebook-table thead .admin-gradebook-sticky-col {
+    z-index: 2;
+    background: var(--table-header);
+}
+
+.admin-gradebook-table tbody .admin-gradebook-sticky-col {
+    font-weight: 400;
+}
+
+.admin-gradebook-name {
+    display: block;
+    font-weight: 600;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+.admin-gradebook-email {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.72rem;
+    font-weight: 400;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+.admin-gradebook-score {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+}
+
+.admin-gradebook-empty {
+    color: var(--text-muted);
+}
+
 /* Mobile: card layout for admin tables (no horizontal scroll, app-like) */
 @media (max-width: 640px) {
     .admin-table-responsive {
@@ -2334,7 +2437,8 @@ textarea.admin-multiline-field {
 
     .admin-table-responsive .dashboard-table,
     .admin-table-responsive .admin-submissions-table,
-    .admin-table-responsive .admin-students-table {
+    .admin-table-responsive .admin-students-table,
+    .admin-table-responsive .admin-gradebook-table {
         min-width: 0;
         display: block;
     }
