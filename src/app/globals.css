@@ -1751,15 +1751,39 @@ ul.article-list,
 .admin-assignment-form input,
 .admin-assignment-form textarea,
 .admin-assignment-edit-form input,
-.admin-assignment-edit-form textarea {
+.admin-assignment-edit-form textarea,
+.admin-rubric-edit-form input,
+.admin-rubric-edit-form textarea {
     padding: 8px 10px;
     border: 1px solid var(--border-color);
     border-radius: 6px;
-    background: var(--bg-primary);
+    background: var(--bg-card);
     color: var(--text-primary);
     font-size: var(--sub-body, 0.95rem);
     color-scheme: light dark;
     font-family: inherit;
+    line-height: 1.5;
+}
+
+.admin-assignment-form input::placeholder,
+.admin-assignment-form textarea::placeholder,
+.admin-assignment-edit-form input::placeholder,
+.admin-assignment-edit-form textarea::placeholder,
+.admin-rubric-edit-form input::placeholder,
+.admin-rubric-edit-form textarea::placeholder {
+    color: var(--text-muted);
+    opacity: 0.9;
+}
+
+.admin-assignment-form input:focus,
+.admin-assignment-form textarea:focus,
+.admin-assignment-edit-form input:focus,
+.admin-assignment-edit-form textarea:focus,
+.admin-rubric-edit-form input:focus,
+.admin-rubric-edit-form textarea:focus {
+    outline: none;
+    border-color: color-mix(in srgb, var(--accent-primary) 50%, var(--border-color));
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 16%, transparent);
 }
 
 textarea.admin-multiline-field {
@@ -2985,6 +3009,10 @@ textarea.admin-multiline-field {
     margin: 0;
 }
 
+.admin-rubric-panel.admin-accordion-panel {
+    background: color-mix(in srgb, var(--bg-card) 90%, var(--bg-secondary));
+}
+
 .admin-rubric-panel-head {
     display: flex;
     flex-wrap: wrap;
@@ -3004,19 +3032,103 @@ textarea.admin-multiline-field {
     flex: 1 1 auto;
 }
 
+.admin-rubric-panel-meta--edit {
+    color: var(--accent-primary);
+    font-weight: 600;
+}
+
+.admin-rubric-panel-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    margin-left: auto;
+}
+
+.admin-rubric-edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    margin-top: 0.85rem;
+    font-family: var(--sub-font, inherit);
+}
+
+.admin-rubric-edit-label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    font-size: var(--sub-small, 0.8rem);
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: var(--text-primary);
+}
+
+.admin-rubric-edit-criteria {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.admin-rubric-edit-criteria > .admin-rubric-edit-label {
+    margin-bottom: -0.15rem;
+}
+
+.admin-rubric-criterion-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid color-mix(in srgb, var(--border-color) 75%, transparent);
+    border-left: 3px solid var(--accent-secondary);
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
+}
+
+.admin-rubric-criterion-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.admin-rubric-criterion-card-index {
+    font-size: var(--sub-tiny, 0.72rem);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--accent-secondary) 80%, var(--text-muted));
+}
+
+.admin-rubric-weight-input {
+    max-width: 8rem;
+}
+
+.admin-rubric-criterion-remove {
+    margin-left: auto;
+}
+
 .admin-rubric-preview {
-    margin-top: 0.65rem;
-    font-size: var(--sub-small, 0.82rem);
+    margin-top: 0.75rem;
+    padding-top: 0.65rem;
+    border-top: 1px solid color-mix(in srgb, var(--border-color) 65%, transparent);
+    font-size: var(--sub-body, 0.9rem);
     color: var(--text-secondary);
-    line-height: 1.45;
+    line-height: 1.55;
+    font-family: var(--sub-font, inherit);
 }
 
 .admin-rubric-goal {
-    margin: 0 0 0.5rem;
+    margin: 0 0 0.6rem;
+    color: var(--text-secondary);
+}
+
+.admin-rubric-goal strong {
+    color: var(--text-primary);
+    font-weight: 600;
 }
 
 .admin-rubric-notes {
-    margin: 0 0 0.5rem;
+    margin: 0 0 0.65rem;
     font-style: italic;
     color: var(--text-muted);
 }
@@ -3027,17 +3139,82 @@ textarea.admin-multiline-field {
 }
 
 .admin-rubric-criteria > li {
-    margin-bottom: 0.45rem;
+    margin-bottom: 0.55rem;
+    color: var(--text-secondary);
+}
+
+.admin-rubric-criteria > li strong {
+    color: var(--text-primary);
+    font-weight: 600;
 }
 
 .admin-rubric-criteria ul {
-    margin: 0.25rem 0 0;
+    margin: 0.3rem 0 0;
     padding-left: 1rem;
+}
+
+.admin-rubric-criteria ul li {
+    color: var(--text-muted);
 }
 
 .admin-rubric-weight {
     color: var(--text-muted);
     font-weight: 400;
+}
+
+[data-theme="dark"] .admin-rubric-panel.admin-accordion-panel {
+    background: color-mix(in srgb, var(--bg-card) 82%, var(--bg-primary));
+    border-color: color-mix(in srgb, var(--border-color) 70%, var(--accent-primary) 30%);
+}
+
+[data-theme="dark"] .admin-rubric-panel-meta--edit {
+    color: var(--accent-secondary);
+}
+
+[data-theme="dark"] .admin-rubric-edit-label {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .admin-rubric-criterion-card {
+    background: color-mix(in srgb, var(--bg-primary) 55%, var(--bg-card));
+    border-color: color-mix(in srgb, var(--border-color) 60%, transparent);
+    border-left-color: color-mix(in srgb, var(--accent-secondary) 70%, transparent);
+}
+
+[data-theme="dark"] .admin-rubric-criterion-card-index {
+    color: var(--accent-secondary);
+}
+
+[data-theme="dark"] .admin-rubric-edit-form input,
+[data-theme="dark"] .admin-rubric-edit-form textarea {
+    background: color-mix(in srgb, var(--bg-primary) 70%, var(--bg-card));
+    border-color: color-mix(in srgb, var(--border-color) 85%, transparent);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .admin-rubric-edit-form input:focus,
+[data-theme="dark"] .admin-rubric-edit-form textarea:focus {
+    border-color: color-mix(in srgb, var(--accent-primary) 60%, var(--border-color));
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 22%, transparent);
+}
+
+[data-theme="dark"] .admin-rubric-preview {
+    border-top-color: color-mix(in srgb, var(--border-color) 55%, transparent);
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .admin-rubric-goal,
+[data-theme="dark"] .admin-rubric-criteria > li {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .admin-rubric-goal strong,
+[data-theme="dark"] .admin-rubric-criteria > li strong {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .admin-rubric-criteria ul li {
+    color: color-mix(in srgb, var(--text-muted) 88%, var(--text-secondary));
 }
 
 .admin-plagiarism-panel-hint {

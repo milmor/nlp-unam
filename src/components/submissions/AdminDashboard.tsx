@@ -40,6 +40,19 @@ type RunProgress = {
 type PlagiarismCompareMode = 'students' | 'reference' | 'both';
 type GradingMode = 'rubric' | 'legacy';
 
+type RubricCriterionDraft = {
+  id: string;
+  title: string;
+  weight: string;
+  must_have: string;
+};
+
+type RubricEditDraft = {
+  goal: string;
+  scoring_notes: string;
+  criteria: RubricCriterionDraft[];
+};
+
 type PlagiarismSubResult = {
   studentLabel: string;
   maxSimilarityPct: number;
@@ -442,6 +455,9 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
   const [generatingRubricId, setGeneratingRubricId] = useState<number | null>(null);
   const [freshRubricId, setFreshRubricId] = useState<number | null>(null);
   const [rubricPreviewId, setRubricPreviewId] = useState<number | null>(null);
+  const [editingRubricId, setEditingRubricId] = useState<number | null>(null);
+  const [rubricDraft, setRubricDraft] = useState<Map<number, RubricEditDraft>>(new Map());
+  const [savingRubricId, setSavingRubricId] = useState<number | null>(null);
   const [plagiarismCheckAssignmentId, setPlagiarismCheckAssignmentId] = useState<number | null>(null);
   const [plagiarismCheckingId, setPlagiarismCheckingId] = useState<number | null>(null);
   const [plagiarismCheckStatus, setPlagiarismCheckStatus] = useState<Map<number, { msg: string; isError: boolean }>>(new Map());
@@ -937,6 +953,8 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
         rubric_generated_at: null,
       });
       setRubricPreviewId(prev => (prev === assignId ? null : prev));
+      setEditingRubricId(prev => (prev === assignId ? null : prev));
+      setRubricDraft(prev => { const m = new Map(prev); m.delete(assignId); return m; });
       setFreshRubricId(null);
       setExpandedAssignments(prev => new Set(prev).add(assignId));
       setGradeMsg(assignId, 'Reference uploaded ✓ — generate a new rubric before grading');
@@ -961,6 +979,8 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
         rubric_generated_at: data.rubric_generated_at,
       });
       setRubricPreviewId(assignmentId);
+      setEditingRubricId(null);
+      setRubricDraft(prev => { const m = new Map(prev); m.delete(assignmentId); return m; });
       setFreshRubricId(assignmentId);
       setExpandedAssignments(prev => new Set(prev).add(assignmentId));
       const t = data.tokens_used;
@@ -975,6 +995,228 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
     } finally {
       setGeneratingRubricId(null);
     }
+  }
+
+  function slugifyCriterionId(title: string, fallback: string): string {
+    const slug = title.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+    return slug || fallback;
+  }
+
+  function rubricToDraft(rubric: AssignmentRubric): RubricEditDraft {
+    return {
+      goal: rubric.goal,
+      scoring_notes: rubric.scoring_notes ?? '',
+      criteria: rubric.criteria.map(c => ({
+        id: c.id,
+        title: c.title,
+        weight: c.weight != null ? String(c.weight) : '',
+        must_have: (c.must_have ?? []).join('\n'),
+      })),
+    };
+  }
+
+  function startEditRubric(assignmentId: number, rubric: AssignmentRubric) {
+    setRubricDraft(prev => new Map(prev).set(assignmentId, rubricToDraft(rubric)));
+    setEditingRubricId(assignmentId);
+    setRubricPreviewId(assignmentId);
+    setExpandedAssignments(prev => new Set(prev).add(assignmentId));
+  }
+
+  function cancelEditRubric(assignmentId: number) {
+    setEditingRubricId(prev => (prev === assignmentId ? null : prev));
+    setRubricDraft(prev => { const m = new Map(prev); m.delete(assignmentId); return m; });
+  }
+
+  function updateRubricDraftField(
+    assignmentId: number,
+    field: 'goal' | 'scoring_notes',
+    value: string,
+  ) {
+    setRubricDraft(prev => {
+      const m = new Map(prev);
+      const draft = m.get(assignmentId);
+      if (!draft) return prev;
+      m.set(assignmentId, { ...draft, [field]: value });
+      return m;
+    });
+  }
+
+  function updateRubricCriterionDraft(
+    assignmentId: number,
+    index: number,
+    field: keyof RubricCriterionDraft,
+    value: string,
+  ) {
+    setRubricDraft(prev => {
+      const m = new Map(prev);
+      const draft = m.get(assignmentId);
+      if (!draft) return prev;
+      const criteria = draft.criteria.map((c, i) => (i === index ? { ...c, [field]: value } : c));
+      m.set(assignmentId, { ...draft, criteria });
+      return m;
+    });
+  }
+
+  function addRubricCriterionDraft(assignmentId: number) {
+    setRubricDraft(prev => {
+      const m = new Map(prev);
+      const draft = m.get(assignmentId);
+      if (!draft) return prev;
+      const n = draft.criteria.length + 1;
+      m.set(assignmentId, {
+        ...draft,
+        criteria: [...draft.criteria, { id: `criterion_${n}`, title: '', weight: '', must_have: '' }],
+      });
+      return m;
+    });
+  }
+
+  function removeRubricCriterionDraft(assignmentId: number, index: number) {
+    setRubricDraft(prev => {
+      const m = new Map(prev);
+      const draft = m.get(assignmentId);
+      if (!draft || draft.criteria.length <= 1) return prev;
+      m.set(assignmentId, {
+        ...draft,
+        criteria: draft.criteria.filter((_, i) => i !== index),
+      });
+      return m;
+    });
+  }
+
+  function draftToRubric(draft: RubricEditDraft): AssignmentRubric | null {
+    const goal = draft.goal.trim();
+    if (!goal) return null;
+    const criteria = draft.criteria
+      .map((c, index) => {
+        const title = c.title.trim();
+        if (!title) return null;
+        const weight = c.weight.trim() ? parseInt(c.weight, 10) : undefined;
+        const must_have = c.must_have
+          .split('\n')
+          .map(line => line.trim())
+          .filter(Boolean);
+        return {
+          id: c.id.trim() || slugifyCriterionId(title, `criterion_${index + 1}`),
+          title,
+          weight: weight != null && !isNaN(weight) ? weight : undefined,
+          must_have: must_have.length > 0 ? must_have : undefined,
+        };
+      })
+      .filter((c): c is NonNullable<typeof c> => c != null);
+    if (criteria.length === 0) return null;
+    const scoring_notes = draft.scoring_notes.trim();
+    return {
+      goal,
+      criteria,
+      scoring_notes: scoring_notes || undefined,
+    };
+  }
+
+  async function saveRubricEdit(assignmentId: number) {
+    const draft = rubricDraft.get(assignmentId);
+    if (!draft) return;
+    const rubric = draftToRubric(draft);
+    if (!rubric) {
+      setGradeMsg(assignmentId, 'Rubric needs a goal and at least one criterion with a title.', true);
+      return;
+    }
+    const sb = getSupabase();
+    if (!sb) return;
+    setSavingRubricId(assignmentId);
+    setGradeMsg(assignmentId, 'Saving rubric…');
+    const { error } = await sb.from('assignments').update({ rubric }).eq('id', assignmentId);
+    setSavingRubricId(null);
+    if (error) {
+      setGradeMsg(assignmentId, 'Failed to save rubric: ' + error.message, true);
+      return;
+    }
+    patchAssignment(assignmentId, { rubric });
+    cancelEditRubric(assignmentId);
+    setGradeMsg(assignmentId, 'Rubric saved ✓');
+  }
+
+  function renderRubricEditor(assignmentId: number) {
+    const draft = rubricDraft.get(assignmentId);
+    if (!draft) return null;
+    const saving = savingRubricId === assignmentId;
+    return (
+      <div className="admin-rubric-edit-form">
+        <label className="admin-rubric-edit-label">
+          Goal
+          <textarea
+            className="admin-multiline-field"
+            rows={2}
+            value={draft.goal}
+            onChange={e => updateRubricDraftField(assignmentId, 'goal', e.target.value)}
+            disabled={saving}
+          />
+        </label>
+        <label className="admin-rubric-edit-label">
+          Scoring notes
+          <textarea
+            className="admin-multiline-field"
+            rows={2}
+            value={draft.scoring_notes}
+            onChange={e => updateRubricDraftField(assignmentId, 'scoring_notes', e.target.value)}
+            disabled={saving}
+            placeholder="Optional guidance for graders"
+          />
+        </label>
+        <div className="admin-rubric-edit-criteria">
+          <span className="admin-rubric-edit-label">Criteria</span>
+          {draft.criteria.map((criterion, index) => (
+            <div key={`${criterion.id}-${index}`} className="admin-rubric-criterion-card">
+              <div className="admin-rubric-criterion-card-head">
+                <span className="admin-rubric-criterion-card-index">#{index + 1}</span>
+                <button
+                  type="button"
+                  className="btn-secondary btn-small admin-rubric-criterion-remove"
+                  onClick={() => removeRubricCriterionDraft(assignmentId, index)}
+                  disabled={saving || draft.criteria.length <= 1}
+                  title="Remove criterion"
+                >
+                  Remove
+                </button>
+              </div>
+              <input
+                type="text"
+                placeholder="Criterion title"
+                value={criterion.title}
+                onChange={e => updateRubricCriterionDraft(assignmentId, index, 'title', e.target.value)}
+                disabled={saving}
+              />
+              <input
+                type="number"
+                min={1}
+                max={5}
+                placeholder="Weight (1–5)"
+                value={criterion.weight}
+                onChange={e => updateRubricCriterionDraft(assignmentId, index, 'weight', e.target.value)}
+                disabled={saving}
+                className="admin-rubric-weight-input"
+              />
+              <textarea
+                className="admin-multiline-field"
+                rows={3}
+                placeholder="Must-have requirements (one per line)"
+                value={criterion.must_have}
+                onChange={e => updateRubricCriterionDraft(assignmentId, index, 'must_have', e.target.value)}
+                disabled={saving}
+              />
+            </div>
+          ))}
+          <button
+            type="button"
+            className="btn-secondary btn-small"
+            onClick={() => addRubricCriterionDraft(assignmentId)}
+            disabled={saving}
+          >
+            Add criterion
+          </button>
+        </div>
+      </div>
+    );
   }
 
   function renderRubricPreview(rubric: AssignmentRubric) {
@@ -1653,6 +1895,21 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                                   </span>
                                 </button>
                               )}
+                              {a.rubric && (
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  className="admin-assignment-menu-item"
+                                  disabled={uploadingRefId != null || generatingRubricId != null || savingRubricId != null}
+                                  onClick={() => {
+                                    setActionsMenuId(null);
+                                    startEditRubric(a.id, a.rubric!);
+                                  }}
+                                >
+                                  Edit rubric
+                                  <span className="admin-assignment-menu-item-meta">Adjust criteria manually</span>
+                                </button>
+                              )}
                             </div>
                             {count >= 2 || (a.reference_notebook && count >= 1) ? (
                               <div className="admin-assignment-menu-section">
@@ -1839,20 +2096,57 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                     <div className={`admin-rubric-panel admin-accordion-panel${freshRubricId === a.id ? ' admin-rubric-panel--fresh' : ''}`}>
                       <div className="admin-rubric-panel-head">
                         <span className="admin-rubric-panel-title">Grading rubric</span>
-                        {a.rubric_generated_at && (
+                        {a.rubric_generated_at && editingRubricId !== a.id && (
                           <span className="admin-rubric-panel-meta">
                             Generated {formatCourseDateTime(a.rubric_generated_at)}
                           </span>
                         )}
-                        <button
-                          type="button"
-                          className="btn-secondary btn-small"
-                          onClick={() => setRubricPreviewId(prev => prev === a.id ? null : a.id)}
-                        >
-                          {rubricPreviewId === a.id ? 'Hide' : 'Show'}
-                        </button>
+                        {editingRubricId === a.id && (
+                          <span className="admin-rubric-panel-meta admin-rubric-panel-meta--edit">Editing</span>
+                        )}
+                        <div className="admin-rubric-panel-actions">
+                          {editingRubricId === a.id ? (
+                            <>
+                              <button
+                                type="button"
+                                className="btn-primary btn-small"
+                                onClick={() => void saveRubricEdit(a.id)}
+                                disabled={savingRubricId === a.id}
+                              >
+                                {savingRubricId === a.id ? 'Saving…' : 'Save'}
+                              </button>
+                              <button
+                                type="button"
+                                className="btn-secondary btn-small"
+                                onClick={() => cancelEditRubric(a.id)}
+                                disabled={savingRubricId === a.id}
+                              >
+                                Cancel
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                className="btn-secondary btn-small"
+                                onClick={() => startEditRubric(a.id, a.rubric!)}
+                                disabled={generatingRubricId != null}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                className="btn-secondary btn-small"
+                                onClick={() => setRubricPreviewId(prev => prev === a.id ? null : a.id)}
+                              >
+                                {rubricPreviewId === a.id ? 'Hide' : 'Show'}
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </div>
-                      {rubricPreviewId === a.id && renderRubricPreview(a.rubric)}
+                      {editingRubricId === a.id && renderRubricEditor(a.id)}
+                      {editingRubricId !== a.id && rubricPreviewId === a.id && renderRubricPreview(a.rubric)}
                     </div>
                   )}
 
