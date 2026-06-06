@@ -1657,6 +1657,31 @@ ul.article-list,
     letter-spacing: 0.01em;
 }
 
+.admin-section-head-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.65rem 0.85rem;
+}
+
+.admin-grading-mode-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.admin-grading-mode-label {
+    font-size: var(--sub-small, 0.82rem);
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.admin-grading-mode-select {
+    min-width: 11rem;
+    width: auto;
+    max-width: none;
+}
+
 .admin-assignment-form {
     display: flex;
     align-items: flex-start;
@@ -1901,6 +1926,9 @@ textarea.admin-multiline-field {
 }
 
 .admin-accordion-item {
+    --accordion-inset-x: var(--space-4);
+    --accordion-inset-y: var(--space-3);
+    --accordion-gap: var(--space-3);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     overflow: hidden;
@@ -1908,6 +1936,13 @@ textarea.admin-multiline-field {
     width: 100%;
     min-width: 0;
     box-sizing: border-box;
+    position: relative;
+    z-index: 0;
+}
+
+.admin-accordion-item--menu-open {
+    overflow: visible;
+    z-index: 40;
 }
 
 .admin-accordion-header-row {
@@ -1915,6 +1950,7 @@ textarea.admin-multiline-field {
     align-items: center;
     flex-wrap: wrap;
     gap: 0.5rem;
+    overflow: visible;
     background: color-mix(in srgb, var(--border-color) 25%, transparent);
     border-bottom: 1px solid var(--border-color);
     width: 100%;
@@ -1946,9 +1982,13 @@ textarea.admin-multiline-field {
 .admin-accordion-actions {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 0.4rem;
     padding: 6px 10px 6px 0;
+    flex-shrink: 0;
+    overflow: visible;
+    position: relative;
+    z-index: 2;
 }
 
 .admin-accordion-actions .btn-small {
@@ -1956,19 +1996,170 @@ textarea.admin-multiline-field {
     padding: 0.35rem 0.6rem;
 }
 
+.admin-assignment-statuses {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+}
+
+.admin-assignment-status {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 0.12rem 0.38rem;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    line-height: 1.3;
+}
+
+.admin-assignment-status--ok {
+    color: var(--color-success);
+    background: var(--color-success-soft);
+    border-color: color-mix(in srgb, var(--color-success) 35%, transparent);
+}
+
+.admin-assignment-status--warn {
+    color: var(--color-warning);
+    background: var(--color-warning-soft);
+    border-color: color-mix(in srgb, var(--color-warning) 35%, transparent);
+}
+
+.admin-assignment-status--alert {
+    color: var(--color-danger);
+    background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+    border-color: color-mix(in srgb, var(--color-danger) 35%, transparent);
+}
+
+.admin-assignment-menu {
+    position: relative;
+}
+
+.admin-assignment-menu-trigger {
+    min-width: 2.1rem;
+    padding: 0.35rem 0.45rem;
+    font-size: 1rem;
+    line-height: 1;
+    letter-spacing: 0.05em;
+}
+
+.admin-assignment-menu-panel {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    z-index: 100;
+    min-width: 220px;
+    max-width: min(280px, calc(100vw - 2rem));
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 6px 20px color-mix(in srgb, var(--text-primary) 12%, transparent);
+    padding: 0.3rem 0;
+}
+
+.admin-assignment-menu-section {
+    padding: 0.2rem 0;
+}
+
+.admin-assignment-menu-section + .admin-assignment-menu-section {
+    border-top: 1px solid var(--border-color);
+}
+
+.admin-assignment-menu-label {
+    margin: 0;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    padding: 0.3rem 0.75rem 0.15rem;
+    font-weight: 600;
+}
+
+.admin-assignment-menu-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 0.45rem 0.75rem;
+    border: none;
+    background: none;
+    font-size: 0.82rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    line-height: 1.35;
+}
+
+.admin-assignment-menu-item:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--border-color) 35%, transparent);
+}
+
+.admin-assignment-menu-item:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.admin-assignment-menu-item--danger {
+    color: var(--color-danger);
+}
+
+.admin-assignment-menu-item-meta {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: normal;
+    margin-top: 0.1rem;
+}
+
+.admin-accordion-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--accordion-gap);
+    padding: var(--accordion-inset-y) var(--accordion-inset-x) var(--space-4);
+}
+
+.admin-accordion-stack > .admin-dashboard-message,
+.admin-accordion-stack > .admin-accordion-grade-msg,
+.admin-accordion-stack .admin-accordion-grade-msg {
+    margin: 0 !important;
+}
+
+.admin-accordion-stack > .admin-grading-progress {
+    margin: 0;
+}
+
+.admin-accordion-stack > .admin-rubric-panel,
+.admin-accordion-stack > .admin-accordion-panel {
+    margin: 0;
+}
+
+.admin-accordion-stack > .admin-overlap-accordion-summary .admin-overlap-results-list {
+    margin: var(--space-1) 0 0;
+    padding-left: 1.1rem;
+}
+
+.admin-accordion-panel {
+    padding: var(--space-3);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--border-color) 18%, transparent);
+}
+
 .admin-accordion-body {
-    padding: 0.75rem 1rem 1rem;
+    padding: 0;
+    margin: 0;
     background: var(--bg-primary);
 }
 
 .admin-accordion-body .admin-assignment-edit-form {
-    margin-bottom: 1rem;
-    padding-bottom: 1rem;
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-4);
     border-bottom: 1px solid var(--border-color);
 }
 
 .admin-accordion-grade-msg {
-    margin: 0.35rem 1rem 0 !important;
+    margin: 0 !important;
     font-size: 0.82rem !important;
 }
 
@@ -2031,31 +2222,48 @@ textarea.admin-multiline-field {
         margin-top: 0.15rem;
     }
 
+    .admin-assignment-statuses {
+        margin-left: 0;
+        margin-top: 0.25rem;
+    }
+
     .admin-accordion-chevron {
         margin-left: auto;
     }
 
     .admin-accordion-actions {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
+        display: flex;
+        flex-direction: row;
         gap: 0.5rem;
         padding: 0 1rem 1rem;
         align-items: stretch;
     }
 
-    .admin-accordion-actions .btn-small,
     .admin-accordion-actions .btn-primary.btn-small,
     .admin-accordion-actions .btn-danger.btn-small {
+        flex: 1;
         min-height: 44px;
         font-size: 0.85rem;
         padding: 0.5rem 0.65rem;
-        margin: 0;
     }
 
-    /* Grade + Stop: each can span or sit in grid */
-    .admin-accordion-actions .btn-primary.btn-small:not(.btn-danger),
-    .admin-accordion-actions .btn-danger.btn-small {
-        grid-column: span 1;
+    .admin-accordion-actions .admin-assignment-menu-trigger {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .admin-accordion-stack {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .admin-similarity-toolbar-run {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .admin-similarity-settings-hint {
+        order: 10;
     }
 }
 
@@ -2173,10 +2381,10 @@ textarea.admin-multiline-field {
 }
 
 .admin-grading-progress {
-    margin: 0.4rem 1rem 0.5rem;
-    padding: 0.55rem 0.75rem;
+    margin: 0;
+    padding: var(--space-3);
     border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     background: color-mix(in srgb, var(--bg-secondary) 65%, transparent);
 }
 
@@ -2211,6 +2419,11 @@ textarea.admin-multiline-field {
     height: 100%;
     border-radius: 999px;
     background: linear-gradient(90deg, color-mix(in srgb, var(--accent-primary) 75%, transparent), var(--accent-primary));
+    transition: width 0.35s ease;
+}
+
+.admin-grading-progress--similarity .admin-grading-progress-fill {
+    background: linear-gradient(90deg, color-mix(in srgb, var(--color-warning) 75%, transparent), var(--color-warning));
     transition: width 0.35s ease;
 }
 
@@ -2274,20 +2487,186 @@ textarea.admin-multiline-field {
 
 .admin-selection-toolbar {
     display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    margin: 0 0 0.6rem;
-    padding: 0.5rem 0.65rem;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin: 0 0 var(--space-3);
+    padding: var(--space-3);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     background: var(--bg-secondary);
 }
 
+.admin-selection-toolbar-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+}
+
+.admin-selection-toolbar-title {
+    font-size: var(--sub-small, 0.82rem);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.admin-selection-toolbar-hint {
+    margin: 0;
+    font-size: var(--sub-tiny, 0.76rem);
+    color: var(--text-muted);
+    line-height: 1.45;
+}
+
+.admin-selection-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.admin-selection-cancel {
+    margin-left: auto;
+}
+
 .admin-selection-count {
-    font-size: 0.82rem;
+    font-size: var(--sub-tiny, 0.76rem);
+    font-weight: 600;
     color: var(--text-secondary);
-    margin-right: 0.25rem;
+    padding: 0.12rem 0.45rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--border-color) 35%, transparent);
+}
+
+.admin-similarity-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 25;
+    margin: 0 0 var(--space-3);
+    padding: var(--space-3);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--bg-primary);
+    box-shadow: 0 1px 0 color-mix(in srgb, var(--border-color) 70%, transparent),
+        0 4px 16px color-mix(in srgb, var(--text-primary) 6%, transparent);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.admin-similarity-toolbar-main {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-3);
+}
+
+.admin-similarity-toolbar-title {
+    font-size: var(--sub-small, 0.82rem);
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: 0.01em;
+    padding-bottom: 0.35rem;
+    flex: 0 0 auto;
+}
+
+.admin-similarity-settings-controls {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-3);
+    flex: 1 1 auto;
+}
+
+.admin-similarity-settings-field {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0;
+}
+
+.admin-similarity-settings-field-label {
+    font-size: var(--sub-tiny, 0.76rem);
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.admin-similarity-settings-input {
+    width: 4.2rem;
+    min-width: 0;
+    padding: 6px 8px;
+    font-size: var(--sub-body, 0.88rem);
+}
+
+.admin-similarity-settings-select {
+    min-width: 11rem;
+    max-width: 16rem;
+    padding: 6px 10px;
+    font-size: var(--sub-body, 0.88rem);
+}
+
+.admin-similarity-settings-hint {
+    flex: 1 1 100%;
+    font-size: var(--sub-tiny, 0.76rem);
+    color: var(--text-muted);
+    line-height: 1.4;
+    margin: 0;
+}
+
+.admin-similarity-toolbar-run {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-left: auto;
+}
+
+.admin-similarity-toolbar-assignment {
+    min-width: 10rem;
+    max-width: 14rem;
+}
+
+.admin-similarity-toolbar-message {
+    margin: 0 !important;
+}
+
+.admin-similarity-settings-bar--inline {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-2);
+}
+
+.admin-similarity-settings-bar-row {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-3);
+}
+
+.admin-similarity-settings-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.admin-similarity-settings-bar-note {
+    margin: 0;
+    font-size: var(--sub-tiny, 0.76rem);
+    color: var(--color-warning);
+    line-height: 1.4;
+}
+
+.admin-similarity-settings-bar-title {
+    font-size: var(--sub-tiny, 0.76rem);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    width: 100%;
+    margin: 0;
 }
 
 .admin-plagiarism-panel {
@@ -2333,6 +2712,136 @@ textarea.admin-multiline-field {
     max-width: 24rem;
     padding: 6px 10px;
     font-size: var(--sub-body, 0.88rem);
+}
+
+.admin-plagiarism-panel-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.65rem 1rem;
+}
+
+.admin-plagiarism-panel-actions .admin-plagiarism-panel-control {
+    flex: 1 1 14rem;
+    min-width: min(100%, 14rem);
+}
+
+.admin-overlap-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 8rem;
+}
+
+.admin-overlap-badge {
+    display: inline-block;
+    font-size: var(--sub-tiny, 0.76rem);
+    font-weight: 600;
+    padding: 0.15rem 0.45rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--border-color) 30%, transparent);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    white-space: nowrap;
+}
+
+.admin-overlap-badge--flagged {
+    background: var(--color-danger-soft);
+    color: var(--color-danger);
+    border-color: color-mix(in srgb, var(--color-danger) 28%, transparent);
+}
+
+.admin-overlap-with {
+    font-size: var(--sub-tiny, 0.76rem);
+    color: var(--text-muted);
+    line-height: 1.35;
+}
+
+.admin-overlap-empty {
+    color: var(--text-muted);
+}
+
+.admin-overlap-results {
+    margin-top: 0.35rem;
+}
+
+.admin-overlap-results-title {
+    display: block;
+    font-size: var(--sub-small, 0.82rem);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.35rem;
+}
+
+.admin-overlap-results-list {
+    margin: 0;
+    padding-left: 1.1rem;
+    font-size: var(--sub-small, 0.82rem);
+    color: var(--text-secondary);
+    line-height: 1.45;
+}
+
+.admin-overlap-results-list li {
+    margin-bottom: 0.25rem;
+}
+
+.admin-rubric-panel {
+    margin: 0;
+}
+
+.admin-rubric-panel-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+}
+
+.admin-rubric-panel-title {
+    font-size: var(--sub-small, 0.82rem);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.admin-rubric-panel-meta {
+    font-size: var(--sub-tiny, 0.76rem);
+    color: var(--text-muted);
+    flex: 1 1 auto;
+}
+
+.admin-rubric-preview {
+    margin-top: 0.65rem;
+    font-size: var(--sub-small, 0.82rem);
+    color: var(--text-secondary);
+    line-height: 1.45;
+}
+
+.admin-rubric-goal {
+    margin: 0 0 0.5rem;
+}
+
+.admin-rubric-notes {
+    margin: 0 0 0.5rem;
+    font-style: italic;
+    color: var(--text-muted);
+}
+
+.admin-rubric-criteria {
+    margin: 0;
+    padding-left: 1.2rem;
+}
+
+.admin-rubric-criteria > li {
+    margin-bottom: 0.45rem;
+}
+
+.admin-rubric-criteria ul {
+    margin: 0.25rem 0 0;
+    padding-left: 1rem;
+}
+
+.admin-rubric-weight {
+    color: var(--text-muted);
+    font-weight: 400;
 }
 
 .admin-plagiarism-panel-hint {
@@ -2407,6 +2916,33 @@ textarea.admin-multiline-field {
     background: var(--bg-primary);
     color: var(--text-primary);
     cursor: pointer;
+}
+
+.admin-plagiarism-threshold-field {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.admin-plagiarism-threshold-input {
+    width: 5rem;
+    padding: 6px 10px;
+    font-size: var(--sub-body, 0.88rem);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    cursor: text;
+}
+
+.admin-plagiarism-threshold-input:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--accent-primary) 55%, transparent);
+    outline-offset: 1px;
+}
+
+.admin-plagiarism-threshold-suffix {
+    font-size: var(--sub-body, 0.88rem);
+    color: var(--text-secondary);
 }
 
 @media (max-width: 600px) {

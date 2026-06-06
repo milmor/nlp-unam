@@ -7,8 +7,24 @@ export interface Course {
   created_at: string;
 }
 
+export interface RubricCriterion {
+  id: string;
+  title: string;
+  weight?: number;
+  must_have?: string[];
+  nice_to_have?: string[];
+}
+
+export interface AssignmentRubric {
+  goal: string;
+  criteria: RubricCriterion[];
+  scoring_notes?: string;
+}
+
 export interface Assignment {
   reference_notebook?: string | null;
+  rubric?: AssignmentRubric | null;
+  rubric_generated_at?: string | null;
   id: number;
   title: string;
   description?: string | null;
