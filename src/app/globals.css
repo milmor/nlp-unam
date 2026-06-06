@@ -2072,6 +2072,16 @@ textarea.admin-multiline-field {
     animation: admin-status-pulse 1.4s ease-in-out infinite;
 }
 
+.admin-assignment-status--partial {
+    color: var(--accent-primary);
+    background: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+    border-color: color-mix(in srgb, var(--accent-primary) 28%, transparent);
+}
+
+.admin-assignment-status--grade {
+    font-variant-numeric: tabular-nums;
+}
+
 @keyframes admin-status-pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.55; }

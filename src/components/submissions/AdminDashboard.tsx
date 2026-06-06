@@ -1478,6 +1478,10 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
             {assignments.map(a => {
               const assignSubs = submissions.filter(s => s.assignment_id === a.id);
               const count = assignSubs.length;
+              const submittedHomework = assignSubs.filter(s => !!s.notebook_url);
+              const gradedCount = submittedHomework.filter(s => s.score != null).length;
+              const submittedTotal = submittedHomework.length;
+              const allGraded = submittedTotal > 0 && gradedCount === submittedTotal;
               const isOpen = expandedAssignments.has(a.id);
               const draft = editingAssignment.get(a.id);
               const isEditing = !!draft;
@@ -1540,8 +1544,26 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                               {overlapRun.flagged} overlap
                             </span>
                           )}
+                          {submittedTotal > 0 && (
+                            <span
+                              className={`admin-assignment-status admin-assignment-status--grade${
+                                allGraded
+                                  ? ' admin-assignment-status--ok'
+                                  : gradedCount === 0
+                                    ? ' admin-assignment-status--warn'
+                                    : ' admin-assignment-status--partial'
+                              }`}
+                              title={`${gradedCount} of ${submittedTotal} submitted homeworks graded`}
+                            >
+                              {gradedCount}/{submittedTotal} graded
+                            </span>
+                          )}
                         </span>
-                        <span className="admin-accordion-count">{count} submission{count !== 1 ? 's' : ''}</span>
+                        {submittedTotal === 0 && (
+                          <span className="admin-accordion-count">
+                            {count === 0 ? 'No submissions' : `${count} submission${count !== 1 ? 's' : ''}`}
+                          </span>
+                        )}
                       </span>
                       <span className="admin-accordion-chevron">{isOpen ? '▲' : '▼'}</span>
                     </button>
