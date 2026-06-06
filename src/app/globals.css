@@ -4699,6 +4699,14 @@ textarea.admin-multiline-field {
     color: var(--text-muted);
 }
 
+.usage-item-sub--warn {
+    color: var(--color-warning);
+}
+
+.usage-item-sub code {
+    font-size: 0.7rem;
+}
+
 .usage-bar-track {
     height: 6px;
     border-radius: 3px;

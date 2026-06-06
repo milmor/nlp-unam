@@ -49,7 +49,7 @@ export default function ApiStatus() {
       if (s === 'running') {
         setStatus('running');
         setStatusText('Service is running ✅');
-        setDetail('You will soon be able to upload homework through this page.');
+        setDetail('');
       } else {
         setStatus('error');
         setStatusText(`Service responded — status: ${data?.status ?? 'unknown'}`);
