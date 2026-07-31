@@ -14,12 +14,36 @@ const navLinks = [
   { label: 'Submissions', href: '/submissions' },
 ];
 
+function scrollToHash(hash: string, behavior: ScrollBehavior = 'smooth') {
+  const id = hash.replace(/^#/, '');
+  if (!id) return false;
+  const el = document.getElementById(id);
+  if (!el) return false;
+  el.scrollIntoView({ behavior, block: 'start' });
+  return true;
+}
+
 export default function Nav() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     setMenuOpen(false);
+  }, [pathname]);
+
+  // After landing on home with a hash (from another page or refresh), scroll to the section.
+  useEffect(() => {
+    if (pathname !== '/') return;
+    const hash = typeof window !== 'undefined' ? window.location.hash : '';
+    if (!hash) return;
+
+    // Wait a tick so the home page content is in the DOM.
+    const t1 = window.setTimeout(() => scrollToHash(hash, 'smooth'), 0);
+    const t2 = window.setTimeout(() => scrollToHash(hash, 'smooth'), 120);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+    };
   }, [pathname]);
 
   useEffect(() => {
@@ -34,6 +58,22 @@ export default function Nav() {
   function isActive(href: string) {
     if (href.startsWith('/#')) return pathname === '/';
     return pathname === href;
+  }
+
+  function handleHashClick(
+    e: React.MouseEvent<HTMLAnchorElement>,
+    href: string,
+  ) {
+    if (!href.includes('#')) return;
+
+    const hash = href.slice(href.indexOf('#'));
+    // Already on the home page: Next.js Link won't re-scroll to the same-page hash.
+    if (pathname === '/') {
+      e.preventDefault();
+      scrollToHash(hash, 'smooth');
+      window.history.pushState(null, '', href);
+      setMenuOpen(false);
+    }
   }
 
   return (
@@ -62,7 +102,10 @@ export default function Nav() {
               <Link
                 href={href}
                 className={isActive(href) ? 'active' : ''}
-                onClick={() => setMenuOpen(false)}
+                onClick={e => {
+                  handleHashClick(e, href);
+                  setMenuOpen(false);
+                }}
               >
                 {label}
               </Link>

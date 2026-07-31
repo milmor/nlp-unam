@@ -207,6 +207,14 @@ a:hover {
     box-shadow: 0 2px 8px var(--shadow-color);
 }
 
+/* Offset in-page anchors so sticky nav doesn't cover section titles */
+#overview,
+#syllabus,
+#instructor,
+#programming-assignments {
+    scroll-margin-top: 72px;
+}
+
 .nav-container {
     display: flex;
     flex-direction: column;
