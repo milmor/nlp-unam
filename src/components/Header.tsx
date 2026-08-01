@@ -20,7 +20,7 @@ export default function Header() {
             />
             <div className="logo-text">
               <h1>Natural Language Processing with Deep Learning</h1>
-              <p className="subtitle">School of Engineering - UNAM · Semester 2026-2</p>
+              <p className="subtitle">School of Engineering - UNAM · Semester 2027-1</p>
             </div>
           </div>
           <button

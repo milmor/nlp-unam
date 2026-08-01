@@ -183,7 +183,7 @@ export default function CourseSelector({ user, isAdmin, onSelect, onLogout }: Pr
                       />
                       <input
                         type="text"
-                        placeholder="Term (e.g. 2025-1)"
+                        placeholder="Term (e.g. 2027-1)"
                         value={newTerm}
                         onChange={e => setNewTerm(e.target.value)}
                         disabled={creating}

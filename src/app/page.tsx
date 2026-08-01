@@ -269,7 +269,13 @@ export default function Home() {
                     <strong>Language &amp; Vision: CNNs and Captioning</strong>
                     <p>Convolutional neural networks, image description generation</p>
                   </td>
-                  <td></td>
+                  <td>
+                    <strong>Readings:</strong><br />
+                    1.{' '}
+                    <a href="https://d2l.ai/chapter_convolutional-neural-networks/index.html" target="_blank" rel="noopener noreferrer">
+                      Convolutional Neural Networks
+                    </a>{' '}(Dive into Deep Learning)
+                  </td>
                 </tr>
                 <tr>
                   <td>12</td>

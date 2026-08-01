@@ -1542,7 +1542,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                   type="text"
                   value={courseTerm}
                   onChange={e => setCourseTerm(e.target.value)}
-                  placeholder="Term (e.g. 2025-1)"
+                  placeholder="Term (e.g. 2027-1)"
                   disabled={savingCourse}
                   className="course-edit-input course-edit-input--term"
                 />
