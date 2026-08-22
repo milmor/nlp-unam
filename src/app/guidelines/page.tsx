@@ -9,7 +9,7 @@ export default function GuidelinesPage() {
     <section className="section">
       <div className="container">
         <h2>Research Project Guidelines</h2>
-        <p className="section-intro">The research project counts for 40% of the final grade.</p>
+        <p className="section-intro">The research project counts for 35% of the final grade.</p>
 
         <div className="prereq-info" style={{ marginTop: '1.5rem' }}>
           <h3>Scope &amp; topics</h3>

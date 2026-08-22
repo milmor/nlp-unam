@@ -353,16 +353,22 @@ export default function Home() {
 
           <div id="programming-assignments" className="programming-assignments">
             <h3>Programming Assignments</h3>
-            <p className="section-intro syllabus-note">The list below is subject to change.</p>
+            <p className="section-intro syllabus-note">The list below is subject to change. Some slots may be replaced by exams.</p>
             <ol className="program-list">
               <li>Program 1: Machine Learning &amp; NLP Fundamentals</li>
               <li>Program 2: Word Embeddings, RNNs, Seq2Seq, Attention, and Transformers</li>
               <li>Program 3: Advanced Topics (e.g. pre-trained models, RAG)</li>
             </ol>
             <ul className="program-rules">
-              <li>Each programming assignment is worth <strong>15%</strong> of the final grade.</li>
-              <li>Students are encouraged to work in teams of 2.</li>
-              <li>There will be two to four programs in total during the semester. Late submissions are not accepted.</li>
+              <li>
+                Programming assignments (and any exams that replace them) together are worth{' '}
+                <strong>50%</strong> of the final grade.
+              </li>
+              <li>Students are encouraged to work in teams of 2 on programming assignments.</li>
+              <li>
+                There will be two to four programs in total during the semester; some may be substituted
+                by exams. Late submissions are not accepted.
+              </li>
             </ul>
           </div>
 
@@ -372,11 +378,11 @@ export default function Home() {
               <ul className="grading-list">
                 <li>
                   <span><Link href="/guidelines">Research Project</Link></span>
-                  <span>40%</span>
+                  <span>35%</span>
                 </li>
                 <li>
-                  <span><a href="#programming-assignments">Programming Assignments</a></span>
-                  <span>45%</span>
+                  <span><a href="#programming-assignments">Programming Assignments / Exams</a></span>
+                  <span>50%</span>
                 </li>
                 <li>
                   <span>Class Exercises</span>
