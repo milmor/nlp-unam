@@ -352,7 +352,7 @@ export default function Home() {
           </div>
 
           <div id="programming-assignments" className="programming-assignments">
-            <h3>Programming Assignments</h3>
+            <h3>Programming Assignments / Exams</h3>
             <p className="section-intro syllabus-note">The list below is subject to change. Some slots may be replaced by exams.</p>
             <ol className="program-list">
               <li>Program 1: Machine Learning &amp; NLP Fundamentals</li>
@@ -468,7 +468,7 @@ export default function Home() {
           <div className="instructor-card">
             <div className="instructor-info">
               <h3>Prof. Emilio Morales</h3>
-              <p className="title">The School of Engineering of the National Autonomous University of Mexico</p>
+              <p className="title">The School of Engineering of the Universidad Nacional Autónoma de México</p>
               <p className="bio">
                 Research interests include natural language processing, deep learning, diffusion models, GANs,
                 music generation, audio and video processing.

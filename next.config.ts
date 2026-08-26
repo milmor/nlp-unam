@@ -11,6 +11,17 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,     // required for static export (no Next.js image server)
   },
+  // Local convenience: bare localhost:3000 → course site (ignored by static export)
+  async redirects() {
+    return [
+      {
+        source: "/",
+        destination: basePath,
+        permanent: false,
+        basePath: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
