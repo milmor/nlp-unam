@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -50,7 +51,60 @@ function getDataField(data: Record<string, unknown> | undefined, key: string): s
   return getMimeString(data[key]);
 }
 
-function renderSingleOutput(out: NbOutput, idx: number): React.ReactNode {
+const TABLE_THEME = {
+  light: { bg: '#ffffff', text: '#1a1a1a', border: '#e0dcd4', header: '#f0ebe3', index: '#faf8f5' },
+  dark: { bg: '#1f2544', text: '#e8e8e8', border: '#2d3a5a', header: '#252d4a', index: '#1c2340' },
+} as const;
+
+function tableThemeCss(dark: boolean): string {
+  const t = dark ? TABLE_THEME.dark : TABLE_THEME.light;
+  const force = dark ? ' !important' : '';
+  return `
+    html, body { margin: 0; padding: 8px 10px; background: ${t.bg}${force}; color: ${t.text}${force};
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 13px; }
+    table { border-collapse: collapse; font-size: 12px; color: ${t.text}; background: transparent; }
+    th, td { border: 1px solid ${t.border}; padding: 4px 8px; vertical-align: top; color: inherit; }
+    thead th { background: ${t.header}${force}; font-weight: 600; color: ${t.text}${force}; }
+    tbody th { background: ${t.index}${force}; font-weight: 500; color: ${t.text}${force}; }
+  `;
+}
+
+/** Pandas HTML often ships a scoped <style> browsers ignore, so the table looks unstyled. */
+function wrapNotebookHtml(fragment: string, dark: boolean): string {
+  const body = fragment.replace(/<style\b[^>]*\bscoped\b[^>]*>/gi, '<style>');
+  const css = tableThemeCss(dark);
+  const trimmed = body.trim();
+  if (/^<!doctype html/i.test(trimmed) || /^<html[\s>]/i.test(trimmed)) {
+    return `${trimmed}<style>${css}</style>`;
+  }
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${css}</style></head><body>${body}<style>${css}</style></body></html>`;
+}
+
+function HtmlOutput({ html, title, dark }: { html: string; title: string; dark: boolean }) {
+  const frameRef = useRef<HTMLIFrameElement>(null);
+  const srcDoc = useMemo(() => wrapNotebookHtml(html, dark), [html, dark]);
+
+  function fit() {
+    const frame = frameRef.current;
+    const doc = frame?.contentDocument;
+    if (!frame || !doc) return;
+    const height = Math.max(doc.documentElement.scrollHeight, doc.body?.scrollHeight ?? 0);
+    frame.style.height = `${Math.min(Math.max(height, 36), 480)}px`;
+  }
+
+  return (
+    <iframe
+      ref={frameRef}
+      title={title}
+      className="notebook-viewer-output-iframe"
+      sandbox="allow-same-origin"
+      srcDoc={srcDoc}
+      onLoad={fit}
+    />
+  );
+}
+
+function renderSingleOutput(out: NbOutput, idx: number, dark: boolean): React.ReactNode {
   const { output_type } = out;
 
   if (output_type === 'stream') {
@@ -99,16 +153,11 @@ function renderSingleOutput(out: NbOutput, idx: number): React.ReactNode {
     if (html) {
       parts.push(
         <div key={`${idx}-html`} className="notebook-viewer-output notebook-viewer-output--html-wrap">
-          <iframe
-            title={`Notebook output ${idx}`}
-            className="notebook-viewer-output-iframe"
-            sandbox=""
-            srcDoc={html}
-          />
+          <HtmlOutput html={html} title={`Notebook output ${idx}`} dark={dark} />
         </div>
       );
     }
-    if (plain && (parts.length === 0 || png || jpeg || svg || html)) {
+    if (plain && parts.length === 0) {
       parts.push(
         <pre key={`${idx}-plain`} className="notebook-viewer-output notebook-viewer-output--text">
           {plain}
@@ -147,8 +196,8 @@ function renderSingleOutput(out: NbOutput, idx: number): React.ReactNode {
   );
 }
 
-function CellOutputs({ outputs }: { outputs: NbOutput[] }) {
-  const nodes = outputs.map((o, i) => renderSingleOutput(o, i)).filter(Boolean);
+function CellOutputs({ outputs, dark }: { outputs: NbOutput[]; dark: boolean }) {
+  const nodes = outputs.map((o, i) => renderSingleOutput(o, i, dark)).filter(Boolean);
   if (nodes.length === 0) return null;
   return <div className="notebook-viewer-outputs">{nodes}</div>;
 }
@@ -204,7 +253,7 @@ export default function NotebookViewer({ notebook, className = '' }: Props) {
                   {source}
                 </SyntaxHighlighter>
               </div>
-              <CellOutputs outputs={outputs} />
+              <CellOutputs outputs={outputs} dark={isDark} />
             </div>
           );
         }

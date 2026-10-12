@@ -2012,6 +2012,15 @@ textarea.admin-multiline-field {
     color: var(--text-muted);
 }
 
+.admin-prompt-version {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 0.68rem;
+    line-height: 1.2;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
 .admin-submission-row--earlier {
     background: color-mix(in srgb, var(--border-color) 40%, transparent);
 }
@@ -4682,10 +4691,9 @@ textarea.admin-multiline-field {
 .notebook-viewer-output-iframe {
     display: block;
     width: 100%;
-    min-height: 120px;
-    max-height: 400px;
+    height: 36px;
     border: none;
-    background: #fff;
+    background: var(--bg-card);
 }
 
 .notebook-viewer-output--fallback {

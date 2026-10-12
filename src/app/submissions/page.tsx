@@ -8,7 +8,6 @@ import AuthPanel from '@/components/submissions/AuthPanel';
 import CourseSelector from '@/components/submissions/CourseSelector';
 import StudentDashboard from '@/components/submissions/StudentDashboard';
 import AdminDashboard from '@/components/submissions/AdminDashboard';
-import ApiStatus from '@/components/submissions/ApiStatus';
 import GradingPlatformSpotlight from '@/components/submissions/GradingPlatformSpotlight';
 import ResetPasswordForm from '@/components/submissions/ResetPasswordForm';
 
@@ -106,14 +105,6 @@ export default function SubmissionsPage() {
             </div>
           )}
         </div>
-
-        {authState === 'admin' && selectedCourse && (
-          <>
-            <div className="detail-card ui-card submissions-api-card">
-              <ApiStatus />
-            </div>
-          </>
-        )}
       </div>
     </section>
   );

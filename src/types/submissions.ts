@@ -19,6 +19,7 @@ export interface AssignmentRubric {
   goal: string;
   criteria: RubricCriterion[];
   scoring_notes?: string;
+  prompt_version?: string;
 }
 
 export interface Assignment {
@@ -50,6 +51,7 @@ export interface AdminSubmission {
   notebook_url?: string | null;
   score?: number | null;
   feedback?: string | null;
+  prompt_version?: string | null;
   created_at: string;
   verification_requested?: boolean;
   verification_requested_at?: string | null;

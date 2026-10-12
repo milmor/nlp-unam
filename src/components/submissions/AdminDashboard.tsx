@@ -7,6 +7,7 @@ import { formatCourseDateTime, parseCourseDate } from '@/lib/datetime';
 import type { Assignment, AssignmentRubric, AdminSubmission, Course } from '@/types/submissions';
 import ConfirmDialog from './ConfirmDialog';
 import NotebookViewer from './NotebookViewer';
+import ApiStatus from './ApiStatus';
 import UsageStats from './UsageStats';
 
 interface EnrolledStudent {
@@ -306,8 +307,9 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
     setSignupsToggling(false);
   }
 
-  const SUBMISSION_SELECT =
+  const SUBMISSION_SELECT_BASE =
     'id, assignment_id, notebook_url, score, feedback, created_at, verification_requested, verification_requested_at, verification_comment, student:profiles!submissions_student_id_fkey(email, name, role), assignment:assignments!fk_assignment(title, course_id)';
+  const SUBMISSION_SELECT = `${SUBMISSION_SELECT_BASE}, prompt_version`;
 
   function patchAssignment(id: number, patch: Partial<Assignment>) {
     setAssignments(prev => prev.map(a => (a.id === id ? { ...a, ...patch } : a)));
@@ -320,11 +322,22 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
   async function refreshSubmissionsForAssignment(assignmentId: number) {
     const sb = getSupabase();
     if (!sb) return;
-    const { data, error } = await sb
+    const first = await sb
       .from('submissions')
       .select(SUBMISSION_SELECT)
       .eq('assignment_id', assignmentId)
       .order('created_at', { ascending: false });
+    let data: unknown = first.data;
+    let error = first.error;
+    if (error && /prompt_version/i.test(error.message)) {
+      const retry = await sb
+        .from('submissions')
+        .select(SUBMISSION_SELECT_BASE)
+        .eq('assignment_id', assignmentId)
+        .order('created_at', { ascending: false });
+      data = retry.data;
+      error = retry.error;
+    }
     if (error) return;
     const fresh = (data ?? []) as unknown as AdminSubmission[];
     setSubmissions(prev => [...prev.filter(s => s.assignment_id !== assignmentId), ...fresh]);
@@ -347,10 +360,20 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
           .order('created_at', { ascending: false }),
       ]);
       if (assignRes.error) throw assignRes.error;
-      if (subRes.error) throw subRes.error;
+      let submissionRows: unknown = subRes.data;
+      let submissionError = subRes.error;
+      if (submissionError && /prompt_version/i.test(submissionError.message)) {
+        const retry = await sb
+          .from('submissions')
+          .select(SUBMISSION_SELECT_BASE)
+          .order('created_at', { ascending: false });
+        submissionRows = retry.data;
+        submissionError = retry.error;
+      }
+      if (submissionError) throw submissionError;
       const courseAssignIds = new Set((assignRes.data ?? []).map(a => a.id));
       setAssignments(assignRes.data ?? []);
-      setSubmissions(((subRes.data ?? []) as unknown as AdminSubmission[]).filter(s => courseAssignIds.has(s.assignment_id)));
+      setSubmissions(((submissionRows ?? []) as unknown as AdminSubmission[]).filter(s => courseAssignIds.has(s.assignment_id)));
 
       // Students: fetch enrollments then join profiles manually (FK goes to auth.users, not profiles)
       const enrollRes = await sb
@@ -432,6 +455,46 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
     const sb = getSupabase();
     if (!sb) return;
     setRemovingStudentId(studentId);
+    setConfirmRemoveStudent(null);
+    showMsg('Removing student…');
+
+    const assignmentIds = assignments.map(a => a.id);
+    let removedSubmissionIds: number[] = [];
+
+    if (assignmentIds.length > 0) {
+      const { data: rows, error: listErr } = await sb
+        .from('submissions')
+        .select('id, notebook_url')
+        .eq('student_id', studentId)
+        .in('assignment_id', assignmentIds);
+      if (listErr) {
+        setRemovingStudentId(null);
+        showMsg('Could not remove student: ' + listErr.message, true);
+        return;
+      }
+      removedSubmissionIds = (rows ?? []).map(row => row.id);
+      const storagePaths = (rows ?? [])
+        .map(row => row.notebook_url)
+        .filter((path): path is string => !!path)
+        .map(getStoragePath);
+
+      if (removedSubmissionIds.length > 0) {
+        const { error: deleteSubsErr } = await sb
+          .from('submissions')
+          .delete()
+          .eq('student_id', studentId)
+          .in('assignment_id', assignmentIds);
+        if (deleteSubsErr) {
+          setRemovingStudentId(null);
+          showMsg('Could not delete submissions: ' + deleteSubsErr.message, true);
+          return;
+        }
+      }
+      if (storagePaths.length > 0) {
+        await sb.storage.from(BUCKET).remove(storagePaths);
+      }
+    }
+
     const { error } = await sb
       .from('enrollments')
       .delete()
@@ -440,11 +503,14 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
     setRemovingStudentId(null);
     if (error) {
       showMsg('Could not remove student: ' + error.message, true);
-    } else {
-      setStudents(prev => prev.filter(s => s.student_id !== studentId));
-      showMsg('Student removed from this course.');
+      return;
     }
-    setConfirmRemoveStudent(null);
+    setStudents(prev => prev.filter(s => s.student_id !== studentId));
+    if (removedSubmissionIds.length > 0) {
+      const removed = new Set(removedSubmissionIds);
+      setSubmissions(prev => prev.filter(s => !removed.has(s.id)));
+    }
+    showMsg('Student and their submissions for this course were removed.');
   }
 
   // Save score/feedback on blur — debounced with a ref timer
@@ -1194,6 +1260,8 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
       setGradeMsg(assignmentId, 'Rubric needs a goal and at least one criterion with a title.', true);
       return;
     }
+    const promptVersion = assignments.find(a => a.id === assignmentId)?.rubric?.prompt_version;
+    if (promptVersion) rubric.prompt_version = promptVersion;
     const sb = getSupabase();
     if (!sb) return;
     setSavingRubricId(assignmentId);
@@ -1354,8 +1422,8 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
       setGradeMsg(
         assignmentId,
         data.aborted
-          ? `Stopped — ${data.graded} graded, ${data.errors} errors${usageStr}${suffix}`
-          : `Done — ${data.graded} graded, ${data.errors} errors${usageStr}`,
+          ? `Stopped — ${data.graded} graded, ${data.skipped ?? 0} skipped, ${data.errors} errors${usageStr}${suffix}`
+          : `Done — ${data.graded} graded, ${data.skipped ?? 0} skipped, ${data.errors} errors${usageStr}`,
       );
       setGradingProgress(prev => {
         const next = new Map(prev);
@@ -1664,6 +1732,10 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                 </button>
               </div>
             )}
+          </div>
+
+          <div className="detail-card submissions-api-card submissions-api-card--tight">
+            <ApiStatus />
           </div>
 
           <div className="detail-card submissions-api-card submissions-api-card--tight">
@@ -2138,6 +2210,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                         {a.rubric_generated_at && editingRubricId !== a.id && (
                           <span className="admin-rubric-panel-meta">
                             Generated {formatCourseDateTime(a.rubric_generated_at)}
+                            {a.rubric.prompt_version ? ` · ${a.rubric.prompt_version}` : ''}
                           </span>
                         )}
                         {editingRubricId === a.id && (
@@ -2372,6 +2445,9 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                                     value={g.score}
                                     onChange={e => handleScoreChange(sub.id, e.target.value)}
                                   />
+                                  {sub.prompt_version && (
+                                    <span className="admin-prompt-version">{sub.prompt_version}</span>
+                                  )}
                                 </td>
                                 <td data-label="Feedback">
                                   <div className="admin-feedback-cell">
@@ -2615,7 +2691,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
       {confirmRemoveStudent && (
         <ConfirmDialog
           title="Remove student from course?"
-          message={`Remove "${confirmRemoveStudent.label}" from this course? Their enrollment will be deleted, but existing submissions and grades will be kept for records.`}
+          message={`Remove "${confirmRemoveStudent.label}" from this course? Their enrollment and all submissions for this course will be permanently deleted.`}
           confirmLabel="Remove"
           onConfirm={confirmRemoveStudentFromCourse}
           onCancel={() => setConfirmRemoveStudent(null)}
