@@ -22,6 +22,40 @@ interface Props {
   onBack: () => void;
 }
 
+function studentSubmissionKey(sub: AdminSubmission): string {
+  return sub.student?.email || `submission:${sub.id}`;
+}
+
+/** Latest upload is the one that counts. Older uploads stay attached to that student. */
+function groupSubmissionsByStudent(subs: AdminSubmission[]) {
+  const groups = new Map<string, AdminSubmission[]>();
+  for (const sub of subs) {
+    const key = studentSubmissionKey(sub);
+    const list = groups.get(key);
+    if (list) list.push(sub);
+    else groups.set(key, [sub]);
+  }
+  return [...groups.entries()]
+    .map(([key, list]) => {
+      const sorted = [...list].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      );
+      return { key, latest: sorted[0], earlier: sorted.slice(1) };
+    })
+    .sort((a, b) => {
+      const aLabel = a.latest.student?.name || a.latest.student?.email || '';
+      const bLabel = b.latest.student?.name || b.latest.student?.email || '';
+      return aLabel.localeCompare(bLabel, undefined, { sensitivity: 'base' });
+    });
+}
+
+function currentNotebookIds(subs: AdminSubmission[]): number[] {
+  return groupSubmissionsByStudent(subs)
+    .map(group => group.latest)
+    .filter(sub => !!sub.notebook_url)
+    .map(sub => sub.id);
+}
+
 type AdminTab = 'assignments' | 'students' | 'course-settings';
 type RunProgress = {
   runId: string;
@@ -53,10 +87,16 @@ type RubricEditDraft = {
   criteria: RubricCriterionDraft[];
 };
 
+type PlagiarismPeer = {
+  label: string;
+  similarityPct: number;
+};
+
 type PlagiarismSubResult = {
   studentLabel: string;
   maxSimilarityPct: number;
   overlappingLabels: string[];
+  overlappingPeers: PlagiarismPeer[];
   studentFlagged: boolean;
   referenceSimilarityPct: number | null;
   referenceFlagged: boolean;
@@ -146,7 +186,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
       description: a.description ?? '',
       deadline,
     }));
-    setExpandedAssignments(prev => new Set(prev).add(a.id));
+    setExpandedAssignments(new Set([a.id]));
   }
 
   function cancelEdit(id: number) {
@@ -445,6 +485,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
   const PLAGIARISM_THRESHOLD_MAX = 95;
   /** Min fingerprint similarity to flag overlap (API 0.2–0.95). Higher → fewer alerts. */
   const [plagiarismThresholdPct, setPlagiarismThresholdPct] = useState(60);
+  const [thresholdInput, setThresholdInput] = useState('60');
 
   function clampPlagiarismThresholdPct(value: number): number {
     return Math.min(PLAGIARISM_THRESHOLD_MAX, Math.max(PLAGIARISM_THRESHOLD_MIN, Math.round(value)));
@@ -458,7 +499,6 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
   const [editingRubricId, setEditingRubricId] = useState<number | null>(null);
   const [rubricDraft, setRubricDraft] = useState<Map<number, RubricEditDraft>>(new Map());
   const [savingRubricId, setSavingRubricId] = useState<number | null>(null);
-  const [plagiarismCheckAssignmentId, setPlagiarismCheckAssignmentId] = useState<number | null>(null);
   const [plagiarismCheckingId, setPlagiarismCheckingId] = useState<number | null>(null);
   const [plagiarismCheckStatus, setPlagiarismCheckStatus] = useState<Map<number, { msg: string; isError: boolean }>>(new Map());
   const [plagiarismResultsByAssignment, setPlagiarismResultsByAssignment] = useState<Map<number, PlagiarismCheckRun>>(new Map());
@@ -559,12 +599,28 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
               min={PLAGIARISM_THRESHOLD_MIN}
               max={PLAGIARISM_THRESHOLD_MAX}
               step={1}
-              value={plagiarismThresholdPct}
+              value={thresholdInput}
               onChange={e => {
-                const next = Number(e.target.value);
-                if (!Number.isNaN(next)) setPlagiarismThresholdPct(next);
+                const raw = e.target.value;
+                if (raw !== '' && !/^\d+$/.test(raw)) return;
+                setThresholdInput(raw);
+                const parsed = Number(raw);
+                if (
+                  raw !== ''
+                  && parsed >= PLAGIARISM_THRESHOLD_MIN
+                  && parsed <= PLAGIARISM_THRESHOLD_MAX
+                ) {
+                  setPlagiarismThresholdPct(parsed);
+                }
               }}
-              onBlur={() => setPlagiarismThresholdPct(prev => clampPlagiarismThresholdPct(prev))}
+              onBlur={() => {
+                const parsed = thresholdInput.trim() === '' ? NaN : Number(thresholdInput);
+                const clamped = clampPlagiarismThresholdPct(
+                  Number.isNaN(parsed) ? PLAGIARISM_THRESHOLD_MIN : parsed,
+                );
+                setPlagiarismThresholdPct(clamped);
+                setThresholdInput(String(clamped));
+              }}
               className="admin-plagiarism-threshold-input admin-similarity-settings-input"
               aria-describedby={opts.showHint ? hintId : undefined}
             />
@@ -584,11 +640,6 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
             <option value="both">Both checks</option>
           </select>
         </label>
-        {opts.showHint && (
-          <span id={hintId} className="admin-similarity-settings-hint">
-            {PLAGIARISM_THRESHOLD_MIN}%–{PLAGIARISM_THRESHOLD_MAX}% · lower = more alerts · used for checks and grading
-          </span>
-        )}
       </div>
     );
   }
@@ -600,11 +651,14 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
     if (run.compareMode === 'students' || run.compareMode === 'both') {
       for (const result of run.bySubmission.values()) {
         if (!result.studentFlagged) continue;
-        for (const peer of result.overlappingLabels) {
-          const key = [result.studentLabel, peer].sort().join('||');
+        const peers = result.overlappingPeers.length
+          ? result.overlappingPeers
+          : result.overlappingLabels.map(label => ({ label, similarityPct: result.maxSimilarityPct }));
+        for (const peer of peers) {
+          const key = [result.studentLabel, peer.label].sort().join('||');
           if (seenPairs.has(key)) continue;
           seenPairs.add(key);
-          lines.push(`${result.studentLabel} ↔ ${peer} (${result.maxSimilarityPct}%+)`);
+          lines.push(`${result.studentLabel} ↔ ${peer.label} (${peer.similarityPct}%)`);
         }
       }
     }
@@ -617,6 +671,28 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
     }
 
     return lines;
+  }
+
+  function overlapPeers(overlap: PlagiarismSubResult): PlagiarismPeer[] {
+    if (overlap.overlappingPeers.length) return overlap.overlappingPeers;
+    return overlap.overlappingLabels.map(label => ({
+      label,
+      similarityPct: overlap.maxSimilarityPct,
+    }));
+  }
+
+  function renderPeerMatches(overlap: PlagiarismSubResult) {
+    const peers = overlapPeers(overlap);
+    if (peers.length === 0) return null;
+    return (
+      <span className="admin-overlap-peers">
+        {peers.map(peer => (
+          <span key={peer.label} className="admin-overlap-badge admin-overlap-badge--flagged">
+            {peer.similarityPct}% {peer.label}
+          </span>
+        ))}
+      </span>
+    );
   }
 
   function renderOverlapCell(overlap: PlagiarismSubResult, compareMode: PlagiarismCompareMode) {
@@ -642,14 +718,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
       }
       return (
         <div className="admin-overlap-cell">
-          {hasStudent && (
-            <>
-              <span className="admin-overlap-badge admin-overlap-badge--flagged">
-                {overlap.maxSimilarityPct}% vs peers
-              </span>
-              <span className="admin-overlap-with">with {overlap.overlappingLabels.join(', ')}</span>
-            </>
-          )}
+          {hasStudent && renderPeerMatches(overlap)}
           {hasReference && overlap.referenceSimilarityPct != null && (
             <>
               <span className="admin-overlap-badge admin-overlap-badge--flagged">
@@ -665,10 +734,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
     if (overlap.studentFlagged) {
       return (
         <div className="admin-overlap-cell">
-          <span className="admin-overlap-badge admin-overlap-badge--flagged">
-            {overlap.maxSimilarityPct}% match
-          </span>
-          <span className="admin-overlap-with">with {overlap.overlappingLabels.join(', ')}</span>
+          {renderPeerMatches(overlap)}
         </div>
       );
     }
@@ -728,6 +794,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
           student_label?: string;
           max_similarity: number;
           overlapping_labels: string[];
+          overlapping_peers?: Array<{ label?: string; similarity?: number }>;
           student_flagged?: boolean;
           reference_similarity?: number | null;
           reference_flagged?: boolean;
@@ -742,6 +809,12 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
           studentLabel: row.student_label ?? `Submission ${row.id}`,
           maxSimilarityPct: Math.round((row.max_similarity ?? 0) * 100),
           overlappingLabels: row.overlapping_labels ?? [],
+          overlappingPeers: (row.overlapping_peers ?? [])
+            .filter(peer => peer.label)
+            .map(peer => ({
+              label: peer.label as string,
+              similarityPct: Math.round((peer.similarity ?? 0) * 100),
+            })),
           studentFlagged: !!row.student_flagged,
           referenceSimilarityPct: row.reference_similarity != null
             ? Math.round(row.reference_similarity * 100)
@@ -765,7 +838,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
         next.set(assignmentId, checkRun);
         return next;
       });
-      setExpandedAssignments(prev => new Set(prev).add(assignmentId));
+      setExpandedAssignments(new Set([assignmentId]));
       const loadErrPart = data.load_errors ? ` · ${data.load_errors} notebook(s) could not be read` : '';
       const detailLines = buildOverlapDetailLines(checkRun);
       const detailPart = detailLines.length > 0 ? ` — ${detailLines.join('; ')}` : '';
@@ -956,7 +1029,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
       setEditingRubricId(prev => (prev === assignId ? null : prev));
       setRubricDraft(prev => { const m = new Map(prev); m.delete(assignId); return m; });
       setFreshRubricId(null);
-      setExpandedAssignments(prev => new Set(prev).add(assignId));
+      setExpandedAssignments(new Set([assignId]));
       setGradeMsg(assignId, 'Reference uploaded ✓ — generate a new rubric before grading');
     } finally {
       setUploadingRefId(null);
@@ -982,7 +1055,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
       setEditingRubricId(null);
       setRubricDraft(prev => { const m = new Map(prev); m.delete(assignmentId); return m; });
       setFreshRubricId(assignmentId);
-      setExpandedAssignments(prev => new Set(prev).add(assignmentId));
+      setExpandedAssignments(new Set([assignmentId]));
       const t = data.tokens_used;
       const usageStr = t?.total_tokens ? ` · ${t.total_tokens.toLocaleString()} tokens` : '';
       setGradeMsg(assignmentId, `Rubric generated ✓${usageStr}`);
@@ -1019,7 +1092,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
     setRubricDraft(prev => new Map(prev).set(assignmentId, rubricToDraft(rubric)));
     setEditingRubricId(assignmentId);
     setRubricPreviewId(assignmentId);
-    setExpandedAssignments(prev => new Set(prev).add(assignmentId));
+    setExpandedAssignments(new Set([assignmentId]));
   }
 
   function cancelEditRubric(assignmentId: number) {
@@ -1258,11 +1331,21 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
     params.set('plagiarism_threshold', String(clampPlagiarismThresholdPct(plagiarismThresholdPct) / 100));
     params.set('grading_mode', gradingMode);
     params.set('run_id', runId);
+    const currentIds = currentNotebookIds(submissions.filter(s => s.assignment_id === assignmentId));
+    if (currentIds.length === 0) {
+      setGradeMsg(assignmentId, 'No current notebooks to grade.', true);
+      setGradingAssignmentId(null);
+      return;
+    }
     startProgressPolling(assignmentId, runId);
     try {
-      const res = await fetch(`${API_URL}/grade/${assignmentId}?${params}`, {
+      const res = await fetch(`${API_URL}/grade/${assignmentId}/selected?${params}`, {
         method: 'POST',
-        headers: API_SECRET ? { 'x-api-key': API_SECRET } : {},
+        headers: {
+          'Content-Type': 'application/json',
+          ...(API_SECRET ? { 'x-api-key': API_SECRET } : {}),
+        },
+        body: JSON.stringify({ submission_ids: currentIds }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail ?? 'Unknown error');
@@ -1309,6 +1392,11 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
   }
 
   function toggleSelectionMode(assignmentId: number) {
+    const turningOn = !selectionModeByAssignment.has(assignmentId);
+    if (turningOn) {
+      setViewingStudentsId(assignmentId);
+      setExpandedAssignments(new Set([assignmentId]));
+    }
     setSelectionModeByAssignment(prev => {
       const next = new Set(prev);
       if (next.has(assignmentId)) {
@@ -1402,14 +1490,21 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
     }
   }
 
-  // Accordion: which assignment rows are expanded
+  // Only one assignment row is expanded at a time.
   const [expandedAssignments, setExpandedAssignments] = useState<Set<number>>(new Set());
-  function toggleAssignment(id: number) {
-    setExpandedAssignments(prev => {
-      const s = new Set(prev);
-      s.has(id) ? s.delete(id) : s.add(id);
-      return s;
+  const [viewingStudentsId, setViewingStudentsId] = useState<number | null>(null);
+  const [openSubmissionHistory, setOpenSubmissionHistory] = useState<Set<string>>(new Set());
+  function toggleSubmissionHistory(key: string) {
+    setOpenSubmissionHistory(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
     });
+  }
+  function toggleAssignment(id: number) {
+    setViewingStudentsId(null);
+    setExpandedAssignments(prev => (prev.has(id) ? new Set() : new Set([id])));
   }
 
   useEffect(() => {
@@ -1422,14 +1517,6 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
     }
     setGrades(initial);
   }, [submissions]);
-
-  useEffect(() => {
-    if (assignments.length === 0) return;
-    setPlagiarismCheckAssignmentId(prev => {
-      if (prev != null && assignments.some(a => a.id === prev)) return prev;
-      return assignments[0].id;
-    });
-  }, [assignments]);
 
   useEffect(() => () => {
     for (const timer of progressPollTimersRef.current.values()) clearInterval(timer);
@@ -1650,63 +1737,14 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
           )}
 
           {!loading && assignments.length > 0 && (
-            <section className="admin-similarity-toolbar" aria-label="Similarity settings and quick check">
+            <section className="admin-similarity-toolbar" aria-label="Similarity settings">
               <div className="admin-similarity-toolbar-main">
                 <span className="admin-similarity-toolbar-title">Similarity</span>
-                {renderSimilaritySettingsControls({ showHint: true })}
-                <div className="admin-similarity-toolbar-run">
-                  <label className="admin-similarity-settings-field">
-                    <span className="admin-similarity-settings-field-label">Quick check</span>
-                    <select
-                      value={plagiarismCheckAssignmentId ?? ''}
-                      onChange={e => setPlagiarismCheckAssignmentId(Number(e.target.value))}
-                      className="admin-plagiarism-threshold-select admin-similarity-settings-select admin-similarity-toolbar-assignment"
-                      aria-label="Assignment for quick similarity check"
-                    >
-                      {assignments.map(a => (
-                        <option key={a.id} value={a.id}>{a.title}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <button
-                    type="button"
-                    className="btn-secondary btn-small"
-                    disabled={plagiarismCheckAssignmentId == null || plagiarismCheckingId != null}
-                    onClick={() => {
-                      if (plagiarismCheckAssignmentId != null) {
-                        void handlePlagiarismCheck(plagiarismCheckAssignmentId, undefined, plagiarismCompareMode);
-                      }
-                    }}
-                  >
-                    {plagiarismCheckingId === plagiarismCheckAssignmentId ? 'Checking…' : 'Run check (no AI)'}
-                  </button>
-                </div>
+                {renderSimilaritySettingsControls({ showHint: false })}
               </div>
-              {plagiarismCheckAssignmentId != null && renderRunProgressBar(
-                plagiarismProgress.get(plagiarismCheckAssignmentId),
-                'Checking similarity…',
-                'similarity',
-              )}
-              {plagiarismCheckAssignmentId != null && plagiarismCheckStatus.get(plagiarismCheckAssignmentId) && (
-                <p className={`admin-dashboard-message admin-similarity-toolbar-message${plagiarismCheckStatus.get(plagiarismCheckAssignmentId)?.isError ? ' error' : ''}`}>
-                  {plagiarismCheckStatus.get(plagiarismCheckAssignmentId)?.msg}
-                </p>
-              )}
-              {plagiarismCheckAssignmentId != null && (() => {
-                const run = plagiarismResultsByAssignment.get(plagiarismCheckAssignmentId);
-                const detailLines = run ? buildOverlapDetailLines(run) : [];
-                if (!run || detailLines.length === 0) return null;
-                return (
-                  <div className="admin-overlap-results">
-                    <span className="admin-overlap-results-title">Matches found</span>
-                    <ul className="admin-overlap-results-list">
-                      {detailLines.map(line => (
-                        <li key={line}>{line}</li>
-                      ))}
-                    </ul>
-                  </div>
-                );
-              })()}
+              <p id="admin-plagiarism-threshold-hint" className="admin-similarity-settings-hint">
+                {PLAGIARISM_THRESHOLD_MIN}%–{PLAGIARISM_THRESHOLD_MAX}% · lower = more alerts · used for checks and grading
+              </p>
             </section>
           )}
 
@@ -1716,11 +1754,24 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
             <p className="prereq-note admin-list-empty-standalone">No assignments yet. Click “Add assignment” to create one.</p>
           ) : (
           <>
+          {viewingStudentsId != null && (
+            <div className="admin-students-focus-bar">
+              <button
+                type="button"
+                className="btn-secondary btn-small"
+                onClick={() => setViewingStudentsId(null)}
+              >
+                ← All assignments
+              </button>
+            </div>
+          )}
           <ul className="admin-accordion">
-            {assignments.map(a => {
+            {(viewingStudentsId == null ? assignments : assignments.filter(a => a.id === viewingStudentsId)).map(a => {
               const assignSubs = submissions.filter(s => s.assignment_id === a.id);
-              const count = assignSubs.length;
-              const submittedHomework = assignSubs.filter(s => !!s.notebook_url);
+              const studentGroups = groupSubmissionsByStudent(assignSubs);
+              const currentSubs = studentGroups.map(group => group.latest);
+              const count = currentSubs.length;
+              const submittedHomework = currentSubs.filter(s => !!s.notebook_url);
               const gradedCount = submittedHomework.filter(s => s.score != null).length;
               const submittedTotal = submittedHomework.length;
               const allGraded = submittedTotal > 0 && gradedCount === submittedTotal;
@@ -1731,7 +1782,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
               const isSelectionMode = selectionModeByAssignment.has(a.id);
               const selectedIds = selectedSubmissionIdsByAssignment.get(a.id) ?? new Set<number>();
               const selectedCount = selectedIds.size;
-              const selectableIds = assignSubs.filter(s => !!s.notebook_url).map(s => s.id);
+              const selectableIds = submittedHomework.map(s => s.id);
               const allSelected = selectableIds.length > 0 && selectableIds.every(id => selectedIds.has(id));
               const progress = gradingProgress.get(a.id);
               const similarityProgress = plagiarismProgress.get(a.id);
@@ -1741,10 +1792,9 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
               const isSetupBusy = uploadingRefId === a.id || generatingRubricId === a.id;
               const showAccordionStack = Boolean(
                 gradingStatus.get(a.id)
-                || (plagiarismStatus?.isError && !gradingStatus.get(a.id))
-                || (overlapRun && !plagiarismStatus?.isError)
-                || progress
-                || similarityProgress
+                || (isOpen && plagiarismStatus?.isError && !gradingStatus.get(a.id))
+                || progress?.status === 'running'
+                || similarityProgress?.status === 'running'
                 || isSetupBusy
                 || isOpen,
               );
@@ -1920,7 +1970,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                                     role="menuitem"
                                     className="admin-assignment-menu-item"
                                     disabled={plagiarismCheckingId != null}
-                                    onClick={() => { setActionsMenuId(null); void handlePlagiarismCheck(a.id, undefined, 'students'); }}
+                                    onClick={() => { setActionsMenuId(null); void handlePlagiarismCheck(a.id, selectableIds, 'students'); }}
                                   >
                                     {plagiarismCheckingId === a.id ? 'Checking students…' : 'Compare students'}
                                     <span className="admin-assignment-menu-item-meta">No AI · student ↔ student</span>
@@ -1932,7 +1982,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                                     role="menuitem"
                                     className="admin-assignment-menu-item"
                                     disabled={plagiarismCheckingId != null}
-                                    onClick={() => { setActionsMenuId(null); void handlePlagiarismCheck(a.id, undefined, 'reference'); }}
+                                    onClick={() => { setActionsMenuId(null); void handlePlagiarismCheck(a.id, selectableIds, 'reference'); }}
                                   >
                                     {plagiarismCheckingId === a.id ? 'Checking vs reference…' : 'Compare vs reference'}
                                     <span className="admin-assignment-menu-item-meta">No AI · vs professor solution</span>
@@ -2011,42 +2061,48 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                       && plagiarismCheckingId == null
                       && !checkSelectedBlocked;
                     const isChecking = plagiarismCheckingId === a.id;
+                    const quietNote = !isSelectionMode
+                      ? checkAllBlocked
+                      : selectedCount > 0
+                        ? checkSelectedBlocked
+                        : checkAllBlocked;
                     return (
-                      <div className="admin-similarity-settings-bar admin-similarity-settings-bar--inline admin-accordion-panel">
-                        <span className="admin-similarity-settings-bar-title">Similarity for this assignment</span>
-                        <div className="admin-similarity-settings-bar-row">
-                          {renderSimilaritySettingsControls({ idSuffix: `-${a.id}`, showHint: false })}
-                          <div className="admin-similarity-settings-actions">
-                            <button
-                              type="button"
-                              className="btn-secondary btn-small"
-                              disabled={!canCheckAll}
-                              title={checkAllBlocked ?? 'Check all submissions in this assignment'}
-                              onClick={() => void handlePlagiarismCheck(a.id, undefined, plagiarismCompareMode)}
-                            >
-                              {isChecking ? 'Checking…' : 'Check all (no AI)'}
-                            </button>
-                            {isSelectionMode && (
-                              <button
-                                type="button"
-                                className="btn-secondary btn-small"
-                                disabled={!canCheckSelected}
-                                title={checkSelectedBlocked ?? 'Check only the selected submissions'}
-                                onClick={() => void handlePlagiarismCheck(a.id, Array.from(selectedIds), plagiarismCompareMode)}
-                              >
-                                {isChecking ? 'Checking…' : `Check selected (${selectedCount})`}
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                        {checkAllBlocked && !isSelectionMode && (
-                          <p className="admin-similarity-settings-bar-note">{checkAllBlocked}</p>
+                      <div className="admin-assignment-quick-actions">
+                        {viewingStudentsId !== a.id && (
+                          <button
+                            type="button"
+                            className="admin-quiet-action"
+                            disabled={count === 0}
+                            onClick={() => setViewingStudentsId(a.id)}
+                          >
+                            {count === 0 ? 'No submissions' : `Show ${count} student${count === 1 ? '' : 's'}`}
+                          </button>
                         )}
-                        {isSelectionMode && checkSelectedBlocked && selectedCount > 0 && (
-                          <p className="admin-similarity-settings-bar-note">{checkSelectedBlocked}</p>
+                        <button
+                          type="button"
+                          className="admin-quiet-action"
+                          disabled={!canCheckAll}
+                          title={checkAllBlocked ?? 'Similarity check, no AI'}
+                          onClick={() => void handlePlagiarismCheck(a.id, selectableIds, plagiarismCompareMode)}
+                        >
+                          {isChecking ? 'Checking…' : 'Check'}
+                        </button>
+                        {isSelectionMode && (
+                          <button
+                            type="button"
+                            className="admin-quiet-action"
+                            disabled={!canCheckSelected}
+                            title={checkSelectedBlocked ?? 'Check only the selected submissions'}
+                            onClick={() => void handlePlagiarismCheck(a.id, Array.from(selectedIds), plagiarismCompareMode)}
+                          >
+                            {isChecking ? 'Checking…' : `Check ${selectedCount}`}
+                          </button>
                         )}
-                        {isSelectionMode && checkAllBlocked && selectedCount === 0 && (
-                          <p className="admin-similarity-settings-bar-note">{checkAllBlocked}</p>
+                        {quietNote && <span className="admin-quiet-note">{quietNote}</span>}
+                        {overlapRun && !plagiarismStatus?.isError && (
+                          <span className={`admin-quiet-note${overlapRun.flagged > 0 ? ' admin-quiet-note--alert' : ''}`}>
+                            {overlapRun.flagged} of {overlapRun.total} flagged
+                          </span>
                         )}
                       </div>
                     );
@@ -2061,25 +2117,8 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                       {plagiarismStatus.msg}
                     </p>
                   )}
-                  {overlapRun && !plagiarismStatus?.isError && (() => {
-                    const detailLines = buildOverlapDetailLines(overlapRun);
-                    return (
-                      <div className="admin-overlap-accordion-summary">
-                        <p className="admin-dashboard-message admin-accordion-grade-msg">
-                          Overlap at ≥{overlapRun.thresholdPct}%: {overlapRun.flagged} of {overlapRun.total} flagged · {overlapRun.message}
-                        </p>
-                        {detailLines.length > 0 && (
-                          <ul className="admin-overlap-results-list">
-                            {detailLines.map(line => (
-                              <li key={line}>{line}</li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    );
-                  })()}
                   {renderRunProgressBar(progress, 'Grading in progress…', 'grading')}
-                  {renderRunProgressBar(similarityProgress, 'Checking similarity…', 'similarity')}
+                  {similarityProgress?.status === 'running' && renderRunProgressBar(similarityProgress, 'Checking similarity…', 'similarity')}
 
                   {isSetupBusy && (
                     <div className="admin-setup-activity admin-accordion-panel" role="status" aria-live="polite">
@@ -2150,9 +2189,9 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                     </div>
                   )}
 
-                  {isOpen && (
+                  {isOpen && (isEditing || viewingStudentsId === a.id) && (
                     <div className="admin-accordion-body">
-                      {isSelectionMode && (
+                      {isSelectionMode && viewingStudentsId === a.id && (
                         <div className="admin-selection-toolbar">
                           <div className="admin-selection-toolbar-head">
                             <span className="admin-selection-toolbar-title">Select submissions to grade</span>
@@ -2217,6 +2256,7 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                           </div>
                         </div>
                       )}
+                    {viewingStudentsId === a.id && (
                     <div className="dashboard-table-wrapper admin-table-responsive">
                       <table className="dashboard-table admin-submissions-table">
                         <thead>
@@ -2241,21 +2281,32 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                         <tbody>
                           {assignSubs.length === 0 ? (
                             <tr><td colSpan={(isSelectionMode ? 6 : 5) + (hasOverlapResults ? 1 : 0)} className="admin-table-empty">No submissions yet.</td></tr>
-                          ) : assignSubs.map(sub => {
+                          ) : studentGroups.flatMap(group => {
+                            const historyKey = `${a.id}:${group.key}`;
+                            const historyOpen = openSubmissionHistory.has(historyKey);
+                            const rows = [
+                              { sub: group.latest, earlier: false, earlierCount: group.earlier.length },
+                              ...(historyOpen
+                                ? group.earlier.map(sub => ({ sub, earlier: true, earlierCount: 0 }))
+                                : []),
+                            ];
+                            return rows.map(({ sub, earlier, earlierCount }) => {
                             const g = grades.get(sub.id) ?? { score: '', feedback: '' };
                             const role = sub.student?.role ? ` (${sub.student.role})` : '';
                             const overlap = overlapRun?.bySubmission.get(sub.id);
                             return (
-                              <tr key={sub.id}>
+                              <tr key={sub.id} className={earlier ? 'admin-submission-row--earlier' : undefined}>
                                 {isSelectionMode && (
                                   <td data-label="Select">
-                                    <input
-                                      type="checkbox"
-                                      checked={selectedIds.has(sub.id)}
-                                      onChange={() => toggleSubmissionSelection(a.id, sub.id)}
-                                      disabled={!sub.notebook_url}
-                                      aria-label={`Select submission ${sub.id}`}
-                                    />
+                                    {earlier ? '—' : (
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedIds.has(sub.id)}
+                                        onChange={() => toggleSubmissionSelection(a.id, sub.id)}
+                                        disabled={!sub.notebook_url}
+                                        aria-label={`Select submission ${sub.id}`}
+                                      />
+                                    )}
                                   </td>
                                 )}
                                 <td data-label="Student">
@@ -2266,6 +2317,17 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                                   <span className="admin-email-subtext">
                                     {sub.student?.email ?? ''}
                                   </span>
+                                  {earlier && <span className="admin-history-label">Earlier upload</span>}
+                                  {!earlier && earlierCount > 0 && (
+                                    <button
+                                      type="button"
+                                      className="admin-history-toggle"
+                                      aria-expanded={historyOpen}
+                                      onClick={() => toggleSubmissionHistory(historyKey)}
+                                    >
+                                      {historyOpen ? 'Hide earlier' : `${earlierCount} earlier`}
+                                    </button>
+                                  )}
                                 </td>
                                 <td data-label="Notebook">
                                   {sub.notebook_url ? (
@@ -2371,10 +2433,12 @@ export default function AdminDashboard({ user, course, onLogout, onBack }: Props
                                 <td data-label="Submitted">{formatCourseDateTime(sub.created_at)}</td>
                               </tr>
                             );
+                            });
                           })}
                         </tbody>
                       </table>
                     </div>
+                    )}
                     </div>
                   )}
                     </div>
