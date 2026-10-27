@@ -20,9 +20,18 @@ const sourceSans = Source_Sans_3({
   display: 'swap',
 });
 
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+
 export const metadata: Metadata = {
   title: 'NLP with Deep Learning - UNAM',
   description: 'Natural Language Processing with Deep Learning course at the School of Engineering, UNAM.',
+  icons: {
+    icon: [
+      { url: `${BASE_PATH}/assets/favicon-32.png?v=3`, sizes: '32x32', type: 'image/png' },
+      { url: `${BASE_PATH}/favicon.ico?v=3`, sizes: 'any' },
+    ],
+    apple: [{ url: `${BASE_PATH}/assets/apple-touch-icon.png`, sizes: '180x180', type: 'image/png' }],
+  },
 };
 
 export default function RootLayout({
